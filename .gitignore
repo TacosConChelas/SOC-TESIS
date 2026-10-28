@@ -18,7 +18,6 @@ skills-lock.json
 *.tfstate
 *.tfstate.backup
 .terraform/
-.terraform.lock.hcl
 *.tfvars
 !example.tfvars
 crash.log
@@ -26,3 +25,13 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+
+# Entorno de despliegue (imágenes/secretos) — Fase 2, hallazgo F2-09
+.env
+.env.*
+!.env.example
+
+# Evidencia: datos crudos fuera de Git (D10, doc 19 §6)
+evidence/tests/**/03-raw/
+evidence/tests/**/04-alertas.json
+evidence/tests/**/05-metricas/
