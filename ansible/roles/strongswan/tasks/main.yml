@@ -1,0 +1,5 @@
+# TODO: paquete strongswan-swanctl, ip_forward=1, reglas de forward locales
+# (solo tráfico establecido hacia el túnel), MSS clamp.
+# NO gestionar /etc/swanctl secrets ni el PSK aquí: el bootstrap de IKE/PSK se
+# hace UNA vez con `az vm run-command` (parámetro protegido). Esta VM es solo
+# respondedora (sin start_action).
