@@ -220,6 +220,24 @@ resource "azurerm_network_security_rule" "vpn_in_esp" {
   network_security_group_name = azurerm_network_security_group.vpn.name
 }
 
+# SSH de administración a la VM strongSwan SOLO desde el lab (lab_cidr), igual
+# que en las otras 3 NSG. Llega descifrado por el túnel (no hay SSH desde
+# Internet). Necesario para que Ansible configure la VM una vez arriba el
+# túnel; el bootstrap inicial (PSK/IKE) va por `az vm run-command`.
+resource "azurerm_network_security_rule" "vpn_in_admin_ssh" {
+  name                        = "Allow-Lab-Admin-SSH"
+  priority                    = 200
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "22"
+  source_address_prefix       = var.lab_cidr
+  destination_address_prefix  = "10.50.20.10"
+  resource_group_name         = azurerm_resource_group.lab.name
+  network_security_group_name = azurerm_network_security_group.vpn.name
+}
+
 # D7 §5.2 "todas 100": DNS al resolver de Azure. Antes faltaba en nsg-vpn
 # (solo existía en las otras 3 NSG).
 resource "azurerm_network_security_rule" "vpn_out_dns" {
