@@ -1,5 +1,5 @@
 # 4 VM (architecture.md §2). Imagen Ubuntu 22.04 fijada por D1 (sin "latest").
-# Sin custom_data: los comandos de instalación (Wazuh, strongSwan, Docker,
+# Sin custom_data (salvo el puerto SSH de honeyserver, ADR-006 E1-2): los comandos de instalación (Wazuh, strongSwan, Docker,
 # honeypots) quedan fuera del alcance de este documento/arquitectura
 # (architecture.md §19) y se ejecutan manualmente después del apply, por SSH
 # a través del túnel — así lo fija el orden de implementación (architecture.md
@@ -113,6 +113,25 @@ resource "azurerm_linux_virtual_machine" "honeyserver" {
 
   network_interface_ids           = [azurerm_network_interface.honeyserver.id]
   disable_password_authentication = true
+
+  # ADR-006 E1-2: sshd administrativo en 22222 desde el PRIMER arranque. El 22
+  # público es el señuelo (Allow-Internet-Honeypot-Surface) y Ansible entra por
+  # 22222; sin esto el sshd real quedaría expuesto a Internet en el 22.
+  # write_files corre en la etapa init de cloud-init, antes de que arranque
+  # ssh.service (Ubuntu 22.04, sin socket activation); el restart es por si acaso.
+  # Única excepción a "sin custom_data": nada de instalación de paquetes aquí.
+  custom_data = base64encode(<<-EOT
+    #cloud-config
+    write_files:
+      - path: /etc/ssh/sshd_config.d/10-admin-port.conf
+        owner: root:root
+        permissions: "0644"
+        content: |
+          Port 22222
+    runcmd:
+      - [systemctl, restart, ssh]
+  EOT
+  )
 
   admin_ssh_key {
     username   = var.admin_username
