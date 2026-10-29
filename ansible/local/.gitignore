@@ -1,0 +1,6 @@
+# Artefactos del ensayo local: llaves desechables, known_hosts y logs.
+.keys/
+.known_hosts
+.artifacts/
+.selftest/
+__pycache__/
