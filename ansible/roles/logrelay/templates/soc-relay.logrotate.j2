@@ -1,4 +1,4 @@
-{{ logrelay_log_dir }}/stream.log {
+{{ logrelay_log_dir }}/stream.log {{ logrelay_log_dir }}/error.log {
     daily
     rotate {{ logrelay_log_keep_days }}
     missingok

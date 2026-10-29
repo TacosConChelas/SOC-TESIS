@@ -97,9 +97,33 @@
   when: ansible_virtualization_type != 'docker'
   tags: [config]
 
+# NGINX escucha en una IP concreta: sin esto, un arranque en frio puede alcanzarlo
+# antes de que la NIC tenga IP ("Cannot assign requested address").
+- name: Crear el directorio del drop-in de nginx.service
+  ansible.builtin.file:
+    path: /etc/systemd/system/nginx.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [config]
+
+- name: Hacer que nginx arranque tras network-online.target
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/nginx.service.d/10-soc-relay.conf
+    content: |
+      [Unit]
+      Wants=network-online.target
+      After=network-online.target
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [config]
+
 - name: Habilitar y arrancar NGINX
   ansible.builtin.systemd_service:
     name: nginx
     enabled: true
     state: started
+    daemon_reload: true
   tags: [start]

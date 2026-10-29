@@ -3,3 +3,4 @@
 # En el nix-shell local ya viene con el paquete `ansible`.
 collections:
   - name: community.general
+    version: "12.6.1"

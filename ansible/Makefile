@@ -120,6 +120,7 @@ rehearse: known-hosts
 	@echo "== 1a pasada: debe aplicar cambios =="
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --tags install,config 2>&1 | tee "$(LOGS)/pass1.log"
 	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/pass1.log" changed
+	@if docker exec soc-local-logrelay systemctl is-active --quiet nginx; then echo "FALLA: nginx arranco durante install,config (policy-rc.d no lo evito)" >&2; exit 1; fi
 	@echo "== 2a pasada: debe ser idempotente =="
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --tags install,config 2>&1 | tee "$(LOGS)/pass2.log"
 	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/pass2.log" nochange

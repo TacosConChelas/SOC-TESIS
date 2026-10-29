@@ -32,6 +32,10 @@ run_probe() { # contenedor puerto modo
   docker exec -i "$1" python3 - probe "$relay_ip" "$2" "$token" "$3" <"$probe"
 }
 
+# Lineas previas del log: solo cuentan las que generen estas sondas.
+before="$(docker exec "$relay" sh -c 'wc -l < /var/log/soc-relay/stream.log 2>/dev/null || echo 0' | tr -dc '0-9')"
+before="${before:-0}"
+
 # 1. Paso L4 desde el agente permitido.
 for port in 1514 1515; do
   if run_probe "$agent" "$port" echo; then good "honeyserver -> relay:$port pasa al Manager"; else bad "honeyserver no llega al Manager por el relay:$port"; fi
@@ -44,7 +48,7 @@ done
 
 # 3. access_log: metadatos si, contenido no.
 sleep 1
-log="$(docker exec "$relay" cat /var/log/soc-relay/stream.log 2>/dev/null || true)"
+log="$(docker exec "$relay" cat /var/log/soc-relay/stream.log 2>/dev/null | tail -n +"$((before + 1))" || true)"
 if grep -Eq '^10\.50\.10\.10 \[[^]]+\] TCP 200 ' <<<"$log"; then good "log registra la sesion permitida (200)"; else bad "el log no registra la sesion 200 de 10.50.10.10"; fi
 if grep -Eq '^10\.50\.20\.10 \[[^]]+\] TCP 403 ' <<<"$log"; then good "log registra la sesion denegada (403)"; else bad "el log no registra la sesion 403 de 10.50.20.10"; fi
 if grep -q "$token" <<<"$log"; then bad "el log contiene el contenido de la sesion"; else good "el log no contiene el contenido"; fi

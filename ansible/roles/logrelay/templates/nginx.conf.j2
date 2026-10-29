@@ -2,8 +2,10 @@
 user www-data;
 worker_processes auto;
 pid /run/nginx.pid;
-# libnginx-mod-stream instala aqui el load_module; sin esta linea no existe `stream`.
-include /etc/nginx/modules-enabled/*.conf;
+error_log {{ logrelay_log_dir }}/error.log warn;
+# Solo el modulo stream (libnginx-mod-stream, fijado). Los demas modulos llegan como
+# dependencias de nginx-core, no estan fijados y no se cargan.
+include /etc/nginx/modules-enabled/50-mod-stream.conf;
 
 events {
     worker_connections 768;
