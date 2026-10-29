@@ -1,1 +1,16 @@
-# TODO(logrelay): tareas pendientes de diseño; ver README.md
+---
+# P-A1: rol marcador. El reenvío real de logs se define antes del primer ciclo
+# en Azure; aquí solo se ejercita el contrato de tags.
+- name: Crear el directorio de marcadores
+  ansible.builtin.file:
+    path: /etc/soc-tesis
+    state: directory
+    mode: "0755"
+  tags: [config]
+
+- name: Escribir el marcador del rol logrelay
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/logrelay
+    content: "role=logrelay\n"
+    mode: "0644"
+  tags: [config]

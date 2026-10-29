@@ -1,22 +1,27 @@
 # Orden importa: instalar paquetes con maintenance_egress=true; cerrar el
 # egreso (terraform apply -var maintenance_egress=false) ANTES de arrancar los
 # servicios del honeypot (ver tag `start`).
-- hosts: azure
+- name: Base comun de las VMs del laboratorio
+  hosts: azure
   become: true
   roles: [common]
 
-- hosts: strongswan
+- name: VM strongSwan (respondedora del tunel)
+  hosts: strongswan
   become: true
   roles: [strongswan]
 
-- hosts: wazuh
+- name: VM Wazuh
+  hosts: wazuh
   become: true
   roles: [wazuh]
 
-- hosts: logrelay
+- name: VM logrelay
+  hosts: logrelay
   become: true
   roles: [logrelay]
 
-- hosts: honeyserver
+- name: VM honeyserver (senuelo)
+  hosts: honeyserver
   become: true
   roles: [honeypot]

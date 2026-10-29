@@ -1,1 +1,26 @@
-# TODO(honeypot): tareas pendientes de diseño; ver README.md
+---
+# Señuelo en el 22 y administración en el 22222 (A6/E1-2). Mientras el egreso
+# esté abierto, nada del honeypot puede quedar activo ni habilitado (E1-3):
+# por eso este rol no tiene tareas `install` y todo arranque vive en `start`.
+- name: Comprobar que la administración usa el puerto 22222
+  ansible.builtin.assert:
+    that:
+      - ansible_port | default(22) | int == 22222
+    fail_msg: "honeyserver debe administrarse por 22222; el 22 es el señuelo"
+    quiet: true
+  tags: [config]
+
+- name: Escribir el marcador del rol honeypot
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/honeypot
+    content: "role=honeypot\n"
+    mode: "0644"
+  tags: [config]
+
+- name: Arrancar el señuelo (solo host real)
+  ansible.builtin.systemd_service:
+    name: "{{ honeypot_decoy_service | default('cowrie') }}"
+    state: started
+    enabled: true
+  when: ansible_virtualization_type != 'docker'
+  tags: [start]

@@ -1,1 +1,35 @@
-# TODO(common): tareas pendientes de diseño; ver README.md
+---
+# Tareas base de las 4 VMs. Contrato de tags (ADR-006 E1-8).
+- name: Instalar paquetes base
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags: [install]
+
+- name: Bloquear el arranque automático de servicios durante la instalación
+  ansible.builtin.copy:
+    dest: /usr/sbin/policy-rc.d
+    content: |
+      #!/bin/sh
+      # ADR-006 E1-3: ningún servicio arranca solo durante la ventana de egreso.
+      exit 101
+    mode: "0755"
+  tags: [install]
+
+- name: Crear el directorio de marcadores
+  ansible.builtin.file:
+    path: /etc/soc-tesis
+    state: directory
+    mode: "0755"
+  tags: [config]
+
+- name: Escribir el marcador del rol common
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/common
+    content: "role=common\n"
+    mode: "0644"
+  tags: [config]

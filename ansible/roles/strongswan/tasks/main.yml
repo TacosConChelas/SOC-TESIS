@@ -1,5 +1,35 @@
-# TODO: paquete strongswan-swanctl, ip_forward=1, reglas de forward locales
-# (solo tráfico establecido hacia el túnel), MSS clamp.
-# NO gestionar /etc/swanctl secrets ni el PSK aquí: el bootstrap de IKE/PSK se
-# hace UNA vez con `az vm run-command` (parámetro protegido). Esta VM es solo
-# respondedora (sin start_action).
+---
+# VM strongSwan: respondedora del túnel. El bootstrap de IKE/PSK (paquete,
+# swanctl.conf y secreto) se hace UNA vez con `az vm run-command`; este rol
+# converge sobre eso y NO toca el archivo de secretos (ADR-006 A3/E1-1/E1-5).
+- name: Instalar strongSwan con swanctl
+  ansible.builtin.apt:
+    name: strongswan-swanctl
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags: [install]
+
+- name: Escribir el sysctl de reenvío
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-soc-strongswan.conf
+    content: |
+      # ADR-006 E1-1: la VM strongSwan reenvía solo lo que entra por el túnel.
+      net.ipv4.ip_forward = 1
+    mode: "0644"
+  tags: [config]
+
+- name: Aplicar el sysctl de reenvío (solo host real)
+  ansible.builtin.command:
+    cmd: sysctl -p /etc/sysctl.d/99-soc-strongswan.conf
+  changed_when: false
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Asegurar strongSwan activo (solo host real)
+  ansible.builtin.systemd_service:
+    name: strongswan
+    state: started
+    enabled: true
+  when: ansible_virtualization_type != 'docker'
+  tags: [start]
