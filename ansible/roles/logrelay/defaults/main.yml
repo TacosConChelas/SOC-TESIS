@@ -1,0 +1,10 @@
+---
+# Valores de D4 (.knowledge/18_DECISIONES_IMPLEMENTACION.md §2) y del baseline (doc 17).
+logrelay_listen_ip: "10.50.30.10"
+logrelay_manager_ip: "10.50.40.10"
+logrelay_agent_ip: "10.50.10.10"
+logrelay_admin_cidr: "192.168.1.0/24" # lab_cidr de terraform/lab
+# Baseline D1 decía 14.21; Ubuntu lo retiró (2026-10-29), vigente en jammy-updates/security.
+logrelay_nginx_version: "1.18.0-6ubuntu14.22"
+logrelay_log_dir: /var/log/soc-relay
+logrelay_log_keep_days: 7

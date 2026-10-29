@@ -1,0 +1,5 @@
+---
+# El controlador real (192.168.1.73) necesita esta coleccion para community.general.ufw.
+# En el nix-shell local ya viene con el paquete `ansible`.
+collections:
+  - name: community.general
