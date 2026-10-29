@@ -112,8 +112,8 @@ ciclo real.
   `operate` antes de ensayar.
 - `ansible-lint` corre con el perfil `production`; `site.yml` necesitó nombres
   de play para pasar.
-- Los roles `wazuh` y `logrelay` siguen siendo marcadores (P-A1): no instalan ni
-  arrancan nada real todavía.
+- El rol `wazuh` sigue siendo un marcador (P-A1): no instala ni arranca nada
+  real todavía.
 
 ## Rol logrelay: `make relay-check`
 

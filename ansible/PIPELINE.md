@@ -109,11 +109,11 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 |---|---|
 | strongSwan (VM) | SA activa |
 | Wazuh | puertos y servicio arriba |
-| logrelay | acepta y reenvía una línea de prueba |
+| logrelay | desde honeyserver, `nc -zv 10.50.30.10 1514` y `1515` conectan, y `/var/log/soc-relay/stream.log` registra `10.50.10.10 ... TCP 200` |
 | Honeypot | el señuelo escucha en el 22 y la administración sigue en el 22222 |
 
 ## Etapa 9 · Aceptación de punta a punta [AUTO]
-Evento de prueba: una conexión al señuelo tiene que aparecer en logrelay, después en Wazuh, y quedar como alerta.
+Evento de prueba: una conexión al señuelo. En el relay (L4, solo tráfico cifrado) únicamente se ve la sesión del agente en `stream.log`, no el evento; el evento tiene que aparecer en Wazuh con la identidad del agente y quedar como alerta. El Manager ve la IP del relay (10.50.30.10) como origen.
 
 Comprobaciones finales:
 - 2ª pasada completa de Ansible con `changed=0`,

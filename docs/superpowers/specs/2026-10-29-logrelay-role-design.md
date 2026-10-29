@@ -40,6 +40,8 @@ Reglas de UFW (solo host real, `when: ansible_virtualization_type != 'docker'`, 
 - política de entrada: denegar; política de salida: **permitir** (el control de egreso lo mantiene el NSG, cerrado fuera de la ventana de mantenimiento, para no romper `apt` en una pasada posterior);
 - las reglas `allow` se definen antes de activar UFW.
 
+Excepción deliberada al contrato: activar UFW habilita `ufw.service` dentro de `config`; es aceptable porque no arranca servicios de la aplicación.
+
 Defensa en profundidad dentro de NGINX: `allow 10.50.10.10; deny all;` en el bloque `stream`, además del NSG y UFW.
 
 ## 4. Errores y casos límite
@@ -51,6 +53,7 @@ Defensa en profundidad dentro de NGINX: `allow 10.50.10.10; deny all;` en el blo
 | NGINX arranca solo al instalarse | Lo evita el `policy-rc.d` del rol `common` (E1-3), que corre antes. El arranque ocurre en `start`. |
 | Cambio de configuración con NGINX activo | Un handler hace `reload`, solo si el servicio está activo. |
 | UFW corta el SSH | Reglas `allow` antes de `enable`; la Etapa 6 hace `ansible all -m ping` justo después. Rescate: `az vm run-command` con `ufw disable`. |
+| NGINX escucha en una IP concreta | El drop-in `10-soc-relay.conf` hace que arranque tras `network-online.target`, para que `az vm start` tras un `deallocate` no falle con "Cannot assign requested address". |
 | `install` sin egreso | Falla por red; sin reintento silencioso. |
 
 ## 5. Pruebas locales
