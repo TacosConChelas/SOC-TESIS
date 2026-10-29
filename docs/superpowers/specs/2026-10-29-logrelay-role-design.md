@@ -16,11 +16,13 @@ Plantilla Jinja del `/etc/nginx/nginx.conf` completo, parametrizada con variable
 
 | Variable | Valor |
 |---|---|
-| `relay_listen_ip` | `10.50.30.10` |
-| `relay_manager_ip` | `10.50.40.10` |
-| `relay_agent_ip` | `10.50.10.10` |
-| `relay_admin_cidr` | `192.168.1.0/24` (`lab_cidr`) |
-| `relay_nginx_version` | `1.18.0-6ubuntu14.21` |
+| `logrelay_listen_ip` | `10.50.30.10` |
+| `logrelay_manager_ip` | `10.50.40.10` |
+| `logrelay_agent_ip` | `10.50.10.10` |
+| `logrelay_admin_cidr` | `192.168.1.0/24` (`lab_cidr`) |
+| `logrelay_nginx_version` | `1.18.0-6ubuntu14.22` |
+
+El pin pasó de `1.18.0-6ubuntu14.21` (baseline D1, verificado el 2026-10-07) a `1.18.0-6ubuntu14.22` el 2026-10-29, porque 14.21 ya no existe en `jammy-updates` ni `jammy-security`. El baseline (`17_SOFTWARE_BASELINE.md`, fila NGINX) queda por actualizar por el operador como desviación registrada.
 
 El `nginx.conf` es mínimo: solo `events {}` y `stream {}`. Se descartan el archivo estático (IPs repetidas, no parametrizable para el ensayo) y los roles de la comunidad (dependencia nueva para pocas líneas).
 
@@ -28,13 +30,13 @@ El `nginx.conf` es mínimo: solo `events {}` y `stream {}`. Se descartan el arch
 
 | Tag | Acciones | Descarga |
 |---|---|---|
-| `install` | `nginx` y `libnginx-mod-stream` en la versión exacta, `apt-mark hold`, `ufw` si falta | Sí (único tag) |
-| `config` | plantilla de `nginx.conf` con `validate: nginx -t -c %s`; `access_log` de `stream` solo con metadatos (IP, bytes, duración); logrotate a 7 días; reglas UFW y activación de UFW al final | No |
+| `install` | `nginx`, `nginx-core`, `nginx-common` y `libnginx-mod-stream` en la versión exacta y retenidos (`dpkg_selections` hold; el binario `/usr/sbin/nginx` vive en `nginx-core`), `ufw` y `logrotate` si faltan | Sí (único tag) |
+| `config` | plantilla de `nginx.conf` con `validate: nginx -t -c %s`; `access_log` de `stream` solo con metadatos (IP, bytes, duración); logs en `/var/log/soc-relay/stream.log` (fuera de `/var/log/nginx/`, que el paquete ya rota a 14 días) con logrotate propio a 7 días; reglas UFW y activación de UFW al final | No |
 | `start` | NGINX habilitado y activo | Nunca |
 
 Reglas de UFW (solo host real, `when: ansible_virtualization_type != 'docker'`, E1-7):
-- permitir SSH 22 desde `relay_admin_cidr`;
-- permitir 1514/1515 solo desde `relay_agent_ip`;
+- permitir SSH 22 desde `logrelay_admin_cidr`;
+- permitir 1514/1515 solo desde `logrelay_agent_ip`;
 - política de entrada: denegar; política de salida: **permitir** (el control de egreso lo mantiene el NSG, cerrado fuera de la ventana de mantenimiento, para no romper `apt` en una pasada posterior);
 - las reglas `allow` se definen antes de activar UFW.
 
@@ -44,7 +46,7 @@ Defensa en profundidad dentro de NGINX: `allow 10.50.10.10; deny all;` en el blo
 
 | Riesgo | Comportamiento |
 |---|---|
-| Ubuntu retira la versión fijada de `jammy-updates` | `apt` falla con "version not found"; no se instala otra. Se re-verifica el baseline (doc 17 §3) y se actualiza `relay_nginx_version`. |
+| Ubuntu retira la versión fijada de `jammy-updates` | `apt` falla con "version not found"; no se instala otra. Se re-verifica el baseline (doc 17 §3) y se actualiza `logrelay_nginx_version`. |
 | Plantilla inválida | `nginx -t` falla antes de reemplazar el archivo. |
 | NGINX arranca solo al instalarse | Lo evita el `policy-rc.d` del rol `common` (E1-3), que corre antes. El arranque ocurre en `start`. |
 | Cambio de configuración con NGINX activo | Un handler hace `reload`, solo si el servicio está activo. |
@@ -58,10 +60,10 @@ Los contenedores usan las IPs reales de Azure en la red `operate`. Pieza de prue
 1. Desde `honeyserver`, conexión a `10.50.30.10:1514` y `:1515`; el token enviado vuelve igual.
 2. Desde `strongswan` (origen no permitido), la misma conexión no recibe eco.
 3. El `access_log` registra la conexión y no contiene el token.
-4. `nginx -t` pasa, la versión instalada es la fijada y `apt-mark showhold` incluye `nginx` y `libnginx-mod-stream`.
+4. `nginx -t` pasa, la versión instalada es la fijada y `apt-mark showhold` incluye los cuatro paquetes y el dueño de `/usr/sbin/nginx`.
 5. `logrotate -d` sobre la configuración nueva no da errores.
 
-La doble pasada con `changed=0` y el contrato de tags de la Etapa 0 siguen cubriendo idempotencia y que `start` no descargue.
+La doble pasada con `changed=0` y el contrato de tags de la Etapa 0 siguen cubriendo idempotencia y que `start` no descargue. Como arrancar NGINX es un cambio legítimo, `make rehearse` corre `--tags start` dos veces: la primera exige solo ausencia de fallos (`recap-check.sh ... ok`) y la segunda `changed=0`.
 
 **No se valida en local:** reglas y activación reales de UFW, el NSG de Azure, y el protocolo real del agente Wazuh (enrolamiento TLS en 1515, cifrado en 1514). Esto último se verifica en la Etapa 9 de `PIPELINE.md`.
 

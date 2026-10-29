@@ -114,3 +114,13 @@ ciclo real.
   de play para pasar.
 - Los roles `wazuh` y `logrelay` siguen siendo marcadores (P-A1): no instalan ni
   arrancan nada real todavía.
+
+## Rol logrelay: `make relay-check`
+
+Verifica el rol `logrelay` (NGINX `stream`, D4) sobre los contenedores ya convergidos, por lo que se corre **después** de `make rehearse` (o dentro de `make preflight`, que ya lo incluye). La versión de NGINX está fijada en `roles/logrelay/defaults/main.yml` (`logrelay_nginx_version`); si `apt` no la encuentra, el baseline D1 debe re-verificarse.
+
+Qué hace: levanta un Manager falso (eco TCP) en el contenedor `wazuh` y comprueba (1) que `honeyserver` llega por el relay a 1514 y 1515, (2) que `strongswan` queda bloqueado por `deny all`, (3) que el log `/var/log/soc-relay/stream.log` registra las sesiones (200/403) sin su contenido, (4) `nginx -t`, versión fijada y los paquetes retenidos, (5) `logrotate -d`.
+
+Qué NO valida: reglas y activación reales de UFW (en contenedor se omiten), el NSG de Azure y el protocolo real del agente Wazuh (enrolamiento TLS en 1515, cifrado en 1514). Eso se verifica en el primer ciclo real y en la Etapa 9 de `PIPELINE.md`.
+
+`make rehearse` arranca los servicios dos veces: la 1ª pasada de `--tags start` puede cambiar cosas (arrancar NGINX es un cambio legítimo) y la 2ª debe dar `changed=0`.
