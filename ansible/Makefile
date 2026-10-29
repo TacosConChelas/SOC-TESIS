@@ -24,7 +24,7 @@ export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o Use
         secret-scan secret-scan-selftest keys up known-hosts ping down \
         toggle-install toggle-operate netcheck rehearse preflight \
         azure-session time-guard plan plan-check plan-check-selftest \
-        gate-apply stage1 clean
+        gate-apply stage1 recap-check-selftest relay-check clean
 
 help:
 	@echo "Etapa 0 - pre-vuelo local (sin Azure)"
@@ -38,6 +38,8 @@ help:
 	@echo "  make toggle-install     abre egreso   (Etapa 3 simulada)"
 	@echo "  make toggle-operate     cierra egreso (Etapa 7 simulada)"
 	@echo "  make rehearse           1a pasada con cambios, 2a changed=0, --check, netcheck"
+	@echo "  make recap-check-selftest  prueba los modos de recap-check.sh"
+	@echo "  make relay-check        verifica el rol logrelay (requiere make rehearse previo)"
 	@echo "  make preflight          lint + tags + secretos + ensayo  <-- Etapa 0"
 	@echo "  make azure-session      az account show == EXPECTED_AZ_SUBSCRIPTION_NAME"
 	@echo "  make time-guard         rechaza arrancar despues de 20:30 (E1-9)"
@@ -103,6 +105,12 @@ toggle-operate:
 netcheck:
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 
+recap-check-selftest:
+	@bash "$(LOCAL)/scripts/recap-check-selftest.sh"
+
+relay-check:
+	@bash "$(LOCAL)/scripts/relay-check.sh"
+
 rehearse: known-hosts
 	@mkdir -p "$(LOGS)"
 	@echo "== Etapa 6 simulada: egress abierto =="
@@ -120,12 +128,16 @@ rehearse: known-hosts
 	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/check.log" nochange
 	@echo "== Etapa 7 simulada: egreso cerrado =="
 	@bash "$(LOCAL)/scripts/net-toggle.sh" operate
-	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --tags start 2>&1 | tee "$(LOGS)/start.log"
-	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/start.log" nochange
+	@echo "== arranque, 1a pasada: arrancar servicios es un cambio legitimo =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --tags start 2>&1 | tee "$(LOGS)/start1.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/start1.log" ok
+	@echo "== arranque, 2a pasada: idempotente =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --tags start 2>&1 | tee "$(LOGS)/start2.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/start2.log" nochange
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 	@echo "rehearse: ok. Para reabrir el egreso: make toggle-install"
 
-preflight: lint tags-contract secret-scan secret-scan-selftest rehearse
+preflight: lint tags-contract secret-scan secret-scan-selftest recap-check-selftest rehearse
 	@echo "preflight: Etapa 0 OK"
 
 # Nombre de la suscripcion esperada: variable de entorno, nunca en el repo.

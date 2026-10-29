@@ -2,10 +2,11 @@
 # Lee un log de ansible-playbook y valida el PLAY RECAP.
 #   recap-check.sh <log> changed     -> exige changed > 0, failed=0, unreachable=0
 #   recap-check.sh <log> nochange    -> exige changed = 0, failed=0, unreachable=0
+#   recap-check.sh <log> ok          -> exige failed=0, unreachable=0 (changed libre)
 set -euo pipefail
 
-log="${1:?uso: recap-check.sh LOG changed|nochange}"
-mode="${2:?uso: recap-check.sh LOG changed|nochange}"
+log="${1:?uso: recap-check.sh LOG changed|nochange|ok}"
+mode="${2:?uso: recap-check.sh LOG changed|nochange|ok}"
 
 if [ ! -s "$log" ]; then
   echo "recap-check: log vacio: $log" >&2
@@ -42,6 +43,8 @@ case "$mode" in
       echo "recap-check: la pasada no es idempotente, changed=$changed (log: $log)" >&2
       exit 1
     fi
+    ;;
+  ok)
     ;;
   *)
     echo "recap-check: modo desconocido: $mode" >&2
