@@ -27,7 +27,8 @@ export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o Ide
         secret-scan secret-scan-selftest keys up known-hosts ping down \
         toggle-install toggle-operate netcheck rehearse preflight \
         azure-session time-guard plan plan-check plan-check-selftest \
-        gate-apply stage1 recap-check-selftest relay-check common-check clean
+        gate-apply stage1 recap-check-selftest relay-check common-check \
+        pin-check clean
 
 help:
 	@echo "Etapa 0 - pre-vuelo local (sin Azure)"
@@ -44,6 +45,7 @@ help:
 	@echo "  make recap-check-selftest  prueba los modos de recap-check.sh"
 	@echo "  make relay-check        verifica el rol logrelay (requiere make rehearse previo)"
 	@echo "  make common-check       verifica el rol common (requiere make rehearse previo)"
+	@echo "  make pin-check          verifica pines apt vigentes (requiere Internet)"
 	@echo "  make preflight          lint + tags + secretos + ensayo  <-- Etapa 0"
 	@echo "  make azure-session      az account show == EXPECTED_AZ_SUBSCRIPTION_NAME"
 	@echo "  make time-guard         rechaza arrancar despues de 20:30 (E1-9)"
@@ -122,6 +124,9 @@ relay-check:
 
 common-check:
 	@bash "$(LOCAL)/scripts/common-check.sh"
+
+pin-check:
+	@bash "$(LOCAL)/scripts/pin-check.sh" $(PIN_DEFAULTS)
 
 rehearse: known-hosts
 	@mkdir -p "$(LOGS)"

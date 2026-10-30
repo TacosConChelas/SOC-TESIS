@@ -26,7 +26,26 @@ cleanup() {
   docker exec "$manager" sh -c 'for p in /proc/[0-9]*; do grep -qa "relay-probe[.]py" "$p/cmdline" 2>/dev/null && kill "${p#/proc/}" 2>/dev/null; done; true' >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
-sleep 1
+
+# Espera a que el Manager falso acepte conexiones en ambos puertos (hasta ~10 s).
+wait_manager() { # puerto
+  local port="$1" deadline=$((SECONDS + 10))
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    if docker exec "$manager" python3 -c \
+      'import socket,sys; s=socket.socket(); s.settimeout(1); sys.exit(0 if s.connect_ex(("10.50.40.10", int(sys.argv[1]))) == 0 else 1)' \
+      "$port" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  return 1
+}
+for port in 1514 1515; do
+  if ! wait_manager "$port"; then
+    echo "FALLA: el Manager falso de wazuh no abrio 10.50.40.10:$port en ~10 s (revisa relay-probe.py)" >&2
+    exit 1
+  fi
+done
 
 run_probe() { # contenedor puerto modo
   docker exec -i "$1" python3 - probe "$relay_ip" "$2" "$token" "$3" <"$probe"
@@ -60,11 +79,17 @@ if [ -n "$want" ] && [ "$want" = "$have" ]; then good "nginx $have (fijada)"; el
 if docker exec "$relay" nginx -t >/dev/null 2>&1; then good "nginx -t"; else bad "nginx -t falla"; fi
 if docker exec "$relay" systemctl is-active --quiet nginx; then good "nginx activo"; else bad "nginx no esta activo"; fi
 holds="$(docker exec "$relay" apt-mark showhold 2>/dev/null || true)"
-owner="$(docker exec "$relay" dpkg -S /usr/sbin/nginx 2>/dev/null | cut -d: -f1 || true)"
+owners="$(docker exec "$relay" dpkg -S /usr/sbin/nginx 2>/dev/null | cut -d: -f1 || true)"
 for pkg in nginx nginx-core nginx-common libnginx-mod-stream; do
   if grep -qx "$pkg" <<<"$holds"; then good "$pkg retenido"; else bad "$pkg no esta retenido"; fi
 done
-if [ -n "$owner" ] && grep -qx "$owner" <<<"$holds"; then good "el dueño de /usr/sbin/nginx ($owner) esta retenido"; else bad "el dueño de /usr/sbin/nginx ('$owner') no esta retenido"; fi
+held_owner=0
+IFS=',' read -r -a owner_list <<<"$owners"
+for owner in "${owner_list[@]}"; do
+  owner="$(xargs <<<"$owner")"
+  if [ -n "$owner" ] && grep -qx "$owner" <<<"$holds"; then held_owner=1; fi
+done
+if [ "$held_owner" -eq 1 ]; then good "al menos un dueño de /usr/sbin/nginx ($owners) esta retenido"; else bad "ningun dueño de /usr/sbin/nginx ('$owners') esta retenido"; fi
 
 # 5. logrotate valido.
 if docker exec "$relay" logrotate -d /etc/logrotate.d/soc-relay >/dev/null 2>&1; then good "logrotate -d"; else bad "logrotate -d falla"; fi
