@@ -13,6 +13,7 @@ RUN apt-get update \
       openssh-server \
       python3 \
       sudo \
+      tzdata \
  && rm -rf /var/lib/apt/lists/* \
  && rm -f /etc/ssh/ssh_host_* \
  && mkdir -p /run/sshd
@@ -20,6 +21,11 @@ RUN apt-get update \
 RUN useradd --create-home --shell /bin/bash soctesis \
  && printf 'soctesis ALL=(ALL) NOPASSWD:ALL\n' > /etc/sudoers.d/90-soctesis \
  && chmod 0440 /etc/sudoers.d/90-soctesis
+
+# Zona inicial distinta de UTC: el contenedor ya nace en UTC, asi que sin esto el
+# check de zona horaria pasaria aunque el rol common no hiciera nada.
+RUN ln -sf /usr/share/zoneinfo/America/Mexico_City /etc/localtime \
+ && echo America/Mexico_City > /etc/timezone
 
 COPY sshd_config.tpl /etc/ssh/sshd_config.soc
 COPY entrypoint.sh /usr/local/bin/soc-entrypoint
