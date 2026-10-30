@@ -15,10 +15,13 @@ Regla general: cada verificación termina con exit ≠ 0 si falla. Los gates se 
 | **Ensayo local** (Fase 0 del ADR), `site.yml` dos veces | 1ª pasada con cambios, 2ª con `changed=0` |
 | `ansible-playbook --check --diff` **después** de converger (control de drift) | sin errores y sin cambios |
 | Escaneo de secretos en el diff (PSK, llaves privadas) | 0 hallazgos |
+| `make pin-check` (requiere Internet) | los paquetes de NGINX tienen la versión fijada en `jammy`. Correr justo antes de la Etapa 6 y siempre que pase tiempo entre el baseline y el despliegue: los pines de apt se retiran del archivo (ocurrió con NGINX 14.21 → 14.22). |
 | `az account show` | sesión vigente y suscripción correcta |
 | Hora local | antes de las 20:30 (el auto-shutdown de las 22:00 no debe cortar el ciclo) |
 
 **Gate:** si la 2ª pasada local no da `changed=0`, no se avanza a Terraform.
+
+`unattended-upgrades` ya no es un riesgo abierto: el rol `common` desactiva los timers `apt-daily*` y la actualización automática (ver `roles/common` y `make common-check`).
 
 ## Etapa 1 · Plan de Terraform [AUTO] + autorización [GATE]
 1. `umask 077; terraform plan -out=/tmp/tfplan` con `maintenance_egress=false`.
@@ -87,10 +90,13 @@ Desde 192.168.1.73, con `ANSIBLE_PRIVATE_KEY_FILE` y el `known_hosts` de la Etap
 |---|---|
 | `ansible all -m ping` | 4 de 4 `pong` (honeyserver por el 22222) |
 | `site.yml --tags install,config` | `failed=0 unreachable=0` |
+| `ansible all -m ping` **justo después** de `--tags install,config` | 4 de 4 `pong`; detecta un bloqueo de UFW/sshd antes de seguir |
 | 2ª pasada | `changed=0` |
 | **Honeypot apagado** (E1-3): `systemctl is-active` y `docker ps` en honeyserver | ningún servicio del señuelo activo ni habilitado |
 
 Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En la VM strongSwan, el rol converge sobre lo que dejó el bootstrap. **No toca** el archivo de secretos de swanctl.
+
+**Rescate si UFW corta el SSH de logrelay.** Si el `ansible all -m ping` posterior a `--tags install,config` falla solo en `logrelay`, ejecutar desde el operador `az vm run-command invoke` sobre la VM logrelay con `--scripts "ufw disable"` (sin pegar IDs ni secretos), confirmar que vuelve el SSH, corregir la regla de UFW del rol y reintentar. `run-command` usa el agente de la VM y no depende del túnel ni de sshd.
 
 ## Etapa 7 · Cierre de egreso [GATE + verificación AUTO]
 1. Esperar a que no haya descargas en curso: la NSG es stateful y no corta los flujos ya establecidos.

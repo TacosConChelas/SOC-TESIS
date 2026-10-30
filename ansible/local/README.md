@@ -34,6 +34,11 @@ Son `jrei/systemd-ubuntu:22.04` con `openssh-server`, `privileged`,
 claves de host se borran en el build y se regeneran en cada arranque, para que
 `known_hosts` sea realmente desechable.
 
+`make up` reconstruye la imagen pero arranca con `--no-recreate`: los
+contenedores existentes conservan su ID y la convergencia (BuildKit cambia el
+ID de la imagen en cada build). Para aplicar cambios de `Dockerfile` o
+`entrypoint.sh` hay que hacer `make clean` y luego `make up`.
+
 Dos redes:
 
 - `operate` (`internal: true`, 10.50.0.0/16): las IPs simuladas, sin egreso.
@@ -58,6 +63,7 @@ make netcheck         # falla si algún contenedor alcanza 1.1.1.1 o example.com
 | `known-hosts` | simula la Etapa 4a (huellas de host desechables) |
 | `ping` | `ansible all -m ping` (4 `pong`) |
 | `rehearse` | 1ª pasada con cambios, 2ª `changed=0`, `--check --diff` limpio, cierre de egreso y `netcheck` |
+| `pin-check` | verifica con `apt-cache madison` que los pines de apt de los roles existan hoy en jammy (requiere Internet; **fuera** de `preflight`) |
 | `preflight` | todo lo anterior |
 | `azure-session` / `time-guard` | `az account show` y corte de las 20:30; **fuera** de `preflight` |
 
@@ -124,6 +130,10 @@ Qué hace: levanta un Manager falso (eco TCP) en el contenedor `wazuh` y comprue
 Qué NO valida: reglas y activación reales de UFW (en contenedor se omiten), el NSG de Azure y el protocolo real del agente Wazuh (enrolamiento TLS en 1515, cifrado en 1514). Eso se verifica en el primer ciclo real y en la Etapa 9 de `PIPELINE.md`.
 
 `make rehearse` arranca los servicios dos veces: la 1ª pasada de `--tags start` puede cambiar cosas (arrancar NGINX es un cambio legítimo) y la 2ª debe dar `changed=0`.
+
+## Pines de apt: `make pin-check`
+
+Requiere Internet y **no** forma parte de `preflight` (que debe funcionar offline). Lee `logrelay_nginx_version` de `roles/logrelay/defaults/main.yml` (única fuente de verdad, no duplica la versión) y comprueba con `apt-cache madison` dentro de un contenedor desechable que `nginx`, `nginx-core`, `nginx-common` y `libnginx-mod-stream` existan exactamente en esa versión; si falta alguno, falla y lista las versiones disponibles. Cada rol nuevo registra su pin en la lista del script (`local/scripts/pin-check.sh`). Para probar un defaults alternativo: `make pin-check PIN_DEFAULTS=/tmp/defaults.yml`.
 
 ## Rol common: `make common-check`
 
