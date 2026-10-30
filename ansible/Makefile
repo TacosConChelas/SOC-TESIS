@@ -90,8 +90,13 @@ secret-scan-selftest:
 keys:
 	@bash "$(LOCAL)/scripts/gen-local-keys.sh"
 
+# BuildKit genera un ID de imagen distinto en cada build (metadatos y
+# attestations), asi que `compose up --build` recreaba los 4 contenedores y
+# perdia la convergencia. BUILDX_NO_DEFAULT_ATTESTATIONS=1 no lo evita; la
+# imagen se sigue construyendo, pero los contenedores existentes no se tocan.
+# Para aplicar cambios de Dockerfile/entrypoint: `make clean` y luego `make up`.
 up: keys
-	@$(COMPOSE) up -d --build
+	@$(COMPOSE) up -d --build --no-recreate
 	@bash "$(LOCAL)/scripts/wait-sshd.sh"
 
 known-hosts: up
