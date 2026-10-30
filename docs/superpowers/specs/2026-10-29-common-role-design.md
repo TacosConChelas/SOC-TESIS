@@ -31,10 +31,11 @@ Detalles:
 | Riesgo | Comportamiento |
 |---|---|
 | Drop-in de sshd mal formado | `validate` lo rechaza antes de escribirlo; `reload`, no `restart`. El `assert` de `sshd -T` falla si los valores efectivos difieren (cubre también una pasada en VM real). Rescate: `az vm run-command` y revertir el archivo. |
-| Actualización de arranque retiene el candado de dpkg | Los timers se enmascaran primero y el `apt` usa `lock_timeout: 120`. |
+| Actualización de arranque retiene el candado de dpkg | Los timers se enmascaran primero y el `apt` usa `lock_timeout: 120`. Esto **reduce** el riesgo pero no lo elimina: un `apt-daily*.service` que ya esté corriendo al arrancar puede retener el candado más de 120 s; en ese caso la tarea `apt` falla en voz alta y basta reejecutar. Decisión: no se detienen servicios en curso, para no interrumpir un `dpkg` a medias. |
 | `apt-daily*` no existe en la imagen | `systemd_service` falla en voz alta; en Ubuntu 22.04 de Azure existen; se confirma en el primer ciclo. |
 | La hora no sincroniza sin egreso | El `start` falla tras unos 2 min. Entonces se decide si hace falta configurar el PTP de Hyper-V en chrony. Se agrega una fila a la Etapa 8 de `PIPELINE.md`. |
 | Cambio de sshd durante una sesión de Ansible | `reload` no corta conexiones establecidas. |
+| `MaxAuthTries 3` y agente SSH con varias llaves | `Too many authentication failures`. Mitigación: `-o IdentitiesOnly=yes` en `ssh_args` (`ansible.cfg` y `Makefile`). |
 
 ## 4. Pruebas locales
 
@@ -45,10 +46,10 @@ Cambios al entorno de ensayo para que los checks no pasen en vacío:
 Target nuevo `make common-check` (en `preflight`, después de `relay-check`), sobre las 4 VMs, con exit ≠ 0 si algo falla:
 
 1. `apt-daily.timer` y `apt-daily-upgrade.timer` figuran como `masked` y no están activos.
-2. Existe `/etc/apt/apt.conf.d/99-soc-no-auto.conf` con las tres líneas y `apt-config dump` muestra `Unattended-Upgrade "0"` y `Update-Package-Lists "0"` (la imagen de contenedor ya desactiva el periodo, así que solo el archivo prueba que actuó el rol).
+2. Existe `/etc/apt/apt.conf.d/99-soc-no-auto.conf` con las tres líneas y `apt-config dump` muestra `Unattended-Upgrade "0"` y `Update-Package-Lists "0"` (la imagen de contenedor solo trae `APT::Periodic::Enable "0"`, no las dos claves que busca el check; el archivo prueba que actuó el rol y `apt-config dump` prueba la configuración efectiva).
 3. `sshd -T` muestra `permitrootlogin no`, `passwordauthentication no`, `kbdinteractiveauthentication no` y `maxauthtries 3`; puerto 22222 en honeyserver y 22 en el resto.
 4. Un intento de login por contraseña desde el host recibe `Permission denied (publickey)` y no `(publickey,password)` (el `reload` llegó al demonio en ejecución).
-5. `timedatectl` reporta `UTC`.
+5. `date +%Z` es `UTC`, `/etc/timezone` contiene `UTC` y `readlink /etc/localtime` termina en `/zoneinfo/UTC` (se lee el archivo, no la caché de `systemd-timedated`).
 
 La doble pasada con `changed=0` de la Etapa 0 cubre la idempotencia, incluido que el handler solo corra cuando hay cambio.
 
