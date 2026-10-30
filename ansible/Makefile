@@ -142,7 +142,7 @@ rehearse: known-hosts
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 	@echo "rehearse: ok. Para reabrir el egreso: make toggle-install"
 
-preflight: lint tags-contract secret-scan secret-scan-selftest recap-check-selftest rehearse relay-check
+preflight: lint tags-contract secret-scan secret-scan-selftest recap-check-selftest rehearse relay-check common-check
 	@echo "preflight: Etapa 0 OK"
 
 # Nombre de la suscripcion esperada: variable de entorno, nunca en el repo.

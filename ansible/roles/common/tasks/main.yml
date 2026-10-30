@@ -1,5 +1,34 @@
 ---
 # Tareas base de las 4 VMs. Contrato de tags (ADR-006 E1-8).
+# Diseño: docs/superpowers/specs/2026-10-29-common-role-design.md
+
+# --- Sin actualizaciones automáticas ---------------------------------------
+# Van primero: que ninguna actualización de arranque retenga el candado de dpkg
+# cuando corra la tarea apt de más abajo.
+- name: Desactivar la actualización automática de apt
+  ansible.builtin.copy:
+    dest: /etc/apt/apt.conf.d/99-soc-no-auto.conf
+    content: |
+      APT::Periodic::Update-Package-Lists "0";
+      APT::Periodic::Unattended-Upgrade "0";
+      APT::Periodic::Download-Upgradeable-Packages "0";
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [config]
+
+- name: Detener y enmascarar los timers de apt
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+    masked: true
+  loop:
+    - apt-daily.timer
+    - apt-daily-upgrade.timer
+  tags: [config]
+
+# --- Paquetes base y bloqueo de arranque (E1-3) ------------------------------
 - name: Instalar paquetes base
   ansible.builtin.apt:
     name:
@@ -8,6 +37,7 @@
     state: present
     update_cache: true
     cache_valid_time: 3600
+    lock_timeout: 120
   tags: [install]
 
 - name: Bloquear el arranque automático de servicios durante la instalación
@@ -19,6 +49,69 @@
       exit 101
     mode: "0755"
   tags: [install]
+
+# --- Hora ----------------------------------------------------------------------
+# Equivale a `timedatectl set-timezone` sin depender de dbus (igual en contenedor y host real).
+- name: Fijar la zona horaria (enlace de /etc/localtime)
+  ansible.builtin.file:
+    src: "/usr/share/zoneinfo/{{ common_timezone }}"
+    dest: /etc/localtime
+    state: link
+    force: true
+  tags: [config]
+
+- name: Fijar la zona horaria (/etc/timezone)
+  ansible.builtin.copy:
+    dest: /etc/timezone
+    content: "{{ common_timezone }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [config]
+
+# --- sshd endurecido ---------------------------------------------------------------
+- name: Asegurar el directorio de drop-ins de sshd
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [config]
+
+- name: "Endurecer sshd con un drop-in (sin Port: no pisa el 22222 de honeyserver)"
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/20-soc-hardening.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      KbdInteractiveAuthentication no
+      MaxAuthTries {{ common_ssh_max_auth_tries }}
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/sbin/sshd -t -f %s
+  notify: Recargar sshd
+  tags: [config]
+
+- name: Leer la configuración efectiva de sshd
+  ansible.builtin.command: /usr/sbin/sshd -T
+  register: common_sshd_effective
+  changed_when: false
+  check_mode: false
+  tags: [config]
+
+- name: Comprobar los valores efectivos de sshd
+  ansible.builtin.assert:
+    that:
+      - "'permitrootlogin no' in common_sshd_effective.stdout_lines"
+      - "'passwordauthentication no' in common_sshd_effective.stdout_lines"
+      - "'kbdinteractiveauthentication no' in common_sshd_effective.stdout_lines"
+      - "('maxauthtries ' ~ common_ssh_max_auth_tries) in common_sshd_effective.stdout_lines"
+    fail_msg: >-
+      sshd -T no refleja el endurecimiento; otro archivo anterior de
+      /etc/ssh/sshd_config.d (10-*) gana por "el primer valor gana".
+  tags: [config]
 
 - name: Crear el directorio de marcadores
   ansible.builtin.file:
@@ -33,3 +126,15 @@
     content: "role=common\n"
     mode: "0644"
   tags: [config]
+
+# --- Hora sincronizada (solo host real, solo lectura) -------------------------------
+- name: Exigir la hora sincronizada (solo host real)
+  ansible.builtin.command: timedatectl show -p NTPSynchronized --value
+  register: common_ntp
+  until: common_ntp.stdout == "yes"
+  retries: "{{ common_ntp_retries }}"
+  delay: "{{ common_ntp_delay }}"
+  changed_when: false
+  check_mode: false
+  when: ansible_virtualization_type != 'docker'
+  tags: [start]
