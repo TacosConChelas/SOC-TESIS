@@ -18,7 +18,10 @@ export ANSIBLE_PRIVATE_KEY_FILE := $(LOCAL)/.keys/local_ed25519
 export ANSIBLE_USER_KNOWN_HOSTS_FILE := $(LOCAL)/.known_hosts
 # ssh usa por defecto ~/.ssh/known_hosts; se fuerza el desechable para no
 # mezclar las claves de los contenedores con las del operador.
-export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o UserKnownHostsFile=$(LOCAL)/.known_hosts -o GlobalKnownHostsFile=/dev/null
+# IdentitiesOnly: MaxAuthTries es 3 y el agente del controlador puede tener
+# varias llaves; sin esto ssh las ofrece primero y agota los intentos antes de
+# la de ANSIBLE_PRIVATE_KEY_FILE ("Too many authentication failures").
+export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o IdentitiesOnly=yes -o UserKnownHostsFile=$(LOCAL)/.known_hosts -o GlobalKnownHostsFile=/dev/null
 
 .PHONY: help lint tf-fmt tf-validate ansible-lint syntax-check tags-contract \
         secret-scan secret-scan-selftest keys up known-hosts ping down \

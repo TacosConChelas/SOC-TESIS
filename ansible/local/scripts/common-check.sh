@@ -32,8 +32,10 @@ for entry in "${vms[@]}"; do
     fi
   done
 
-  # 2. apt sin periodos automaticos. La imagen de contenedor ya desactiva el
-  # periodo, asi que solo el archivo del rol prueba que el rol actuo.
+  # 2. apt sin periodos automaticos. La imagen de contenedor solo trae
+  # APT::Periodic::Enable "0", no las dos claves que busca el check; por eso el
+  # archivo del rol prueba que el rol actuo y apt-config dump prueba la
+  # configuracion efectiva.
   conf=/etc/apt/apt.conf.d/99-soc-no-auto.conf
   if docker exec "$ctr" grep -qx 'APT::Periodic::Unattended-Upgrade "0";' "$conf" 2>/dev/null \
      && docker exec "$ctr" grep -qx 'APT::Periodic::Update-Package-Lists "0";' "$conf" 2>/dev/null \
@@ -67,9 +69,24 @@ for entry in "${vms[@]}"; do
     bad "$name: el demonio ofrece mas que publickey (salida: $out)"
   fi
 
-  # 5. Zona horaria.
-  tz="$(docker exec "$ctr" timedatectl show -p Timezone --value 2>/dev/null || true)"
-  if [ "$tz" = UTC ]; then good "$name: zona horaria UTC"; else bad "$name: zona horaria '$tz', se esperaba UTC"; fi
+  # 5. Zona horaria. Se lee la verdad del archivo y no timedatectl: systemd-timedated
+  # cachea la zona y tras cambiar /etc/localtime puede reportar un valor viejo
+  # (falso fallo o falso verde).
+  zone_abbr="$(docker exec "$ctr" date +%Z 2>/dev/null || true)"
+  timezone_file="$(docker exec "$ctr" cat /etc/timezone 2>/dev/null || true)"
+  localtime_link="$(docker exec "$ctr" readlink /etc/localtime 2>/dev/null || true)"
+  tz_ok=1
+  [ "$zone_abbr" = UTC ] || tz_ok=0
+  [ "$timezone_file" = UTC ] || tz_ok=0
+  case "$localtime_link" in
+    */zoneinfo/UTC) ;;
+    *) tz_ok=0 ;;
+  esac
+  if [ "$tz_ok" -eq 1 ]; then
+    good "$name: zona horaria UTC (date +%Z, /etc/timezone y enlace de /etc/localtime)"
+  else
+    bad "$name: zona horaria incorrecta (date +%Z='$zone_abbr', /etc/timezone='$timezone_file', /etc/localtime -> '$localtime_link')"
+  fi
 done
 
 if [ "$fail" -ne 0 ]; then

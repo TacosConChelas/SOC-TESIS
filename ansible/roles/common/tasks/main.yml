@@ -111,6 +111,9 @@
     fail_msg: >-
       sshd -T no refleja el endurecimiento; otro archivo anterior de
       /etc/ssh/sshd_config.d (10-*) gana por "el primer valor gana".
+  # En --check sobre un host sin converger el drop-in no existe todavia; el
+  # assert solo tiene sentido despues de aplicarlo.
+  when: not ansible_check_mode
   tags: [config]
 
 - name: Crear el directorio de marcadores
