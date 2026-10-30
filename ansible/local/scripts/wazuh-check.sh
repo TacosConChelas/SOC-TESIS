@@ -88,7 +88,7 @@ c6() {
   heap="$(cd "$ansible_dir" && ansible-inventory --host wazuh 2>/dev/null \
     | python3 -c 'import json,sys; print(json.load(sys.stdin).get("wazuh_indexer_heap",""))' 2>/dev/null || true)"
   [ -n "$heap" ] || heap="$(default_of wazuh_indexer_heap)"
-  if wz grep -qx "-Xms${heap}" /etc/wazuh-indexer/jvm.options && wz grep -qx "-Xmx${heap}" /etc/wazuh-indexer/jvm.options; then
+  if wz grep -qxe "-Xms${heap}" /etc/wazuh-indexer/jvm.options && wz grep -qxe "-Xmx${heap}" /etc/wazuh-indexer/jvm.options; then
     good "jvm.options con -Xms${heap} -Xmx${heap}"
   else
     bad "jvm.options sin -Xms${heap} / -Xmx${heap}"
