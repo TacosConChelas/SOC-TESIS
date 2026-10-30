@@ -65,7 +65,7 @@ for fila in "${pines[@]}"; do
       echo "FALLA: $pkg no tiene la version fijada $want ($archivo:$variable)" >&2
       if [ -n "$disponibles" ]; then
         echo "  versiones disponibles:" >&2
-        sed 's/^/    /' <<<"$disponibles" >&2
+        while IFS= read -r linea; do echo "    $linea" >&2; done <<<"$disponibles"
       else
         echo "  el paquete no aparece en el archivo apt" >&2
       fi
@@ -73,6 +73,42 @@ for fila in "${pines[@]}"; do
     fi
   done
 done
+
+# --- Wazuh: el asistente instala el ULTIMO parche 4.14.x del indice, no uno fijo ---
+# Si el ultimo parche difiere de wazuh_expected_version, el rol fallaria despues de 15 min de
+# instalacion; aqui se detecta antes. Requiere Internet.
+wazuh_defaults="${PIN_CHECK_WAZUH_DEFAULTS:-$root/roles/wazuh/defaults/main.yml}"
+wazuh_index="https://packages.wazuh.com/4.x/apt/dists/stable/main/binary-amd64/Packages"
+
+if [ ! -f "$wazuh_defaults" ]; then
+  echo "aviso: roles/wazuh/defaults/main.yml no existe todavia; se omite la comprobacion del indice de Wazuh"
+else
+  wazuh_want="$(sed -n 's/^wazuh_expected_version:[[:space:]]*"\([^"]*\)".*/\1/p' "$wazuh_defaults" | head -n1)"
+  if [ -z "$wazuh_want" ]; then
+    echo "FALLA: wazuh_expected_version no esta definida en $wazuh_defaults" >&2
+    fail=1
+  else
+    indice="$(curl -fsSL --max-time 60 "$wazuh_index" 2>/dev/null || true)"
+    if [ -z "$indice" ]; then
+      indice="$(curl -fsSL --max-time 60 "${wazuh_index}.gz" 2>/dev/null | gzip -dc 2>/dev/null || true)"
+    fi
+    if [ -z "$indice" ]; then
+      echo "FALLA: no se pudo leer el indice de Wazuh ($wazuh_index); pin-check necesita Internet" >&2
+      fail=1
+    else
+      wazuh_latest="$(awk '/^Package: / {pkg=$2} /^Version: / {if (pkg == "wazuh-manager") print $2}' <<<"$indice" \
+        | grep -E '^4\.14\.' | sort -V | tail -n 1)"
+      if [ "$wazuh_latest" = "${wazuh_want}-1" ]; then
+        echo "ok: el asistente de Wazuh instalaria ${wazuh_want} (ultimo wazuh-manager 4.14.x: $wazuh_latest)"
+      else
+        echo "FALLA: el ultimo wazuh-manager 4.14.x del indice es '${wazuh_latest:-ninguno}', no ${wazuh_want}-1" >&2
+        echo "  el asistente instalaria esa version y el gate de versión del rol fallaria (baseline D1)." >&2
+        echo "  decide si el baseline sube y actualiza wazuh_expected_version en roles/wazuh/defaults/main.yml" >&2
+        fail=1
+      fi
+    fi
+  fi
+fi
 
 if [ "$fail" -ne 0 ]; then
   echo "pin-check: FALLA (revisar la version fijada en los defaults de los roles)" >&2
