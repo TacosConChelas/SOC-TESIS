@@ -111,6 +111,7 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 | Wazuh | puertos y servicio arriba |
 | logrelay | desde honeyserver, `nc -zv 10.50.30.10 1514` y `1515` conectan, y `/var/log/soc-relay/stream.log` registra `10.50.10.10 ... TCP 200` |
 | Honeypot | el señuelo escucha en el 22 y la administración sigue en el 22222 |
+| Hora (4 VMs) | `timedatectl show -p NTPSynchronized --value` = `yes`; el rol `common` lo exige en el tag `start` (12 reintentos de 10 s) y falla si no llega. Depende de que la imagen sincronice sin egreso (PTP de Hyper-V); si no, decidir aquí si se configura chrony |
 
 ## Etapa 9 · Aceptación de punta a punta [AUTO]
 Evento de prueba: una conexión al señuelo. En el relay (L4, solo tráfico cifrado) únicamente se ve la sesión del agente en `stream.log`, no el evento; el evento tiene que aparecer en Wazuh con la identidad del agente y quedar como alerta. El Manager ve la IP del relay (10.50.30.10) como origen.

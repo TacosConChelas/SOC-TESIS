@@ -124,3 +124,13 @@ Qué hace: levanta un Manager falso (eco TCP) en el contenedor `wazuh` y comprue
 Qué NO valida: reglas y activación reales de UFW (en contenedor se omiten), el NSG de Azure y el protocolo real del agente Wazuh (enrolamiento TLS en 1515, cifrado en 1514). Eso se verifica en el primer ciclo real y en la Etapa 9 de `PIPELINE.md`.
 
 `make rehearse` arranca los servicios dos veces: la 1ª pasada de `--tags start` puede cambiar cosas (arrancar NGINX es un cambio legítimo) y la 2ª debe dar `changed=0`.
+
+## Rol common: `make common-check`
+
+Verifica el rol `common` en las 4 VMs sobre los contenedores ya convergidos, por lo que se corre **después** de `make rehearse` (o dentro de `make preflight`, que ya lo incluye).
+
+Qué comprueba: (1) los timers `apt-daily*` enmascarados e inactivos, (2) `99-soc-no-auto.conf` con sus 3 líneas y `apt-config dump` sin actualización automática, (3) `sshd -T` con `permitrootlogin no`, `passwordauthentication no`, `kbdinteractiveauthentication no`, `maxauthtries 3` y el puerto correcto (22222 en honeyserver), (4) que el demonio **en ejecución** solo ofrezca `publickey` (prueba que el `reload` llegó), (5) zona horaria `UTC`.
+
+Para que no pasen en vacío, el entorno de ensayo parte sin endurecimiento: `sshd_config.tpl` solo incluye `sshd_config.d` y los contenedores nacen en `America/Mexico_City`.
+
+Qué NO valida: la sincronía NTP real (`NTPSynchronized`, se exige en el tag `start` solo en host real), que `apt-daily*` exista y se pueda enmascarar en la imagen de Azure, y que la unidad de sshd se llame `ssh` en la imagen real.

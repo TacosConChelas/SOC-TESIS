@@ -15,7 +15,7 @@ Ampliar el rol `common`, que hoy instala `ca-certificates` y `curl`, escribe el 
 | Bloque | Tag | Qué hace | Descarga |
 |---|---|---|---|
 | Sin actualizaciones automáticas | `config` | Escribe `/etc/apt/apt.conf.d/99-soc-no-auto.conf` con `APT::Periodic::Update-Package-Lists`, `APT::Periodic::Unattended-Upgrade` y `APT::Periodic::Download-Upgradeable-Packages` en `"0"`; detiene, deshabilita y enmascara `apt-daily.timer` y `apt-daily-upgrade.timer`. Va **al principio** del archivo de tareas, antes del `apt`, para que una actualización de arranque no retenga el candado de dpkg | No |
-| Hora UTC | `config` | Zona horaria `UTC` (`community.general.timezone`) | No |
+| Hora UTC | `config` | Zona horaria `UTC` por enlace de `/etc/localtime` y `/etc/timezone` (`file` + `copy`; equivale a `timedatectl set-timezone` sin depender de dbus, igual en contenedor y host real) | No |
 | Hora sincronizada | `start` | Solo en host real (`when: ansible_virtualization_type != 'docker'`): `timedatectl show -p NTPSynchronized --value` debe valer `yes`, con 12 reintentos de 10 s; si no, el play **falla** (decisión del operador: estricto). Solo lectura (`changed_when: false`) | No |
 | sshd endurecido | `config` | Drop-in `/etc/ssh/sshd_config.d/20-soc-hardening.conf` con `PermitRootLogin no`, `PasswordAuthentication no`, `KbdInteractiveAuthentication no` y `MaxAuthTries 3`; `validate: /usr/sbin/sshd -t -f %s`; aplicado con un handler `reload` (nunca `restart`); después, una tarea `sshd -T` con `assert` de los valores efectivos | No |
 
@@ -40,11 +40,12 @@ Detalles:
 
 Cambios al entorno de ensayo para que los checks no pasen en vacío:
 - `ansible/local/sshd_config.tpl`: se agrega `Include /etc/ssh/sshd_config.d/*.conf` como primera línea (como Ubuntu) y se quitan `PermitRootLogin no`, `PasswordAuthentication no` y `KbdInteractiveAuthentication no`. Así esos valores solo pueden venir del rol. Es seguro porque las cuentas de los contenedores no tienen contraseña, y la imagen se reconstruye con `make clean preflight`.
+- `ansible/local/Dockerfile`: instala `tzdata` y arranca los contenedores en `America/Mexico_City`, para que el check de zona horaria no pase en vacío (el contenedor ya nace en UTC).
 
 Target nuevo `make common-check` (en `preflight`, después de `relay-check`), sobre las 4 VMs, con exit ≠ 0 si algo falla:
 
 1. `apt-daily.timer` y `apt-daily-upgrade.timer` figuran como `masked` y no están activos.
-2. `apt-config dump` muestra `Unattended-Upgrade "0"` y `Update-Package-Lists "0"`.
+2. Existe `/etc/apt/apt.conf.d/99-soc-no-auto.conf` con las tres líneas y `apt-config dump` muestra `Unattended-Upgrade "0"` y `Update-Package-Lists "0"` (la imagen de contenedor ya desactiva el periodo, así que solo el archivo prueba que actuó el rol).
 3. `sshd -T` muestra `permitrootlogin no`, `passwordauthentication no`, `kbdinteractiveauthentication no` y `maxauthtries 3`; puerto 22222 en honeyserver y 22 en el resto.
 4. Un intento de login por contraseña desde el host recibe `Permission denied (publickey)` y no `(publickey,password)` (el `reload` llegó al demonio en ejecución).
 5. `timedatectl` reporta `UTC`.
