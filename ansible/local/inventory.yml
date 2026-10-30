@@ -7,7 +7,11 @@ all:
     azure:
       hosts:
         strongswan: { ansible_host: 10.50.20.10 }
-        wazuh: { ansible_host: 10.50.40.10 }
+        wazuh:
+          ansible_host: 10.50.40.10
+          wazuh_enabled: false # make wazuh-rehearse lo activa con -e; preflight no instala Wazuh
+          wazuh_indexer_heap: "2g" # el real (8g) no cabe en el ensayo local
+          wazuh_secrets_dir: /tmp/soc-local-secrets # fuera del repo (la guarda del rol lo exige)
         logrelay: { ansible_host: 10.50.30.10 }
         honeyserver:
           ansible_host: 10.50.10.10

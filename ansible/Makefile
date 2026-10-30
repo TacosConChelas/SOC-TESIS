@@ -28,7 +28,7 @@ export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o Ide
         toggle-install toggle-operate netcheck rehearse preflight \
         azure-session time-guard plan plan-check plan-check-selftest \
         gate-apply stage1 recap-check-selftest relay-check common-check \
-        pin-check clean
+        pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check clean
 
 help:
 	@echo "Etapa 0 - pre-vuelo local (sin Azure)"
@@ -46,6 +46,9 @@ help:
 	@echo "  make relay-check        verifica el rol logrelay (requiere make rehearse previo)"
 	@echo "  make common-check       verifica el rol common (requiere make rehearse previo)"
 	@echo "  make pin-check          verifica pines apt vigentes (requiere Internet)"
+	@echo "  make wazuh-rehearse     all-in-one real de Wazuh en el contenedor (10-25 min; fuera de preflight)"
+	@echo "  make wazuh-check        verifica el rol wazuh (requiere wazuh-rehearse; WAZUH_CHECKS=\"1 2\" para un subconjunto)"
+	@echo "  make wazuh-apply TAGS=install   aplica el rol wazuh con esos tags (iteracion)"
 	@echo "  make preflight          lint + tags + secretos + ensayo  <-- Etapa 0"
 	@echo "  make azure-session      az account show == EXPECTED_AZ_SUBSCRIPTION_NAME"
 	@echo "  make time-guard         rechaza arrancar despues de 20:30 (E1-9)"
@@ -128,6 +131,44 @@ common-check:
 pin-check:
 	@bash "$(LOCAL)/scripts/pin-check.sh" $(PIN_DEFAULTS)
 
+wazuh-hostcheck:
+	@bash "$(LOCAL)/scripts/wazuh-hostcheck.sh"
+
+wazuh-secrets:
+	@bash "$(LOCAL)/scripts/gen-wazuh-secrets.sh"
+
+wazuh-check:
+	@bash "$(LOCAL)/scripts/wazuh-check.sh"
+
+# Iteracion: aplica el rol wazuh con los tags indicados (por defecto install,config).
+wazuh-apply: wazuh-secrets known-hosts
+	@bash "$(LOCAL)/scripts/net-toggle.sh" install
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit wazuh --tags "$(or $(TAGS),install,config)" -e wazuh_enabled=true
+
+wazuh-rehearse: wazuh-hostcheck wazuh-secrets known-hosts
+	@mkdir -p "$(LOGS)"
+	@echo "== Wazuh: egreso abierto (instalacion del all-in-one) =="
+	@bash "$(LOCAL)/scripts/net-toggle.sh" install
+	@echo "== Wazuh 1a pasada (install,config): debe aplicar cambios; tarda 10-25 min =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit wazuh --tags install,config -e wazuh_enabled=true 2>&1 | tee "$(LOGS)/wazuh-pass1.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/wazuh-pass1.log" changed
+	@echo "== Wazuh 2a pasada: idempotente =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit wazuh --tags install,config -e wazuh_enabled=true 2>&1 | tee "$(LOGS)/wazuh-pass2.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/wazuh-pass2.log" nochange
+	@echo "== Wazuh --check --diff tras converger =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit wazuh --tags install,config -e wazuh_enabled=true --check --diff 2>&1 | tee "$(LOGS)/wazuh-check.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/wazuh-check.log" nochange
+	@echo "== Fixture del arnes: agente en honeyserver enrolado por el relay (D4) =="
+	@bash "$(LOCAL)/scripts/wazuh-agent-fixture.sh"
+	@echo "== Wazuh: egreso cerrado y arranque en dos pasadas =="
+	@bash "$(LOCAL)/scripts/net-toggle.sh" operate
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit wazuh --tags start -e wazuh_enabled=true 2>&1 | tee "$(LOGS)/wazuh-start1.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/wazuh-start1.log" ok
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit wazuh --tags start -e wazuh_enabled=true 2>&1 | tee "$(LOGS)/wazuh-start2.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/wazuh-start2.log" nochange
+	@$(MAKE) --no-print-directory wazuh-check
+	@echo "wazuh-rehearse: ok"
+
 rehearse: known-hosts
 	@mkdir -p "$(LOGS)"
 	@echo "== Etapa 6 simulada: egress abierto =="
@@ -204,5 +245,5 @@ down:
 	@$(COMPOSE) down -v --remove-orphans
 
 clean: down
-	@rm -rf "$(LOGS)" "$(LOCAL)/.known_hosts" "$(LOCAL)/.keys" "$(LOCAL)/.selftest-scan.txt"
+	@rm -rf "$(LOGS)" "$(LOCAL)/.known_hosts" "$(LOCAL)/.keys" "$(LOCAL)/.selftest-scan.txt" /tmp/soc-local-secrets
 	@echo "clean: entorno local eliminado"
