@@ -27,7 +27,7 @@ Descomposición acordada: **W1** instalación y verificación de versión, **W2*
 | Variable | Valor |
 |---|---|
 | `wazuh_enabled` | `true` (en el inventario local: `false`; `wazuh-rehearse` pasa `-e wazuh_enabled=true`) |
-| `wazuh_expected_version` | `4.14.8` (baseline; subirla a 4.14.9 es decisión del operador tras verificarla) |
+| `wazuh_expected_version` | `4.14.9` (decisión del operador 2026-10-30: el asistente de la rama 4.14 ya no instala 4.14.8; el baseline D1 y los agentes 4.14.8 existentes se actualizan aparte, y un Manager 4.14.9 acepta agentes 4.14.8) |
 | `wazuh_installer_url` | `https://packages.wazuh.com/4.14/wazuh-install.sh` |
 | `wazuh_indexer_heap` | `8g` (D5); el inventario local lo sobrescribe a `2g` |
 | `wazuh_retention_days` | `30` |
@@ -102,7 +102,7 @@ El check 9 cierra el hueco que dejó `relay-check` (probaba el paso de bytes, no
 
 **Dependencias:**
 - `make up` no debe recrear contenedores (Tarea A del lote de pendientes), o `wazuh-rehearse` destruiría la instalación al reiniciar el arnés.
-- La decisión del baseline (4.14.8 o 4.14.9) sale de la Tarea C del mismo lote. Conviene completarlo antes de implementar.
+- La decisión del baseline está tomada: 4.14.9. Queda por actualizar el baseline `.knowledge/17_SOFTWARE_BASELINE.md` (manager, indexer, dashboard, agente Linux y MSI de Windows a 4.14.9-1; comprobar que el MSI responde HTTP 200), a cargo del operador.
 
 ## 8. Fuera de alcance
 

@@ -15,7 +15,7 @@
 - Rama `practica/ansible-local`. Todo comando se corre desde `/home/tacosconchelas/Projects/SOC-TESIS/ansible` dentro de `nix-shell --run '...'`.
 - Contrato de tags (E1-8): `install` es el único que descarga; `config` no descarga; `start` nunca descarga. En los roles, **cada tarea lleva sus propios tags** (también las anidadas en `block`/`rescue`), porque `tags-contract.py` los exige tarea por tarea.
 - E1-7: las tareas no aplicables en contenedor llevan `when: ansible_virtualization_type != 'docker'` (UFW, `sysctl -p`).
-- Versión esperada de Wazuh: `wazuh_expected_version: "4.14.8"` en `roles/wazuh/defaults/main.yml` con ese formato exacto (lo leen `wazuh-check.sh`, `wazuh-agent-fixture.sh` y `pin-check.sh`). Instalador: `https://packages.wazuh.com/4.14/wazuh-install.sh`; el asistente no admite fijar versión.
+- Versión esperada de Wazuh: `wazuh_expected_version: "4.14.9"` (decisión del operador 2026-10-30: 4.14.8 ya no la instala el asistente; 4.14.9 es parche sin cambios incompatibles) en `roles/wazuh/defaults/main.yml` con ese formato exacto (lo leen `wazuh-check.sh`, `wazuh-agent-fixture.sh` y `pin-check.sh`). Instalador: `https://packages.wazuh.com/4.14/wazuh-install.sh`; el asistente no admite fijar versión.
 - Datos de D5: heap del Indexer `8g` (en el inventario local `2g`); retención de `wazuh-alerts-*` a 30 días; `logall` y `logall_json` en `no`; Active Response y `vulnerability-detection` apagados; `use_password yes`; `use_source_ip no`; API (55000) y Indexer (9200) solo en loopback; 1514/1515 desde el relay `10.50.30.10` y `lab_cidr` `192.168.1.0/24`; 443 y SSH desde `lab_cidr`.
 - Secretos: nunca en el repo. `wazuh_secrets_dir` (controlador, por defecto `~/soc-tesis-secrets/wazuh`) debe estar **fuera** del repo: el rol falla si no. Toda tarea que toque contraseñas lleva `no_log: true`. El `shred` del tar solo ocurre tras comparar `sha256` con la copia traída al controlador. En el ensayo local los secretos viven en `/tmp/soc-local-secrets/` (700, desechables).
 - UFW: entrada denegada, salida permitida; reglas `allow` antes de activar; solo con `when: ansible_virtualization_type != 'docker'`.
@@ -521,7 +521,7 @@ Crear `ansible/roles/wazuh/defaults/main.yml`:
 # Rol wazuh. Diseño: docs/superpowers/specs/2026-10-30-wazuh-role-design.md
 wazuh_enabled: true
 # Baseline D1. El asistente instala el ultimo parche 4.14.x: si difiere, el gate falla.
-wazuh_expected_version: "4.14.8"
+wazuh_expected_version: "4.14.9"
 wazuh_installer_url: "https://packages.wazuh.com/4.14/wazuh-install.sh"
 wazuh_indexer_heap: "8g"
 wazuh_retention_days: 30
@@ -700,7 +700,7 @@ Expected: `Passed: 0 failure(s), 0 warning(s)` (puede aparecer el ruido no fatal
 
 Run: `nix-shell --run 'make wazuh-apply TAGS=install' > <scratchpad>/wazuh-t2.log 2>&1; echo "rc=$?"` y esperar a que termine.
 Expected: `rc=0`; en el log, la tarea del asistente en `changed`, el gate sin fallos y `failed=0`. Si el asistente falla, la salida incluye el final de `/var/log/wazuh-install.log`; **detenerse y reportar** (puede ser `policy-rc.d`, límites de systemd en el contenedor, requisitos de hardware o red). No relajar nada para forzar el verde.
-Si el gate falla porque el asistente instaló otra versión (p. ej. 4.14.9), eso NO es un fallo del plan: reportar la versión instalada y esperar la decisión del operador (cambiar `wazuh_expected_version` o el baseline); no cambiar el valor por cuenta propia.
+Si el gate falla porque el asistente instaló otra versión (distinta de 4.14.9), eso NO es un fallo del plan: reportar la versión instalada y esperar la decisión del operador (cambiar `wazuh_expected_version` o el baseline); no cambiar el valor por cuenta propia.
 
 - [ ] **Step 5: Segunda pasada idempotente y checks 1 y 2**
 
