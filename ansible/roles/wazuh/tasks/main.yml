@@ -504,3 +504,24 @@
     state: enabled
   when: ansible_virtualization_type != 'docker'
   tags: [config]
+
+# --- Arranque (nunca descarga) ------------------------------------------------------
+- name: Habilitar y arrancar los servicios de Wazuh en orden
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - wazuh-indexer
+    - wazuh-manager
+    - filebeat
+    - wazuh-dashboard
+  tags: [start]
+
+- name: Esperar a que respondan los puertos de Wazuh
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ item }}"
+    timeout: 300
+  loop: [9200, 1514, 1515, 443]
+  tags: [start]
