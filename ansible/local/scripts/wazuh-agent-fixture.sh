@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fixture del ARNES (no del rol): instala wazuh-agent en honeyserver y lo enrola por el relay (D4).
-# El rol `honeypot` hara esto de verdad mas adelante. Requiere el egreso abierto.
+# El rol `honeypot` lo instala de verdad; este fixture solo existe para el check 9 de wazuh-check.
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -24,14 +24,13 @@ else
   chmod 600 "$env_file"
   printf 'WAZUH_MANAGER=%s\nWAZUH_REGISTRATION_PASSWORD=%s\n' "$relay_ip" "$(tr -d '\n' <"$secrets/authd.pass")" >"$env_file"
 
+  # Mismos archivos y contenido que el rol honeypot (wazuh.asc y wazuh.list): si
+  # difirieran, apt veria dos Signed-By para el mismo repo y fallaria.
   docker exec "$ctr" sh -c '
     set -e
-    apt-get update -qq
-    apt-get install -y -qq gnupg >/dev/null
-    curl -fsS https://packages.wazuh.com/key/GPG-KEY-WAZUH \
-      | gpg --no-default-keyring --keyring gnupg-ring:/usr/share/keyrings/wazuh.gpg --import
-    chmod 644 /usr/share/keyrings/wazuh.gpg
-    echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" \
+    curl -fsS -o /usr/share/keyrings/wazuh.asc https://packages.wazuh.com/key/GPG-KEY-WAZUH
+    chmod 644 /usr/share/keyrings/wazuh.asc
+    echo "deb [signed-by=/usr/share/keyrings/wazuh.asc] https://packages.wazuh.com/4.x/apt/ stable main" \
       >/etc/apt/sources.list.d/wazuh.list
     apt-get update -qq
   '

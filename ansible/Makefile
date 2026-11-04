@@ -28,7 +28,8 @@ export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o Ide
         toggle-install toggle-operate netcheck rehearse preflight \
         azure-session time-guard plan plan-check plan-check-selftest \
         gate-apply stage1 recap-check-selftest relay-check common-check \
-        pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check clean
+        pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check \
+        honeypot-apply honeypot-rehearse honeypot-check clean
 
 help:
 	@echo "Etapa 0 - pre-vuelo local (sin Azure)"
@@ -49,6 +50,9 @@ help:
 	@echo "  make wazuh-rehearse     all-in-one real de Wazuh en el contenedor (10-25 min; fuera de preflight)"
 	@echo "  make wazuh-check        verifica el rol wazuh (requiere wazuh-rehearse; WAZUH_CHECKS=\"1 2\" para un subconjunto)"
 	@echo "  make wazuh-apply TAGS=install   aplica el rol wazuh con esos tags (iteracion)"
+	@echo "  make honeypot-rehearse  Docker, 7 imagenes y agente reales en honeyserver (requiere wazuh-rehearse; fuera de preflight)"
+	@echo "  make honeypot-check     verifica el rol honeypot (HONEYPOT_CHECKS=\"1 2\" para un subconjunto)"
+	@echo "  make honeypot-apply TAGS=install   aplica el rol honeypot con esos tags (iteracion)"
 	@echo "  make preflight          lint + tags + secretos + ensayo  <-- Etapa 0"
 	@echo "  make azure-session      az account show == EXPECTED_AZ_SUBSCRIPTION_NAME"
 	@echo "  make time-guard         rechaza arrancar despues de 20:30 (E1-9)"
@@ -169,6 +173,43 @@ wazuh-rehearse: wazuh-hostcheck wazuh-secrets known-hosts
 	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/wazuh-start2.log" nochange
 	@$(MAKE) --no-print-directory wazuh-check
 	@echo "wazuh-rehearse: ok"
+
+honeypot-check:
+	@bash "$(LOCAL)/scripts/honeypot-check.sh"
+
+# Iteracion: aplica el rol honeypot con los tags indicados (por defecto install,config).
+honeypot-apply: wazuh-secrets known-hosts
+	@bash "$(LOCAL)/scripts/net-toggle.sh" install
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver --tags "$(or $(TAGS),install,config)" -e honeypot_enabled=true
+
+honeypot-rehearse: wazuh-secrets known-hosts
+	@mkdir -p "$(LOGS)"
+	@docker exec soc-local-wazuh systemctl is-active --quiet wazuh-manager \
+	  || { echo "FALLA: el Manager de Wazuh no esta activo en el contenedor wazuh (corre make wazuh-rehearse antes)" >&2; exit 1; }
+	@echo "== Honeypot: egreso abierto (Docker, imagenes y agente) =="
+	@bash "$(LOCAL)/scripts/net-toggle.sh" install
+	@echo "== Honeypot 1a pasada (install,config): debe aplicar cambios =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver --tags install,config -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/honeypot-pass1.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/honeypot-pass1.log" changed
+	@echo "== E1-3: nada del senuelo activo ni habilitado con el egreso abierto =="
+	@HONEYPOT_CHECKS=3 bash "$(LOCAL)/scripts/honeypot-check.sh"
+	@echo "== Honeypot 2a pasada: idempotente =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver --tags install,config -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/honeypot-pass2.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/honeypot-pass2.log" nochange
+	@echo "== Honeypot --check --diff tras converger =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver --tags install,config -e honeypot_enabled=true --check --diff 2>&1 | tee "$(LOGS)/honeypot-check.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/honeypot-check.log" nochange
+	@echo "== Honeypot: egreso cerrado y arranque en dos pasadas =="
+	@bash "$(LOCAL)/scripts/net-toggle.sh" operate
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver --tags start -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/honeypot-start1.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/honeypot-start1.log" ok
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver --tags start -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/honeypot-start2.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/honeypot-start2.log" nochange
+	@echo "== Honeypot: pasada completa sin tags con el egreso cerrado (Etapa 9) =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/honeypot-full.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/honeypot-full.log" nochange
+	@$(MAKE) --no-print-directory honeypot-check
+	@echo "honeypot-rehearse: ok"
 
 rehearse: known-hosts
 	@mkdir -p "$(LOGS)"

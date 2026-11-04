@@ -16,4 +16,5 @@ all:
         honeyserver:
           ansible_host: 10.50.10.10
           ansible_port: 22222
+          honeypot_enabled: false # make honeypot-rehearse lo activa con -e; preflight no instala Docker
           wazuh_secrets_dir: /tmp/soc-local-secrets # authd.pass del ensayo (fuera del repo)
