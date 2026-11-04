@@ -24,6 +24,7 @@ DOWNLOAD_MODULES = {
     "apt_key",
     "apt_repository",
     "dnf",
+    "docker_compose_v2_pull",
     "docker_image",
     "get_url",
     "git",
@@ -109,9 +110,35 @@ def walk(tasks: list[Any], path: Path, errors: list[str]) -> None:
         mod = module_of(task)
         if "start" in tags and mod in DOWNLOAD_MODULES:
             errors.append(f"{path}: el tag 'start' usa modulo de descarga '{mod}': {name}")
+        if "start" in tags and mod == "docker_compose_v2":
+            args = next(v for k, v in task.items() if k.split(".")[-1] == "docker_compose_v2")
+            if not isinstance(args, dict) or args.get("pull") != "never":
+                errors.append(f"{path}: el tag 'start' usa docker_compose_v2 sin 'pull: never': {name}")
+
+
+def selftest() -> int:
+    """Casos sinteticos: (tareas, errores esperados)."""
+    casos = [
+        ([{"name": "pull en start", "community.docker.docker_compose_v2_pull": {"project_src": "/x"}, "tags": ["start"]}], 1),
+        ([{"name": "up sin pull never", "community.docker.docker_compose_v2": {"project_src": "/x"}, "tags": ["start"]}], 1),
+        ([{"name": "up con pull missing", "community.docker.docker_compose_v2": {"project_src": "/x", "pull": "missing"}, "tags": ["start"]}], 1),
+        ([{"name": "up con pull never", "community.docker.docker_compose_v2": {"project_src": "/x", "pull": "never"}, "tags": ["start"]}], 0),
+        ([{"name": "pull en install", "community.docker.docker_compose_v2_pull": {"project_src": "/x"}, "tags": ["install"]}], 0),
+        ([{"name": "up sin pull never en block", "tags": ["start"], "block": [{"name": "up sin pull never anidado", "community.docker.docker_compose_v2": {"project_src": "/x"}, "tags": ["start"]}]}], 1),
+    ]
+    for tareas, esperados in casos:
+        errores: list[str] = []
+        walk(tareas, Path("selftest.yml"), errores)
+        if len(errores) != esperados:
+            print(f"tags-contract --selftest: FALLA en '{tareas[0]['name']}': {errores}", file=sys.stderr)
+            return 1
+    print(f"tags-contract --selftest: ok ({len(casos)} casos)")
+    return 0
 
 
 def main() -> int:
+    if "--selftest" in sys.argv[1:]:
+        return selftest()
     root = Path(__file__).resolve().parents[2]
     files = sorted(root.glob("roles/*/tasks/*.yml"))
     if not files:

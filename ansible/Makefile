@@ -82,6 +82,7 @@ syntax-check:
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --syntax-check
 
 tags-contract:
+	@"$(PY)" "$(LOCAL)/scripts/tags-contract.py" --selftest
 	@"$(PY)" "$(LOCAL)/scripts/tags-contract.py"
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --list-tasks --tags start >/dev/null
 	@echo "tags-contract: ok (--list-tasks --tags start compila)"
