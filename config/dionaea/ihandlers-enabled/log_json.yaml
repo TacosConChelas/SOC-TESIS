@@ -1,0 +1,17 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/ihandler/log_json.html (ejemplo oficial, CC0-1.0)
+# CORRECCION (E3, 2026-10-13): placeholder @DIONAEA_STATEDIR@ sin resolver -> ruta literal var/lib/dionaea (ver dionaea.cfg, mismo directorio, para la causa raiz completa).
+# CORRECCION 2 (E3, 2026-10-13): el YAML "available" horneado por la propia imagen usa
+# file://var/lib/dionaea/dionaea.json (ruta RELATIVA dentro de un URI file://). log_json.py
+# hace urllib.parse.urlparse(url) y abre url.path: con una ruta relativa, urlparse interpreta
+# "var" como netloc (host) y descarta ese primer segmento, dando url.path="/lib/dionaea/dionaea.json"
+# (confirmado: log_json.py:71-critical "Unable to open file /lib/dionaea/dionaea.json ... No such
+# file or directory", evidence/local-tests/2026-10-13-dionaea-stability-decision/E1-final-validation/).
+# Esto reproduce el default "available" de la propia imagen (no es un error nuestro de copia), pero
+# es inservible: hace falta una ruta ABSOLUTA dentro del URI (file:///opt/dionaea/...).
+# D4 (18_DECISIONES_IMPLEMENTACION.md sec.2): archivo JSON Lines que el Wazuh Agent del
+# Honey-Server lee con localfile (log_format json) desde el bind
+# /srv/soc-tesis/dionaea/lib -> /opt/dionaea/var/lib/dionaea.
+- name: log_json
+  config:
+    handlers:
+      - file:///opt/dionaea/var/lib/dionaea/dionaea.json

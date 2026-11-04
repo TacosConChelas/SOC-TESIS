@@ -1,0 +1,16 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/http.html (ejemplo oficial, CC0-1.0)
+# CORRECCION (E3, 2026-10-13): placeholder @DIONAEA_STATEDIR@ sin resolver -> ruta literal var/lib/dionaea (ver dionaea.cfg, mismo directorio, para la causa raiz completa).
+# D3 (18_DECISIONES_IMPLEMENTACION.md sec.1): HTTP interno en 80 (no publicado al host;
+# TCP/80 del host pertenece a Snare, architecture.md sec.7) + HTTPS publicado en 443.
+# El certificado HTTPS se genera por defecto al arrancar (ssl.default.* en dionaea.cfg,
+# sin clave montada: ver dionaea.cfg de este mismo directorio).
+- name: http
+  config:
+    root: "var/lib/dionaea/http/root"
+    ports:
+      - 80
+    ssl_ports:
+      - 443
+    max_request_size: 32768
+    global_headers:
+      - ["Server", "nginx"]

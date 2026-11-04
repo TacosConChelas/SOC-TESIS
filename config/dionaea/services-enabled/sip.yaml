@@ -1,0 +1,25 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/sip.html (ejemplo oficial, CC0-1.0,
+# CORRECCION (E3, 2026-10-13): placeholder @DIONAEA_STATEDIR@ sin resolver -> ruta literal var/lib/dionaea (ver dionaea.cfg, mismo directorio, para la causa raiz completa).
+# adaptado: solo personalidad "default", sin acciones custom no decididas por el responsable)
+# Habilitado por D3/D-H03 (architecture.md sec.11): TCP/UDP 5060 SIP, TCP/UDP 5061 SIP-TLS.
+- name: sip
+  config:
+    udp_ports:
+      - 5060
+    tcp_ports:
+      - 5060
+    tls_ports:
+      - 5061
+    users: "var/lib/dionaea/sip/accounts.sqlite"
+    rtp:
+      enable: true
+      modes:
+        - bistream
+      pcap:
+        path: "var/lib/dionaea/sip/rtp/{personality}/%Y-%m-%d/"
+        filename: "%H:%M:%S_{remote_host}_{remote_port}_in.pcap"
+    personalities:
+      default:
+        domain: "localhost"
+        name: "softphone"
+        personality: "generic"

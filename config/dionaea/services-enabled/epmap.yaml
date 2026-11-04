@@ -1,0 +1,3 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/epmap.html (ejemplo oficial, CC0-1.0)
+# Habilitado por D3/D-H03 (architecture.md sec.11): TCP 135 EPMAP.
+- name: epmap

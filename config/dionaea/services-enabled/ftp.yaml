@@ -1,0 +1,8 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/ftp.html (ejemplo oficial, CC0-1.0)
+# CORRECCION (E3, 2026-10-13): placeholder @DIONAEA_STATEDIR@ sin resolver -> ruta literal var/lib/dionaea (ver dionaea.cfg, mismo directorio, para la causa raiz completa).
+# Habilitado por D3/D-H03 (architecture.md sec.11): TCP 21 FTP.
+- name: ftp
+  config:
+    root: "var/lib/dionaea/ftp/root"
+    response_messages:
+      welcome_msg: 220 FTP server ready.

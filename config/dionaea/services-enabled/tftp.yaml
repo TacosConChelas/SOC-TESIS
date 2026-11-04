@@ -1,0 +1,6 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/tftp.html (ejemplo oficial, CC0-1.0)
+# CORRECCION (E3, 2026-10-13): placeholder @DIONAEA_STATEDIR@ sin resolver -> ruta literal var/lib/dionaea (ver dionaea.cfg, mismo directorio, para la causa raiz completa).
+# Habilitado por D3/D-H03 (architecture.md sec.11): UDP 69 TFTP.
+- name: tftp
+  config:
+    root: "var/lib/dionaea/tftp/root"
