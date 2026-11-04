@@ -1,14 +1,28 @@
 ---
-# Señuelo en el 22 y administración en el 22222 (A6/E1-2). Mientras el egreso
-# esté abierto, nada del honeypot puede quedar activo ni habilitado (E1-3):
-# por eso este rol no tiene tareas `install` y todo arranque vive en `start`.
+# Rol honeypot: Docker + 7 imagenes fijadas (D2) + Wazuh Agent por el relay (D4).
+# Diseño: docs/superpowers/specs/2026-11-04-honeypot-role-design.md
+# E1-3: mientras el egreso este abierto, nada del señuelo queda activo ni
+# habilitado. El daemon de Docker solo corre durante el pull de `install` y
+# desde `start` en adelante. Señuelo en el 22, administración en el 22222 (A6/E1-2).
+- name: Omitir el rol si está deshabilitado (el preflight local no instala Docker)
+  ansible.builtin.meta: end_role
+  when: not (honeypot_enabled | bool)
+  tags: [install, config, start]
+
 - name: Comprobar que la administración usa el puerto 22222
   ansible.builtin.assert:
     that:
       - ansible_port | default(22) | int == 22222
     fail_msg: "honeyserver debe administrarse por 22222; el 22 es el señuelo"
     quiet: true
-  tags: [config]
+  tags: [install, config, start]
+
+- name: Asegurar el directorio de centinelas
+  ansible.builtin.file:
+    path: /etc/soc-tesis
+    state: directory
+    mode: "0755"
+  tags: [install, config, start]
 
 - name: Escribir el marcador del rol honeypot
   ansible.builtin.copy:
@@ -17,10 +31,240 @@
     mode: "0644"
   tags: [config]
 
-- name: Arrancar el señuelo (solo host real)
+- name: Leer si el señuelo ya arrancó alguna vez
+  ansible.builtin.stat:
+    path: /etc/soc-tesis/honeypot-started
+  register: honeypot_started
+  tags: [install, config, start]
+
+# --- install: claves, repos y paquetes (único tag que descarga) -------------------------
+- name: Instalar gnupg (verificación de las huellas)
+  ansible.builtin.apt:
+    name: gnupg
+    state: present
+    lock_timeout: 120
+  tags: [install]
+
+- name: Asegurar el directorio de claves descargadas (todavía sin confianza)
+  ansible.builtin.file:
+    path: /etc/soc-tesis/keys
+    state: directory
+    mode: "0755"
+  tags: [install]
+
+- name: Descargar las claves apt de Docker y Wazuh
+  ansible.builtin.get_url:
+    url: "{{ item.key_url }}"
+    dest: "/etc/soc-tesis/keys/{{ item.name }}.asc"
+    mode: "0644"
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags: [install]
+
+- name: Leer la huella de cada clave descargada
+  ansible.builtin.command: gpg --show-keys --with-colons /etc/soc-tesis/keys/{{ item.name }}.asc
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: honeypot_key_info
+  changed_when: false
+  check_mode: false
+  tags: [install]
+
+- name: Exigir la huella fijada en cada clave (clave primaria, 40 hex)
+  ansible.builtin.assert:
+    that:
+      - (item.stdout_lines | select('match', '^fpr:') | first) == ('fpr:::::::::' ~ item.item.fingerprint ~ ':')
+    fail_msg: >-
+      La clave apt de {{ item.item.name }} ({{ item.item.key_url }}) no tiene la huella fijada
+      {{ item.item.fingerprint }}: no se instala nada desde ese repo.
+    quiet: true
+  loop: "{{ honeypot_key_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  tags: [install]
+
+- name: Instalar las claves ya verificadas
+  ansible.builtin.copy:
+    src: "/etc/soc-tesis/keys/{{ item.name }}.asc"
+    dest: "/usr/share/keyrings/{{ item.name }}.asc"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags: [install]
+
+- name: Agregar los repos de Docker y de Wazuh
+  ansible.builtin.apt_repository:
+    repo: "{{ item.repo }}"
+    filename: "{{ item.name }}"
+    update_cache: false
+    state: present
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: honeypot_repos
+  tags: [install]
+
+- name: Leer las versiones instaladas de los paquetes fijados
+  ansible.builtin.command: >-
+    dpkg-query -W -f '${Package}=${Version}\n'
+    {{ honeypot_package_specs | map('regex_replace', '=.*$', '') | join(' ') }}
+  register: honeypot_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+# apt solo refresca la caché si cambió un repo o falta un paquete en su versión:
+# así la pasada completa con el egreso cerrado (Etapa 9) no sale a Internet.
+- name: Instalar Docker, Compose y el Wazuh Agent en las versiones fijadas (D1)
+  ansible.builtin.apt:
+    name: "{{ honeypot_package_specs }}"
+    install_recommends: false
+    update_cache: true
+    lock_timeout: 120
+  when: honeypot_repos is changed or (honeypot_package_specs | difference(honeypot_dpkg.stdout_lines) | length > 0)
+  tags: [install]
+
+- name: Retener los paquetes fijados (hold)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item | regex_replace('=.*$', '') }}"
+    selection: hold
+  loop: "{{ honeypot_package_specs }}"
+  tags: [install]
+
+# El policy-rc.d de common impide que el postinst arranque servicios, pero no que los
+# habilite. Solo antes del primer start: después, install no toca servicios.
+- name: Dejar Docker y el agente detenidos y deshabilitados (E1-3)
   ansible.builtin.systemd_service:
-    name: "{{ honeypot_decoy_service | default('cowrie') }}"
-    state: started
-    enabled: true
-  when: ansible_virtualization_type != 'docker'
-  tags: [start]
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - docker.socket
+    - docker.service
+    - containerd.service
+    - wazuh-agent.service
+  when: not honeypot_started.stat.exists
+  tags: [install]
+
+# --- Proyecto compose (lo necesita el pull de install) ------------------------------------
+- name: Crear el directorio del proyecto compose
+  ansible.builtin.file:
+    path: "{{ honeypot_dir }}"
+    state: directory
+    mode: "0755"
+  tags: [install, config]
+
+- name: Copiar docker-compose.yml y .env (sin secretos, D2)
+  ansible.builtin.copy:
+    src: "{{ honeypot_repo_root }}/{{ item.src }}"
+    dest: "{{ honeypot_dir }}/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: docker-compose.yml, dest: docker-compose.yml }
+    - { src: .env.example, dest: .env }
+  tags: [install, config]
+
+- name: Copiar config/ de Dionaea y Tanner
+  ansible.builtin.copy:
+    src: "{{ honeypot_repo_root }}/config/"
+    dest: "{{ honeypot_dir }}/config/"
+    owner: root
+    group: root
+    mode: "0644"
+    directory_mode: "0755"
+  tags: [install, config]
+
+# --- Imágenes por digest (solo si cambiaron) -------------------------------------------
+- name: Leer el centinela de imágenes
+  ansible.builtin.slurp:
+    src: /etc/soc-tesis/honeypot-images
+  register: honeypot_images_sentinel
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+- name: Descargar y verificar las imágenes (solo si cambiaron los digests)
+  when: (honeypot_images_sentinel.content | default('') | b64decode) != (honeypot_image_refs | join(' '))
+  tags: [install]
+  block:
+    - name: Arrancar Docker solo para el pull (sin habilitarlo)
+      ansible.builtin.systemd_service:
+        name: docker.service
+        state: started
+      tags: [install]
+
+    - name: Descargar las 7 imágenes por digest (D2)
+      community.docker.docker_compose_v2_pull:
+        project_src: "{{ honeypot_dir }}"
+        policy: missing
+      tags: [install]
+
+    - name: Leer los RepoDigests de cada imagen
+      ansible.builtin.command: >-
+        docker image inspect --format '{% raw %}{{join .RepoDigests " "}}{% endraw %}'
+        {{ item | regex_replace(':[^/@]+@', '@') }}
+      loop: "{{ honeypot_image_refs }}"
+      register: honeypot_digests
+      changed_when: false
+      tags: [install]
+
+    - name: Exigir el digest fijado en cada imagen (paso 5 del baseline)
+      ansible.builtin.assert:
+        that:
+          - (item.item | regex_replace(':[^/@]+@', '@')) in item.stdout.split()
+        fail_msg: "La imagen {{ item.item }} no tiene el digest de .env.example (RepoDigests: {{ item.stdout }})."
+        quiet: true
+      loop: "{{ honeypot_digests.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      tags: [install]
+
+    # Contenedor efímero y sin red: lee el usuario por defecto de la imagen.
+    - name: Descubrir el UID:GID de las imágenes que escriben en el host (D4)
+      ansible.builtin.command: >-
+        docker run --rm --network none --entrypoint python3 {{ honeypot_image_env[item.image_var] }}
+        -c 'import os; print(os.getuid(), os.getgid())'
+      loop: "{{ honeypot_bind_dirs }}"
+      loop_control:
+        label: "{{ item.dir }}"
+      register: honeypot_uid_probe
+      changed_when: false
+      tags: [install]
+
+    - name: Guardar los UID:GID descubiertos (config los lee con el daemon apagado)
+      ansible.builtin.copy:
+        dest: /etc/soc-tesis/honeypot-uids.json
+        content: >-
+          {{ dict(honeypot_uid_probe.results | map(attribute='item.dir')
+             | zip(honeypot_uid_probe.results | map(attribute='stdout') | map('split'))) | to_nice_json }}
+        mode: "0644"
+      tags: [install]
+
+    - name: Escribir el centinela de imágenes
+      ansible.builtin.copy:
+        dest: /etc/soc-tesis/honeypot-images
+        content: "{{ honeypot_image_refs | join(' ') }}"
+        mode: "0644"
+      tags: [install]
+
+  always:
+    - name: Volver a dormir Docker tras el pull, aunque haya fallado (E1-3)
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - docker.socket
+        - docker.service
+        - containerd.service
+      when: not honeypot_started.stat.exists
+      tags: [install]
