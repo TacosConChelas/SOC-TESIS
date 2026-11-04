@@ -268,3 +268,153 @@
         - containerd.service
       when: not honeypot_started.stat.exists
       tags: [install]
+
+# --- config: no descarga ni arranca -----------------------------------------------------
+- name: Leer los UID:GID descubiertos en install
+  ansible.builtin.slurp:
+    src: /etc/soc-tesis/honeypot-uids.json
+  register: honeypot_uids_file
+  failed_when: false
+  check_mode: false
+  tags: [config]
+
+- name: Exigir los UID:GID descubiertos
+  ansible.builtin.assert:
+    that: honeypot_uids_file.content is defined
+    fail_msg: "Falta /etc/soc-tesis/honeypot-uids.json: corre antes --tags install (los UID se leen con el daemon arriba)."
+    quiet: true
+  tags: [config]
+
+- name: Crear los directorios del bind con el dueño de cada imagen (D4)
+  ansible.builtin.file:
+    path: "{{ honeypot_data_root }}/{{ item.dir }}"
+    state: directory
+    owner: "{{ (honeypot_uids_file.content | b64decode | from_json)[item.dir][0] }}"
+    group: "{{ (honeypot_uids_file.content | b64decode | from_json)[item.dir][1] }}"
+    mode: "0755"
+  loop: "{{ honeypot_bind_dirs }}"
+  loop_control:
+    label: "{{ item.dir }}"
+  tags: [config]
+
+- name: Apuntar el agente al relay (D4)
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(<server>\s*<address>)[^<]*(</address>)'
+    replace: '\g<1>{{ honeypot_relay_ip }}\g<2>'
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+- name: Fijar el client_buffer de D4 (cola 100000, 500 EPS)
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(?s)(<client_buffer>(?:(?!</client_buffer>).)*?<{{ item.tag }}>)\s*\d+\s*(</{{ item.tag }}>)'
+    replace: '\g<1>{{ item.value }}\g<2>'
+  loop:
+    - { tag: queue_size, value: 100000 }
+    - { tag: events_per_second, value: 500 }
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+# El agente 4.14.9 trae un localfile de journald SIN filtro (todo el journal del sistema
+# iria al Manager: ruido y contra la minimizacion de datos, doc 19 §7). Se quita para que
+# quede uno solo, el de Mailoney. La regex exige el orden y los hijos del bloque original
+# (log_format, location, nada mas), asi que nunca coincide con el nuestro. Verificado
+# contra el ossec.conf real: 1 coincidencia antes, 0 despues.
+- name: Quitar el localfile de journald sin filtro que trae el paquete
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '[ \t]*<localfile>\s*<log_format>journald</log_format>\s*<location>journald</location>\s*</localfile>[ \t]*\n?'
+    replace: ''
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+- name: Declarar los localfile de los honeypots (D4)
+  ansible.builtin.blockinfile:
+    path: /var/ossec/etc/ossec.conf
+    marker: "<!-- {mark} SOC-TESIS D4 localfile (rol honeypot) -->"
+    insertafter: EOF
+    block: |
+      <ossec_config>
+      {% for item in [('cowrie/log/cowrie.json', 'cowrie'), ('dionaea/lib/dionaea.json', 'dionaea'), ('tanner/log/tanner_report.json', 'tanner')] %}
+        <localfile>
+          <location>{{ honeypot_data_root }}/{{ item[0] }}</location>
+          <log_format>json</log_format>
+          <only-future-events>no</only-future-events>
+          <label key="@honeypot">{{ item[1] }}</label>
+        </localfile>
+      {% endfor %}
+        <!-- Mailoney por journald (decisión 2026-11-04): <label> solo aplica a json. -->
+        <localfile>
+          <location>journald</location>
+          <log_format>journald</log_format>
+          <only-future-events>no</only-future-events>
+          <filter field="CONTAINER_NAME">^soc-tesis-mailoney$</filter>
+        </localfile>
+      </ossec_config>
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+- name: Leer ossec.conf para verificarlo
+  ansible.builtin.slurp:
+    src: /var/ossec/etc/ossec.conf
+  register: honeypot_ossec
+  check_mode: false
+  tags: [config]
+
+- name: Comprobar que ossec.conf quedó con los valores de D4
+  ansible.builtin.assert:
+    that:
+      - (honeypot_ossec.content | b64decode) is search('<address>' ~ honeypot_relay_ip ~ '</address>')
+      - (honeypot_ossec.content | b64decode) is search('<queue_size>100000</queue_size>')
+      - (honeypot_ossec.content | b64decode) is search('<events_per_second>500</events_per_second>')
+      - (honeypot_ossec.content | b64decode | regex_findall('<location>journald</location>') | length) == 1
+    fail_msg: >-
+      ossec.conf no tiene los valores de D4: o las sustituciones no coincidieron con el formato del
+      archivo instalado, o el localfile de journald del paquete cambio de forma y la tarea que lo
+      quita ya no lo reconoce (debe quedar uno solo, el de Mailoney). Revisa
+      /var/ossec/etc/ossec.conf y reporta antes de cambiar el rol.
+  tags: [config]
+
+- name: Validar la configuración del agente
+  ansible.builtin.command: /var/ossec/bin/wazuh-logcollector -t
+  changed_when: false
+  check_mode: false
+  tags: [config]
+
+- name: Comprobar que el directorio de secretos está fuera del repositorio
+  ansible.builtin.assert:
+    that:
+      - not ((honeypot_secrets_dir_real ~ '/').startswith(honeypot_repo_root ~ '/'))
+    fail_msg: >-
+      wazuh_secrets_dir ({{ honeypot_secrets_dir_real }}) está dentro del repositorio ({{ honeypot_repo_root }}):
+      los secretos nunca pueden vivir en el repo.
+  delegate_to: localhost
+  become: false
+  run_once: true
+  tags: [config]
+
+- name: Leer authd.pass en el controlador
+  ansible.builtin.stat:
+    path: "{{ honeypot_secrets_dir_real }}/authd.pass"
+  register: honeypot_authd_local
+  delegate_to: localhost
+  become: false
+  tags: [config]
+
+- name: Exigir que authd.pass exista en el controlador
+  ansible.builtin.assert:
+    that: honeypot_authd_local.stat.exists
+    fail_msg: "Falta {{ honeypot_secrets_dir_real }}/authd.pass (D8: el mismo que entrega el rol wazuh)."
+  tags: [config]
+
+- name: Entregar authd.pass (contraseña de enrolamiento)
+  ansible.builtin.copy:
+    src: "{{ honeypot_secrets_dir_real }}/authd.pass"
+    dest: /var/ossec/etc/authd.pass
+    owner: root
+    group: wazuh
+    mode: "0640"
+  no_log: true
+  notify: Reiniciar wazuh-agent
+  tags: [config]

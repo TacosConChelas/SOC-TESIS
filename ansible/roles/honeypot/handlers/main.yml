@@ -1,0 +1,8 @@
+---
+# E1-3: solo se reinicia si el señuelo ya arrancó alguna vez. Durante la ventana
+# de egreso el agente sigue dormido y toma la configuración en `start`.
+- name: Reiniciar wazuh-agent
+  ansible.builtin.systemd_service:
+    name: wazuh-agent
+    state: restarted
+  when: honeypot_started.stat.exists
