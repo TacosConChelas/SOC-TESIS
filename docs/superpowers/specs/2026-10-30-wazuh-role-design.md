@@ -39,7 +39,7 @@ Descomposición acordada: **W1** instalación y verificación de versión, **W2*
 
 | Tag | Qué hace | Descarga |
 |---|---|---|
-| `install` | Comprueba RAM, disco y `vm.max_map_count` ≥ 262144 (persistido en `/etc/sysctl.d/99-soc-wazuh.conf`; `sysctl -p` solo en host real). Descarga el instalador y corre `-a` con `no_log`, protegido por el centinela `/etc/soc-tesis/wazuh-installed` (se escribe solo tras pasar el gate de versión). Exige que `wazuh-control info` reporte `wazuh_expected_version`. Retiene (`hold`) `wazuh-manager`, `wazuh-indexer`, `wazuh-dashboard` y `filebeat` | **Sí** (único tag) |
+| `install` | Comprueba RAM, disco y `vm.max_map_count` ≥ 262144 (persistido en `/etc/sysctl.d/99-soc-wazuh.conf`; `sysctl -p` solo en host real). Descarga el instalador y corre `-a` con `no_log`, solo si no existe `/var/ossec/bin/wazuh-control`; el centinela `/etc/soc-tesis/wazuh-installed` se escribe solo tras pasar el gate de versión y comprobar que los cuatro paquetes están instalados. Exige que `wazuh-control info` reporte `wazuh_expected_version`. Retiene (`hold`) `wazuh-manager`, `wazuh-indexer`, `wazuh-dashboard` y `filebeat` | **Sí** (único tag) |
 | `config` | Entrega `authd.pass` desde el controlador (640 `root:wazuh`, `no_log`). Edita `ossec.conf`: `use_password yes`, `use_source_ip no`, `logall` y `logall_json` en `no`, Active Response y detección de vulnerabilidades apagados. Punto de enganche para `local_rules.xml` (validado con `wazuh-analysisd -t`; hoy solo encabezado). Heap del Indexer en `jvm.options`. API en loopback (`api.yaml`). Política ISM de `wazuh_retention_days` días sobre `wazuh-alerts-*`, aplicada con la contraseña leída en memoria del tar (`no_log`). Luego `fetch` del tar al controlador, comparación de `sha256`, y solo entonces `shred` del tar y borrado de `/var/log/wazuh-install.log`; centinela `wazuh-secrets-handed-over`. UFW al final (solo host real) | No |
 | `start` | Habilita y arranca indexer, manager, filebeat y dashboard en ese orden y espera con reintentos (30 × 10 s) a 1514, 1515, 443 y 9200 local | Nunca |
 
@@ -54,8 +54,8 @@ Reglas del rol:
 
 | Riesgo | Comportamiento |
 |---|---|
-| El asistente instala otro parche | Falla *después* de instalar con un mensaje de desviación de D1. El `pin-check` del lote de pendientes debe consultar el índice `packages.wazuh.com/4.x/apt` para verlo en la Etapa 0. |
-| Instalación a medias | Sin centinela y con restos en `/var/ossec`, el rol se detiene y pide desinstalar a mano con `wazuh-install.sh -u`; no borra nada solo. |
+| El asistente instala otro parche | Falla *después* de instalar con un mensaje de desviación de D1. `make pin-check` consulta el índice `packages.wazuh.com/4.x/apt` y compara el último `wazuh-manager` 4.14.x con `wazuh_expected_version`, para verlo en la Etapa 0. |
+| Instalación a medias | Con `/var/ossec` presente y sin centinela, el rol no reinstala: reejecuta el gate de versión y comprueba que los cuatro paquetes estén instalados; si ambos pasan, escribe el centinela (reanudación, p. ej. tras subir `wazuh_expected_version`); si no, se detiene y pide desinstalar a mano con `wazuh-install.sh -u`. No borra nada solo. |
 | RAM, disco o `vm.max_map_count` insuficientes | Verificación previa con mensaje claro, antes de descargar. |
 | `fetch` falla o `sha256` distinto | No hay `shred`: el tar sigue en la VM para reintentar. |
 | La API del Indexer no responde al aplicar ISM | Reintentos; si falla, no hay `fetch` ni `shred`. |
@@ -111,3 +111,19 @@ El check 9 cierra el hueco que dejó `relay-check` (probaba el paso de bytes, no
 - Agentes Windows 11 y Ubuntu del laboratorio.
 - Personalización del Dashboard y despliegue distribuido.
 - El rol `honeypot`.
+
+## 9. Desviaciones validadas en el ensayo
+
+El ensayo local del all-in-one confirmó estos puntos; el rol y esta especificación ya los incorporan.
+
+| Punto | Qué pasó | Causa | Corrección |
+|---|---|---|---|
+| Disco (`install`) | `ansible_facts.mounts` no lista el overlay `/` en contenedor | El fact no expone el montaje raíz del contenedor | El rol mide el disco con `df -m --output=avail /`; el mínimo de 15000 MiB no cambia |
+| Active Response (`config`) | El bloque de `ossec.conf` 4.14.9 viene comentado y el primer `replace` no lo tocaba | El asistente comenta el bloque por defecto | Se sustituye el bloque comentado por `<active-response><disabled>yes</disabled></active-response>` y se valida con `wazuh-analysisd -t` |
+| `local_rules.xml` (`config`) | Un `<group>` vacío hace fallar al Manager con `Group 'group' without any rule` (CRITICAL 1220) | Wazuh exige al menos una regla por grupo | Se deja una regla base sin efecto: `id=100000`, `level=0`, `match=soc-tesis-placeholder` |
+| Check 3 (puertos) | El JVM liga IPv4 en un socket dual-stack y `ss` muestra `[::ffff:127.0.0.1]` | Comportamiento del JVM en el contenedor | El clasificador acepta solo `[::ffff:127.*]` como loopback, no cualquier `::ffff:*` |
+| `relay-check` | El eco TCP en 1514/1515 fallaba con `EADDRINUSE` tras instalar Wazuh | El Manager real ocupa `0.0.0.0:1514` y `:1515` | La sonda detiene `wazuh-manager` si está activo y lo restaura en el `trap EXIT`; sin Manager instalado no cambia y no se relaja ninguna aserción |
+| `make` fuera de `nix-shell` | El check 6 falla por falta de `ansible-inventory` | El shell de Nix aporta las herramientas de Ansible | Todos los `make` se corren con `nix-shell --run '...'` desde `ansible/` |
+| `make wazuh-apply` | Depende de `known-hosts` → `up` | `known-hosts` simula la Etapa 4a y `up` usa `--no-recreate` | No recrea contenedores, pero conviene saberlo si hay un `wazuh` instalado y valioso |
+
+Ninguna corrección relajó un check: el ensayo terminó con los 10 checks en verde y `changed=0` en las pasadas posteriores.

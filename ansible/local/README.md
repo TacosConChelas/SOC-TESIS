@@ -118,8 +118,8 @@ ciclo real.
   `operate` antes de ensayar.
 - `ansible-lint` corre con el perfil `production`; `site.yml` necesitó nombres
   de play para pasar.
-- El rol `wazuh` sigue siendo un marcador (P-A1): no instala ni arranca nada
-  real todavía.
+- El rol `wazuh` ya instala y configura el all-in-one real, pero **no** corre en
+  `preflight`: se ensaya aparte con `make wazuh-rehearse` (ver abajo).
 
 ## Rol logrelay: `make relay-check`
 
@@ -144,3 +144,27 @@ Qué comprueba: (1) los timers `apt-daily*` enmascarados e inactivos, (2) `99-so
 Para que no pasen en vacío, el entorno de ensayo parte sin endurecimiento: `sshd_config.tpl` solo incluye `sshd_config.d` y los contenedores nacen en `America/Mexico_City`.
 
 Qué NO valida: la sincronía NTP real (`NTPSynchronized`, se exige en el tag `start` solo en host real), que `apt-daily*` exista y se pueda enmascarar en la imagen de Azure, y que la unidad de sshd se llame `ssh` en la imagen real. Tampoco reproduce el `10-admin-port.conf` de cloud-init de honeyserver (aquí el puerto 22222 viene de `sshd_config`), así que el cruce entre el drop-in `10-` y el `20-` no se ejercita; y los timers de apt no estaban activos en el contenedor, así que la parada de un timer activo no se prueba.
+
+## Rol wazuh: `make wazuh-rehearse` y `make wazuh-check`
+
+El all-in-one real (Manager + Indexer + Dashboard) corre en el contenedor `wazuh`. **No** forma parte de `preflight`: descarga más de 1 GB y tarda de 10 a 25 minutos, así que el inventario local marca `wazuh_enabled: false` y el rol se omite. Úsalo cuando toques el rol y antes del primer ciclo real.
+
+Requisitos del anfitrión (`make wazuh-hostcheck`, solo lee): `MemAvailable` suficiente, `vm.max_map_count` ≥ 262144 y disco libre. El heap del Indexer se sobrescribe a `2g` en local (el real, `8g`, no cabe en un equipo compartido).
+
+Flujo: `make clean preflight` y luego `make wazuh-rehearse`: 1ª pasada `install,config` (exige `changed`), 2ª pasada (`changed=0`), `--check --diff`, un agente de prueba instalado en `honeyserver` y enrolado **a través del relay** (D4), egreso cerrado, `--tags start` dos veces y `make wazuh-check`. Para iterar: `make wazuh-apply TAGS=install` y `WAZUH_CHECKS="1 2" make wazuh-check`.
+
+Los secretos del ensayo viven en `/tmp/soc-local-secrets/` (desechables, fuera del repo: así se ejerce la guarda del rol); `make clean` los borra.
+
+Qué comprueba `wazuh-check`: (1) versión y paquetes en `hold`, (2) servicios activos, (3) puertos (1514/1515/443 abiertos; 9200 y 55000 solo en loopback; 9300, 1516, 514 y 1514/udp cerrados), (4) `ossec.conf` con los valores de D5 y `wazuh-analysisd -t`, (5) `authd.pass`, (6) heap, (7) política ISM de 30 días, (8) que el tar y el log del asistente no queden en la VM, (9) agente activo a través del relay, (10) que el gate de versión falle con una versión distinta.
+
+Qué NO valida: UFW real y el NSG de Azure, el heap real de 8g en `Standard_B4as_v2`, el arranque en frío tras `az vm start`, que los datos del Indexer sobrevivan a `deallocate`/`start`, y el acceso al Dashboard desde la LAN por el túnel. El agente de `honeyserver` es un fixture del arnés: el rol `honeypot` lo instalará de verdad.
+
+### Desviaciones validadas en el ensayo
+
+- **Disco:** en contenedor, `ansible_facts.mounts` no lista el overlay `/`; el rol mide el disco libre con `df -m --output=avail /`. El mínimo sigue siendo 15000 MiB.
+- **Active Response:** en `ossec.conf` 4.14.9 viene dentro de un bloque comentado. El rol lo sustituye por `<active-response><disabled>yes</disabled></active-response>` y lo valida con `wazuh-analysisd -t`.
+- **`local_rules.xml`:** un `<group>` vacío lo rechaza el Manager (`Group 'group' without any rule`, CRITICAL 1220). Queda una regla base sin efecto: `id=100000`, `level=0`, `match=soc-tesis-placeholder`.
+- **Check 3:** el JVM liga IPv4 en un socket dual-stack y `ss` muestra `[::ffff:127.0.0.1]:9200` y `:9300`; el clasificador acepta solo `::ffff:127.*`, no cualquier `::ffff:*`.
+- **`relay-check`:** el eco en 1514/1515 del contenedor `wazuh` choca con el Manager real tras instalarlo. La sonda detiene `wazuh-manager` si está activo y lo restaura en el `trap EXIT`; sin Manager instalado nada cambia y no se relajó ninguna aserción.
+- **`make` dentro de `nix-shell`:** fuera de él, el check 6 falla por falta de `ansible-inventory`, no por el rol.
+- **`make wazuh-apply`** depende de `known-hosts` → `up`; `up` usa `--no-recreate`, pero conviene saberlo si hay un `wazuh` instalado y valioso.

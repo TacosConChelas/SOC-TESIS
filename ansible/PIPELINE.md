@@ -98,6 +98,12 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 
 **Rescate si UFW corta el SSH de logrelay.** Si el `ansible all -m ping` posterior a `--tags install,config` falla solo en `logrelay`, ejecutar desde el operador `az vm run-command invoke` sobre la VM logrelay con `--scripts "ufw disable"` (sin pegar IDs ni secretos), confirmar que vuelve el SSH, corregir la regla de UFW del rol y reintentar. `run-command` usa el agente de la VM y no depende del túnel ni de sshd.
 
+### Notas del rol `wazuh` (Etapa 6)
+- Requiere en el controlador `~/soc-tesis-secrets/wazuh/authd.pass` (D8, `openssl rand -base64 32`); el rol falla si falta o si ese directorio está dentro del repo.
+- La instalación con el asistente descarga más de 1 GB y tarda de 10 a 25 minutos: planear la ventana de egreso. Antes, `make pin-check` (la versión que instala el asistente puede diferir del baseline).
+- Si el gate de versión falla, es una desviación del baseline D1: se decide si sube `wazuh_expected_version`; el rol no instala nada más.
+- Al terminar, `wazuh-install-files.tar` (contraseñas de admin/API) queda en el controlador (`0600`) y se destruye en la VM. Cambiar la contraseña de admin es un paso manual posterior.
+
 ## Etapa 7 · Cierre de egreso [GATE + verificación AUTO]
 1. Esperar a que no haya descargas en curso: la NSG es stateful y no corta los flujos ya establecidos.
 2. `terraform apply -var maintenance_egress=false`.
@@ -114,7 +120,7 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 | Servicio | Verificación |
 |---|---|
 | strongSwan (VM) | SA activa |
-| Wazuh | puertos y servicio arriba |
+| Wazuh | `wazuh-control info` = versión esperada (gate D1); indexer, manager, filebeat y dashboard activos; 1514/1515/443 abiertos y 9200/55000 solo en loopback; un agente de prueba aparece `Active` en `agent_control -l` a través del relay |
 | logrelay | desde honeyserver, `nc -zv 10.50.30.10 1514` y `1515` conectan, y `/var/log/soc-relay/stream.log` registra `10.50.10.10 ... TCP 200` |
 | Honeypot | el señuelo escucha en el 22 y la administración sigue en el 22222 |
 | Hora (4 VMs) | `timedatectl show -p NTPSynchronized --value` = `yes`; el rol `common` lo exige en el tag `start` (12 reintentos de 10 s) y falla si no llega. Depende de que la imagen sincronice sin egreso (PTP de Hyper-V); si no, decidir aquí si se configura chrony |
