@@ -7,6 +7,7 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ansible_dir="$(cd "$here/../.." && pwd)"
 repo="$(cd "$ansible_dir/.." && pwd)"
 defaults="$ansible_dir/roles/wazuh/defaults/main.yml"
+shared="$ansible_dir/group_vars/all.yml"
 secrets="${WAZUH_LOCAL_SECRETS_DIR:-/tmp/soc-local-secrets}"
 ctr=soc-local-wazuh
 fail=0
@@ -23,8 +24,8 @@ admin_pass() {
     | grep -P "\'admin\'" -A 1 | tail -n 1 | sed -E "s/.*'([^']*)'.*/\1/"
 }
 
-want_version="$(default_of wazuh_expected_version)"
-[ -n "$want_version" ] || { echo "FALLA: wazuh_expected_version no esta en $defaults" >&2; exit 1; }
+want_version="$(sed -n 's/^wazuh_expected_version:[[:space:]]*"\([^"]*\)".*/\1/p' "$shared" | head -n1)"
+[ -n "$want_version" ] || { echo "FALLA: wazuh_expected_version no esta en $shared" >&2; exit 1; }
 
 # 1. Version esperada y paquetes retenidos.
 c1() {

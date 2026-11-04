@@ -77,11 +77,11 @@ done
 # --- Wazuh: el asistente instala el ULTIMO parche 4.14.x del indice, no uno fijo ---
 # Si el ultimo parche difiere de wazuh_expected_version, el rol fallaria despues de 15 min de
 # instalacion; aqui se detecta antes. Requiere Internet.
-wazuh_defaults="${PIN_CHECK_WAZUH_DEFAULTS:-$root/roles/wazuh/defaults/main.yml}"
+wazuh_defaults="${PIN_CHECK_WAZUH_DEFAULTS:-$root/group_vars/all.yml}"
 wazuh_index="https://packages.wazuh.com/4.x/apt/dists/stable/main/binary-amd64/Packages"
 
 if [ ! -f "$wazuh_defaults" ]; then
-  echo "aviso: roles/wazuh/defaults/main.yml no existe todavia; se omite la comprobacion del indice de Wazuh"
+  echo "aviso: group_vars/all.yml no existe todavia; se omite la comprobacion del indice de Wazuh"
 else
   wazuh_want="$(sed -n 's/^wazuh_expected_version:[[:space:]]*"\([^"]*\)".*/\1/p' "$wazuh_defaults" | head -n1)"
   if [ -z "$wazuh_want" ]; then
@@ -103,7 +103,7 @@ else
       else
         echo "FALLA: el ultimo wazuh-manager 4.14.x del indice es '${wazuh_latest:-ninguno}', no ${wazuh_want}-1" >&2
         echo "  el asistente instalaria esa version y el gate de versión del rol fallaria (baseline D1)." >&2
-        echo "  decide si el baseline sube y actualiza wazuh_expected_version en roles/wazuh/defaults/main.yml" >&2
+        echo "  decide si el baseline sube y actualiza wazuh_expected_version en group_vars/all.yml" >&2
         fail=1
       fi
     fi

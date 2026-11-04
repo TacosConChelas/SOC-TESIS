@@ -4,7 +4,7 @@
 set -euo pipefail
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-defaults="$here/../../roles/wazuh/defaults/main.yml"
+defaults="$here/../../group_vars/all.yml"
 secrets="${WAZUH_LOCAL_SECRETS_DIR:-/tmp/soc-local-secrets}"
 ctr=soc-local-honeyserver
 relay_ctr=soc-local-logrelay
