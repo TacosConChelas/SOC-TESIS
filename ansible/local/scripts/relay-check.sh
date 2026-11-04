@@ -18,14 +18,38 @@ fail=0
 bad() { echo "FALLA: $*" >&2; fail=1; }
 good() { echo "ok: $*"; }
 
-# Manager falso en wazuh: eco en 1514 y 1515; se apaga solo a los 90 s.
-docker cp "$probe" "$manager:/tmp/relay-probe.py"
-docker exec -d "$manager" python3 /tmp/relay-probe.py serve 90 1514 1515
+# El Manager real de Wazuh ocupa 0.0.0.0:1514 y 1515; el fixture necesita esos
+# puertos para el eco. Si esta activo, se detiene durante la sonda y se restaura
+# al salir (asi relay-check vale tambien despues de wazuh-rehearse).
+manager_was_active=0
 # El corchete evita que el sh -c se mate a si mismo (su cmdline no casa con la regex).
 cleanup() {
   docker exec "$manager" sh -c 'for p in /proc/[0-9]*; do grep -qa "relay-probe[.]py" "$p/cmdline" 2>/dev/null && kill "${p#/proc/}" 2>/dev/null; done; true' >/dev/null 2>&1 || true
+  if [ "$manager_was_active" -eq 1 ]; then
+    docker exec "$manager" systemctl start wazuh-manager >/dev/null 2>&1 || true
+  fi
 }
 trap cleanup EXIT
+
+if docker exec "$manager" systemctl is-active --quiet wazuh-manager 2>/dev/null; then
+  manager_was_active=1
+  if ! docker exec "$manager" systemctl stop wazuh-manager >/dev/null 2>&1; then
+    echo "FALLA: no se pudo detener wazuh-manager para liberar 1514/1515" >&2
+    exit 1
+  fi
+  deadline=$((SECONDS + 30))
+  while docker exec "$manager" ss -ltn 2>/dev/null | grep -qE ':(1514|1515)\b'; do
+    if [ "$SECONDS" -ge "$deadline" ]; then
+      echo "FALLA: 1514/1515 siguen ocupados tras detener wazuh-manager" >&2
+      exit 1
+    fi
+    sleep 1
+  done
+fi
+
+# Manager falso en wazuh: eco en 1514 y 1515; se apaga solo a los 90 s.
+docker cp "$probe" "$manager:/tmp/relay-probe.py"
+docker exec -d "$manager" python3 /tmp/relay-probe.py serve 90 1514 1515
 
 # Espera a que el Manager falso acepte conexiones en ambos puertos (hasta ~10 s).
 wait_manager() { # puerto
