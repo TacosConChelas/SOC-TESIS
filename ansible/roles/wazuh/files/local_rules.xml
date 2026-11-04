@@ -1,0 +1,12 @@
+<!--
+  Reglas locales de SOC-TESIS. Rangos reservados (D5):
+  Cowrie 100100-100199, Dionaea 100200-100299, Mailoney 100300-100399, Snare/Tanner 100400-100499.
+  Este archivo es solo el punto de enganche: el contenido llega en la fase de reglas (wazuh-logtest).
+  Wazuh rechaza un <group> vacio (error 1220), por eso queda una regla base sin efecto.
+-->
+<group name="local,soc-tesis,">
+  <rule id="100000" level="0">
+    <match>soc-tesis-placeholder</match>
+    <description>Punto de enganche de reglas locales de SOC-TESIS (sin efecto).</description>
+  </rule>
+</group>

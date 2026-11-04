@@ -46,17 +46,19 @@ c2() {
 }
 
 # 3. Puertos de D5.
+# Un JVM dual-stack liga 127.0.0.1 en un socket IPv6 y ss lo muestra como
+# [::ffff:127.0.0.1]; eso es loopback igual que 127.* y [::1].
 c3() {
   local tcp p
   tcp="$(wz ss -ltnH 2>/dev/null | awk '{n=split($4,a,":"); port=a[n]; addr=substr($4,1,length($4)-length(port)-1); print addr, port}')"
   for p in 1514 1515 443; do
-    if awk -v p="$p" '$2==p && $1!~/^(127\.|\[::1\])/ {f=1} END{exit !f}' <<<"$tcp"; then good "puerto $p escucha en interfaces no loopback"; else bad "puerto $p no escucha fuera de loopback"; fi
+    if awk -v p="$p" '$2==p && $1!~/^(127\.|\[::1\]|\[::ffff:127\.)/ {f=1} END{exit !f}' <<<"$tcp"; then good "puerto $p escucha en interfaces no loopback"; else bad "puerto $p no escucha fuera de loopback"; fi
   done
   for p in 9200 55000; do
-    if awk -v p="$p" '$2==p {seen=1; if ($1!~/^(127\.|\[::1\])/) mal=1} END{exit !(seen && !mal)}' <<<"$tcp"; then good "puerto $p solo en loopback"; else bad "puerto $p no esta solo en loopback"; fi
+    if awk -v p="$p" '$2==p {seen=1; if ($1!~/^(127\.|\[::1\]|\[::ffff:127\.)/) mal=1} END{exit !(seen && !mal)}' <<<"$tcp"; then good "puerto $p solo en loopback"; else bad "puerto $p no esta solo en loopback"; fi
   done
   for p in 9300 1516 514; do
-    if awk -v p="$p" '$2==p && $1!~/^(127\.|\[::1\])/ {f=1} END{exit f}' <<<"$tcp"; then good "puerto $p sin escucha fuera de loopback"; else bad "puerto $p escucha fuera de loopback"; fi
+    if awk -v p="$p" '$2==p && $1!~/^(127\.|\[::1\]|\[::ffff:127\.)/ {f=1} END{exit f}' <<<"$tcp"; then good "puerto $p sin escucha fuera de loopback"; else bad "puerto $p escucha fuera de loopback"; fi
   done
   if wz ss -lunH 2>/dev/null | awk '$4 ~ /:1514$/ {f=1} END{exit f}'; then good "1514/udp cerrado"; else bad "1514/udp escucha"; fi
 }

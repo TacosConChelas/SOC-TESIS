@@ -1,0 +1,28 @@
+{
+  "policy": {
+    "description": "Retencion de wazuh-alerts-* a {{ wazuh_retention_days }} dias (D5)",
+    "default_state": "retention_state",
+    "states": [
+      {
+        "name": "retention_state",
+        "actions": [],
+        "transitions": [
+          {
+            "state_name": "delete_alerts",
+            "conditions": { "min_index_age": "{{ wazuh_retention_days }}d" }
+          }
+        ]
+      },
+      {
+        "name": "delete_alerts",
+        "actions": [
+          { "retry": { "count": 3, "backoff": "exponential", "delay": "1m" }, "delete": {} }
+        ],
+        "transitions": []
+      }
+    ],
+    "ism_template": [
+      { "index_patterns": ["wazuh-alerts-*"], "priority": 1 }
+    ]
+  }
+}
