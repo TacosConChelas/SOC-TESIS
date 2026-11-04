@@ -186,6 +186,8 @@ honeypot-rehearse: wazuh-secrets known-hosts
 	@mkdir -p "$(LOGS)"
 	@docker exec soc-local-wazuh systemctl is-active --quiet wazuh-manager \
 	  || { echo "FALLA: el Manager de Wazuh no esta activo en el contenedor wazuh (corre make wazuh-rehearse antes)" >&2; exit 1; }
+	@echo "== Honeypot: honeyserver sin el agente del fixture (el rol debe enrolarlo) =="
+	@bash "$(LOCAL)/scripts/honeypot-reset-agent.sh"
 	@echo "== Honeypot: egreso abierto (Docker, imagenes y agente) =="
 	@bash "$(LOCAL)/scripts/net-toggle.sh" install
 	@echo "== Honeypot 1a pasada (install,config): debe aplicar cambios =="
