@@ -60,7 +60,7 @@ Es el único tramo con secretos. Se hace con managed run command (`az vm run-com
 **4a · Huellas de host (las 4 VMs).** El script remoto ejecuta `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`. Las huellas se guardan en un `known_hosts` **fuera del repo** (honeyserver como `[10.50.10.10]:22222`). `host_key_checking` sigue en `True` (E1-4).
 
 **4b · VM strongSwan como respondedora.**
-1. Se instala `strongswan-swanctl` y se activa `net.ipv4.ip_forward=1`.
+1. Se instalan `strongswan-swanctl` y `charon-systemd` (el daemon IKE, que trae `strongswan.service`) y se activa `net.ipv4.ip_forward=1`.
 2. Se escribe un `swanctl.conf` mínimo de respondedor (sin `start_action`).
 3. Se entrega el PSK, generado en la Pi con `openssl rand -hex 32` y guardado en `0600` root.
 
