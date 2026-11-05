@@ -29,14 +29,26 @@
   tags: [config]
 
 # --- Paquetes base y bloqueo de arranque (E1-3) ------------------------------
+- name: Leer qué paquetes base ya están instalados
+  ansible.builtin.command: dpkg-query -W -f='${db:Status-Abbrev}${Package}\n' ca-certificates curl
+  register: common_base_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+# apt solo refresca la caché si falta un paquete base: así la pasada completa con el
+# egreso cerrado (Etapa 9) no sale a Internet. Se usa omit y no False: con False
+# explícito el módulo omite su propio apt-get update al auto-instalar python3-apt
+# (VM sin python3-apt y con listas vacías, p. ej. contenedor recién creado).
 - name: Instalar paquetes base
   ansible.builtin.apt:
-    name:
-      - ca-certificates
-      - curl
+    name: [ca-certificates, curl]
     state: present
-    update_cache: true
-    cache_valid_time: 3600
+    update_cache: >-
+      {{ True if (['ca-certificates', 'curl']
+      | difference(common_base_dpkg.stdout_lines | map('regex_replace', '^ii ', '') | list))
+      | length > 0 else omit }}
     lock_timeout: 120
   tags: [install]
 
