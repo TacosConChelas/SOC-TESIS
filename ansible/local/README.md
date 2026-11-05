@@ -64,6 +64,7 @@ make netcheck         # falla si algún contenedor alcanza 1.1.1.1 o example.com
 | `ping` | `ansible all -m ping` (4 `pong`) |
 | `rehearse` | 1ª pasada con cambios, 2ª `changed=0`, `--check --diff` limpio, cierre de egreso y `netcheck` |
 | `pin-check` | verifica con `apt-cache madison` que los pines de apt de los roles existan hoy en jammy (requiere Internet; **fuera** de `preflight`) |
+| `stage9-rehearse` | Etapa 9 local: pasada completa sin tags con egreso cerrado y caché de apt vencida en las 4 VMs; requiere `wazuh-rehearse` y `honeypot-rehearse` previos; **fuera** de `preflight` |
 | `preflight` | todo lo anterior |
 | `azure-session` / `time-guard` | `az account show` y corte de las 20:30; **fuera** de `preflight` |
 
@@ -162,7 +163,7 @@ Qué NO valida: UFW real y el NSG de Azure, el heap real de 8g en `Standard_B4as
 ### Desviaciones validadas en el ensayo
 
 - **Disco:** en contenedor, `ansible_facts.mounts` no lista el overlay `/`; el rol mide el disco libre con `df -m --output=avail /`. El mínimo sigue siendo 15000 MiB.
-- **Active Response:** en `ossec.conf` 4.14.9 viene dentro de un bloque comentado. El rol lo sustituye por `<active-response><disabled>yes</disabled></active-response>` y lo valida con `wazuh-analysisd -t`.
+- **Active Response:** en `ossec.conf` 4.14.9 y 4.14.10 viene dentro de un bloque comentado. El rol lo sustituye por `<active-response><disabled>yes</disabled></active-response>` y lo valida con `wazuh-analysisd -t`.
 - **`local_rules.xml`:** un `<group>` vacío lo rechaza el Manager (`Group 'group' without any rule`, CRITICAL 1220). Queda una regla base sin efecto: `id=100000`, `level=0`, `match=soc-tesis-placeholder`.
 - **Check 3:** el JVM liga IPv4 en un socket dual-stack y `ss` muestra `[::ffff:127.0.0.1]:9200` y `:9300`; el clasificador acepta solo `::ffff:127.*`, no cualquier `::ffff:*`.
 - **`relay-check`:** el eco en 1514/1515 del contenedor `wazuh` choca con el Manager real tras instalarlo. La sonda detiene `wazuh-manager` si está activo y lo restaura en el `trap EXIT`; sin Manager instalado nada cambia y no se relajó ninguna aserción.
@@ -203,3 +204,12 @@ Qué NO valida: el NSG real de Azure, el pull a través de `Allow-Out-Maintenanc
 
 - **`~/.ssh/known_hosts` queda desfasado al recrear `honeyserver`:** la clave de host cambia. El Makefile usa `local/.known_hosts` (`ANSIBLE_USER_KNOWN_HOSTS_FILE`). Para comandos manuales, usa `-o UserKnownHostsFile=local/.known_hosts`.
 - **Aviso `apt_repository` deprecado:** es conocido. El rol usa `ansible.builtin.apt_repository`; migrar a `deb822_repository` queda como mejora futura.
+
+## Etapa 9 local: `make stage9-rehearse`
+
+Pasada completa de `site.yml` sin `--tags` ni `--limit` sobre las 4 VMs, con el egreso cerrado y la caché de apt vencida (`/var/lib/apt/lists` con más de 2 h). Comprueba que ningún `apt` de ningún rol sale a Internet cuando no falta nada.
+
+- **Va después de `make wazuh-rehearse` y `make honeypot-rehearse`.** Exige el Manager de Wazuh activo y `/etc/soc-tesis/honeypot-started` en `honeyserver`; si falta alguno, falla diciendo qué correr antes.
+- **No está en `preflight`:** depende del Manager y de los dos rehearse previos. El objetivo en sí dura unos minutos.
+- **Qué hace:** cierra el egreso, envejece la caché en las 4 VMs (`stage9-rehearse-apt-age.sh` verifica el mtime), hace dos pasadas completas que deben dar `changed=0 failed=0`, un `--check --diff` igual y los checks finales.
+- **Qué NO valida:** el ciclo `deallocate`/`start` de Azure, el NSG real, el pull a través de `Allow-Out-Maintenance-Egress` ni el estado de Terraform.

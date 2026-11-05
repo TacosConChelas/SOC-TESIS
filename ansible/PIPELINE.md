@@ -141,6 +141,7 @@ Comprobaciones finales:
 - **Etapa 7** simulada con dos redes Docker: una con salida para instalar y otra `internal` para operar. Se comprueba que honeyserver pierde la salida a Internet.
 - **Etapa 4a** simulada: `known_hosts` desechable, regenerado por script en cada recreación.
 - **Gates**: `Makefile` con un target por etapa, encadenados por dependencias. Cada target falla con exit ≠ 0.
+- **Etapa 9** (pasada completa sin tags con egreso cerrado y caché de apt vencida, en las 4 VMs): `make stage9-rehearse`, tras `wazuh-rehearse` y `honeypot-rehearse`. Fuera de `preflight`.
 - **No se replican** las Etapas 1 a 5 (Terraform, Azure, `run-command` y el túnel real). Se cubren con `terraform plan` y checks sobre el JSON del plan.
 - **No se valida localmente** (E1-7): xfrm/IPsec real, `ip_forward` del host en contenedores, NSG de Azure, el agente de `run-command`, ni el pull real a través de `Allow-Out-Maintenance-Egress` (Docker dentro del contenedor `honeyserver` sí se ejercita con `make honeypot-rehearse`). Las tareas que no aplican en contenedor llevan `when: ansible_virtualization_type != 'docker'`. Se verifican en el primer ciclo real.
 

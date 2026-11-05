@@ -29,7 +29,7 @@ export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o Ide
         azure-session time-guard plan plan-check plan-check-selftest \
         gate-apply stage1 recap-check-selftest relay-check common-check \
         pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check \
-        honeypot-apply honeypot-rehearse honeypot-check clean
+        honeypot-apply honeypot-rehearse honeypot-check stage9-rehearse clean
 
 help:
 	@echo "Etapa 0 - pre-vuelo local (sin Azure)"
@@ -212,6 +212,40 @@ honeypot-rehearse: wazuh-secrets known-hosts
 	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/honeypot-full.log" nochange
 	@$(MAKE) --no-print-directory honeypot-check
 	@echo "honeypot-rehearse: ok"
+
+# Etapa 9: pasada completa sin tags sobre las 4 VMs con el egreso cerrado y la
+# caché de apt vencida. Requiere wazuh-rehearse + honeypot-rehearse previos.
+# Fuera de preflight: depende del Manager de Wazuh y de los dos rehearse previos
+# (el objetivo en sí solo dura unos minutos).
+stage9-rehearse: wazuh-secrets known-hosts
+	@mkdir -p "$(LOGS)"
+	@echo "== stage9-rehearse: comprobando precondiciones =="
+	@docker exec soc-local-wazuh systemctl is-active --quiet wazuh-manager \
+	  || { echo "FALLA: el Manager de Wazuh no está activo (corre make wazuh-rehearse antes)" >&2; exit 1; }
+	@docker exec soc-local-honeyserver test -e /etc/soc-tesis/honeypot-started \
+	  || { echo "FALLA: /etc/soc-tesis/honeypot-started no existe en honeyserver (corre make honeypot-rehearse antes)" >&2; exit 1; }
+	@echo "== stage9-rehearse: cerrando el egreso (Etapa 7 simulada) =="
+	@bash "$(LOCAL)/scripts/net-toggle.sh" operate
+	@bash "$(LOCAL)/scripts/netcheck.sh"
+	@echo "== stage9-rehearse: envejeciendo la caché de apt en las 4 VMs =="
+	@bash "$(LOCAL)/scripts/stage9-rehearse-apt-age.sh"
+	@echo "== stage9-rehearse: pasada completa 1 (sin tags, sin --limit) =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml \
+	  -e wazuh_enabled=true -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/stage9-pass1.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/stage9-pass1.log" nochange
+	@echo "== stage9-rehearse: pasada completa 2 (idempotente) =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml \
+	  -e wazuh_enabled=true -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/stage9-pass2.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/stage9-pass2.log" nochange
+	@echo "== stage9-rehearse: --check --diff (control de drift) =="
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml \
+	  -e wazuh_enabled=true -e honeypot_enabled=true --check --diff 2>&1 | tee "$(LOGS)/stage9-check.log"
+	@bash "$(LOCAL)/scripts/recap-check.sh" "$(LOGS)/stage9-check.log" nochange
+	@echo "== stage9-rehearse: comprobaciones finales =="
+	@bash "$(LOCAL)/scripts/netcheck.sh"
+	@$(MAKE) --no-print-directory common-check relay-check wazuh-check honeypot-check
+	@cd "$(REPO)" && "$(PY)" ansible/local/scripts/secret-scan.py
+	@echo "stage9-rehearse: ok"
 
 rehearse: known-hosts
 	@mkdir -p "$(LOGS)"
