@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-11-04
 **Rama:** `practica/ansible-local`
-**Estado:** implementado en la rama `practica/ansible-local` (plan `docs/superpowers/plans/2026-11-04-honeypot-role.md`); refinamientos en §9. Pendiente de decisión: §9.10 (E1-3 y el agente durante `install`).
+**Estado:** implementado en la rama `practica/ansible-local` (plan `docs/superpowers/plans/2026-11-04-honeypot-role.md`); refinamientos en §9 (decisión E1-3 del agente durante `install`: §9.10).
 **Fuentes:** `.knowledge/18_DECISIONES_IMPLEMENTACION.md` (D2, D4, D8), `.knowledge/17_SOFTWARE_BASELINE.md` (D1 §1–§2), `.knowledge/20_COMPOSE_REPRODUCIBLE.md`, ADR-006 (A6, E1-2, E1-3, E1-7, E1-8), `ansible/PIPELINE.md`, `docker-compose.yml`, `.env.example`, documentación de Wazuh (`localfile`).
 **Contexto:** cuarto subproyecto de P-A1. `common`, `logrelay` y `wazuh` ya están hechos.
 
@@ -213,11 +213,11 @@ Cada punto se comprobó contra el código del rol. Donde el texto previo no coin
    - En Azure es el mismo caso: Tanner crea su archivo con el primer ataque, que puede llegar horas después del arranque del agente.
    - **Restricción de D4:** los `localfile` deben existir antes de arrancar el agente.
 
-10. **El agente durante `install` y E1-3: pendiente de decisión.** Lo que hace el código:
-    - `install` no arranca el agente. El `policy-rc.d` de `common` devuelve 101 al postinst (`roles/common/tasks/main.yml:45`), y el handler `Reiniciar wazuh-agent` solo actúa si existe `honeypot-started` (`roles/honeypot/handlers/main.yml`). En la primera pasada del ensayo el handler se saltó.
-    - `install` para y deshabilita `wazuh-agent` solo si no existe `honeypot-started` (tarea «Dejar Docker y el agente detenidos y deshabilitados», `:155`). En el ensayo esa tarea dio `ok`: el agente ya estaba parado y deshabilitado tras el postinst.
-    - **Discrepancia con E1-3**, que dice «en ningún momento»: entre la instalación del paquete y la tarea que lo para, el agente existe con el estado que deje el postinst. Ese intervalo no lo protege el rol ni lo cubre el check 3, que solo mira el final de `install`. El agente solo se conecta al relay interno, no a Internet.
-    - **Decisión pendiente del operador:** (a) si el agente cuenta como «servicio del señuelo» a efectos de E1-3; (b) si cuenta, si hace falta un guard antes del `apt install` o basta la comprobación al final de `install`. Este documento no la resuelve.
+10. **El agente durante `install` y E1-3: decidido.** Lo que hace el código:
+    - `install` no arranca el agente. El `policy-rc.d` de `common` devuelve 101 al postinst (`roles/common/tasks/main.yml:43-50`, `exit 101` en la 49), y el handler `Reiniciar wazuh-agent` solo actúa si existe `honeypot-started` (`roles/honeypot/handlers/main.yml`). En la primera pasada del ensayo el handler se saltó.
+    - `install` para y deshabilita `wazuh-agent` solo si no existe `honeypot-started` (tarea «Dejar Docker y el agente detenidos y deshabilitados», `roles/honeypot/tasks/main.yml:157-165`). En el ensayo esa tarea dio `ok`: el agente ya estaba parado y deshabilitado tras el postinst.
+    - **Decisión:** el agente cuenta como servicio del honeypot. E1-3 se garantiza durante `install` con el `policy-rc.d` de `common` (el postinst no arranca nada) y al final de `install` con la tarea que lo detiene y deshabilita, más el check 3. Un `enabled` transitorio dejado por el postinst no expone nada, porque no hay proceso. No hace falta un guard antes del `apt install`: un agente que no arrancó no recibe tráfico, y un guard solo cubriría una ventana de segundos sin proceso.
+    - **Riesgo aceptado:** un postinst futuro que ignorara `policy-rc.d` y arrancara el agente solo lo detectaría el check 3 al final de `install`, no en el intervalo. Lo cubren `pin-check` y el gate de versión.
 
 11. **Tiempos reales del ensayo** (para recalibrar estimaciones): `make clean preflight` 2 min 44 s (21:14:34 a 21:17:18); `make wazuh-rehearse` 8 min 05 s (21:17:18 a 21:25:23); `make honeypot-rehearse` 5 min 07 s (21:25:23 a 21:30:30).
 

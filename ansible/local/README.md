@@ -201,5 +201,5 @@ Qué NO valida: el NSG real de Azure, el pull a través de `Allow-Out-Maintenanc
 
 ### Notas del ensayo
 
-- **`~/.ssh/known_hosts` queda desfasado tras cada `make clean`:** la clave de host de `honeyserver` cambia. El Makefile usa `local/.known_hosts` (`ANSIBLE_USER_KNOWN_HOSTS_FILE`). Para comandos manuales, usa `-o UserKnownHostsFile=local/.known_hosts`.
+- **`~/.ssh/known_hosts` queda desfasado al recrear `honeyserver`:** la clave de host cambia. El Makefile usa `local/.known_hosts` (`ANSIBLE_USER_KNOWN_HOSTS_FILE`). Para comandos manuales, usa `-o UserKnownHostsFile=local/.known_hosts`.
 - **Aviso `apt_repository` deprecado:** es conocido. El rol usa `ansible.builtin.apt_repository`; migrar a `deb822_repository` queda como mejora futura.
