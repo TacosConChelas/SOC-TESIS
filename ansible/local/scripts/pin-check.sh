@@ -78,6 +78,7 @@ done
 # Si el ultimo parche difiere de wazuh_expected_version, el rol fallaria despues de 15 min de
 # instalacion; aqui se detecta antes. Requiere Internet.
 wazuh_defaults="${PIN_CHECK_WAZUH_DEFAULTS:-$root/group_vars/all.yml}"
+indice=""   # indice de Wazuh; lo reusa el bloque del rol honeypot (set -u exige inicializarla)
 wazuh_index="https://packages.wazuh.com/4.x/apt/dists/stable/main/binary-amd64/Packages"
 
 if [ ! -f "$wazuh_defaults" ]; then
@@ -106,6 +107,52 @@ else
         echo "  decide si el baseline sube y actualiza wazuh_expected_version en group_vars/all.yml" >&2
         fail=1
       fi
+    fi
+  fi
+fi
+
+# --- Rol honeypot: Docker (indice del repo de Docker) y wazuh-agent (indice de Wazuh) ---
+hp_defaults="${PIN_CHECK_HONEYPOT_DEFAULTS:-$root/roles/honeypot/defaults/main.yml}"
+docker_index="https://download.docker.com/linux/ubuntu/dists/jammy/stable/binary-amd64/Packages"
+var_of() { sed -n "s/^$2:[[:space:]]*\"\([^\"]*\)\".*/\1/p" "$1" | head -n1; }
+en_indice() { awk -v p="$1" -v v="$2" '/^Package: /{pkg=$2} /^Version: /{if (pkg == p && $2 == v) f=1} END{exit !f}'; }
+
+if [ ! -f "$hp_defaults" ]; then
+  echo "aviso: $hp_defaults no existe todavia; se omite la comprobacion de Docker"
+else
+  dindice="$(curl -fsSL --max-time 60 "$docker_index" 2>/dev/null || true)"
+  if [ -z "$dindice" ]; then
+    echo "FALLA: no se pudo leer el indice de Docker ($docker_index); pin-check necesita Internet" >&2
+    fail=1
+  else
+    for fila in "docker-ce honeypot_docker_version" "docker-ce-cli honeypot_docker_version" \
+                "containerd.io honeypot_containerd_version" "docker-compose-plugin honeypot_compose_version"; do
+      read -r pkg variable <<<"$fila"
+      want="$(var_of "$hp_defaults" "$variable")"
+      if [ -z "$want" ]; then
+        echo "FALLA: '$variable' no esta definida en $hp_defaults" >&2; fail=1; continue
+      fi
+      if en_indice "$pkg" "$want" <<<"$dindice"; then
+        echo "ok: $pkg $want disponible (indice de Docker, $variable)"
+      else
+        echo "FALLA: $pkg no tiene la version fijada $want en el indice de Docker ($variable)" >&2; fail=1
+      fi
+    done
+  fi
+
+  if [ -n "$indice" ] && [ -n "${wazuh_want:-}" ]; then
+    if en_indice wazuh-agent "${wazuh_want}-1" <<<"$indice"; then
+      echo "ok: wazuh-agent ${wazuh_want}-1 disponible (indice de Wazuh)"
+    else
+      echo "FALLA: wazuh-agent ${wazuh_want}-1 no esta en el indice de Wazuh" >&2; fail=1
+    fi
+  fi
+
+  expira="$(var_of "$hp_defaults" honeypot_wazuh_key_expires)"
+  if [ -n "$expira" ]; then
+    dias=$(( ( $(date -d "$expira" +%s) - $(date +%s) ) / 86400 ))
+    if [ "$dias" -lt 60 ]; then
+      echo "aviso: la clave apt de Wazuh caduca el $expira (en $dias dias): verifica la nueva y actualiza honeypot_wazuh_key_fingerprint y honeypot_wazuh_key_expires" >&2
     fi
   fi
 fi

@@ -168,3 +168,38 @@ Qué NO valida: UFW real y el NSG de Azure, el heap real de 8g en `Standard_B4as
 - **`relay-check`:** el eco en 1514/1515 del contenedor `wazuh` choca con el Manager real tras instalarlo. La sonda detiene `wazuh-manager` si está activo y lo restaura en el `trap EXIT`; sin Manager instalado nada cambia y no se relajó ninguna aserción.
 - **`make` dentro de `nix-shell`:** fuera de él, el check 6 falla por falta de `ansible-inventory`, no por el rol.
 - **`make wazuh-apply`** depende de `known-hosts` → `up`; `up` usa `--no-recreate`, pero conviene saberlo si hay un `wazuh` instalado y valioso.
+
+## Rol honeypot: `make honeypot-rehearse` y `make honeypot-check`
+
+Docker, las 7 imágenes de D2 y el Wazuh Agent reales corren dentro del contenedor `honeyserver`, con `/var/lib/docker` y `/var/lib/containerd` en volúmenes (sin overlayfs sobre overlayfs). **No** forma parte de `preflight`: el inventario local marca `honeypot_enabled: false`.
+
+Flujo: `make clean preflight` y luego `make wazuh-rehearse` (el agente necesita el Manager). Después `make honeypot-rehearse`, que primero ejecuta `local/scripts/honeypot-reset-agent.sh`: deja `honeyserver` como una VM nueva frente al agente (sin paquete, sin `/var/ossec` y sin registrar en el Manager), para que el check 7 pruebe el enrolamiento del rol y no la clave que dejó el fixture de `wazuh-rehearse`. Ese script se niega a correr si existe `/etc/soc-tesis/honeypot-started`: el señuelo ya arrancó y hay que volver al principio con `make clean`.
+
+Después del reset, el ensayo sigue así:
+1. 1ª pasada `install,config` con el egreso abierto (exige `changed`) y el check 3 (todo dormido);
+2. 2ª pasada (`changed=0`);
+3. `--check --diff`;
+4. egreso cerrado;
+5. `--tags start` dos veces;
+6. pasada completa sin tags (`changed=0`, como la Etapa 9);
+7. `make honeypot-check`.
+
+Para iterar: `make honeypot-apply TAGS=install` y `HONEYPOT_CHECKS="1 3" make honeypot-check`.
+
+Qué comprueba `honeypot-check`:
+1. paquetes en versión fijada y en `hold`, sin recomendados;
+2. `RepoDigests` iguales a `.env.example`;
+3. tras `install,config`, Docker, containerd y el agente inactivos y deshabilitados (lo llama `honeypot-rehearse`);
+4. tras `start`, 7 contenedores `healthy`, el 22 atendido por el señuelo y sshd solo en el 22222;
+5. `ossec.conf` con el relay, `client_buffer` y los `localfile` de D4;
+6. `authd.pass`;
+7. el agente activo en el Manager, a través del relay;
+8. cada honeypot escribe un evento de prueba, y `wazuh-logcollector` lo lee: en `wazuh-logcollector.state` deben tener `events > 0` los 4 `localfile` (Cowrie, Dionaea y Tanner en JSON, y Mailoney en `journald`). El archivo lo escribe el agente en ejecución, así que sus contadores son los de la sesión actual;
+9. prueba negativa: con el egreso abierto, `start` falla en la sonda.
+
+Qué NO valida: el NSG real de Azure, el pull a través de `Allow-Out-Maintenance-Egress`, el ciclo `deallocate`/`start` con `restart: unless-stopped`, el tráfico real de Internet, ni alertas en el Manager (no hay reglas por honeypot todavía).
+
+### Notas del ensayo
+
+- **`~/.ssh/known_hosts` queda desfasado tras cada `make clean`:** la clave de host de `honeyserver` cambia. El Makefile usa `local/.known_hosts` (`ANSIBLE_USER_KNOWN_HOSTS_FILE`). Para comandos manuales, usa `-o UserKnownHostsFile=local/.known_hosts`.
+- **Aviso `apt_repository` deprecado:** es conocido. El rol usa `ansible.builtin.apt_repository`; migrar a `deb822_repository` queda como mejora futura.

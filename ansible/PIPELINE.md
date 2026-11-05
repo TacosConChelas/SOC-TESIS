@@ -92,7 +92,7 @@ Desde 192.168.1.73, con `ANSIBLE_PRIVATE_KEY_FILE` y el `known_hosts` de la Etap
 | `site.yml --tags install,config` | `failed=0 unreachable=0` |
 | `ansible all -m ping` **justo después** de `--tags install,config` | 4 de 4 `pong`; detecta un bloqueo de UFW/sshd antes de seguir |
 | 2ª pasada | `changed=0` |
-| **Honeypot apagado** (E1-3): `systemctl is-active` y `docker ps` en honeyserver | ningún servicio del señuelo activo ni habilitado |
+| **Honeypot apagado** (E1-3): `docker.service`, `docker.socket`, `containerd.service` y `wazuh-agent` en honeyserver | inactivos **y** deshabilitados; existe `/etc/soc-tesis/honeypot-images` (7 digests de `.env.example` verificados por `RepoDigests`) |
 
 Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En la VM strongSwan, el rol converge sobre lo que dejó el bootstrap. **No toca** el archivo de secretos de swanctl.
 
@@ -122,7 +122,7 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 | strongSwan (VM) | SA activa |
 | Wazuh | `wazuh-control info` = versión esperada (gate D1); indexer, manager, filebeat y dashboard activos; 1514/1515/443 abiertos y 9200/55000 solo en loopback; un agente de prueba aparece `Active` en `agent_control -l` a través del relay |
 | logrelay | desde honeyserver, `nc -zv 10.50.30.10 1514` y `1515` conectan, y `/var/log/soc-relay/stream.log` registra `10.50.10.10 ... TCP 200` |
-| Honeypot | el señuelo escucha en el 22 y la administración sigue en el 22222 |
+| Honeypot | el rol se niega a arrancar si responde `http://1.1.1.1` o `https://example.com` (egreso abierto); `compose up` con `pull: never` deja los 7 contenedores `healthy`; el señuelo atiende el 22 y la administración sigue en el 22222; el agente queda `connected` por el relay (`/var/ossec/var/run/wazuh-agentd.state`) |
 | Hora (4 VMs) | `timedatectl show -p NTPSynchronized --value` = `yes`; el rol `common` lo exige en el tag `start` (12 reintentos de 10 s) y falla si no llega. Depende de que la imagen sincronice sin egreso (PTP de Hyper-V); si no, decidir aquí si se configura chrony |
 
 ## Etapa 9 · Aceptación de punta a punta [AUTO]
@@ -142,7 +142,7 @@ Comprobaciones finales:
 - **Etapa 4a** simulada: `known_hosts` desechable, regenerado por script en cada recreación.
 - **Gates**: `Makefile` con un target por etapa, encadenados por dependencias. Cada target falla con exit ≠ 0.
 - **No se replican** las Etapas 1 a 5 (Terraform, Azure, `run-command` y el túnel real). Se cubren con `terraform plan` y checks sobre el JSON del plan.
-- **No se valida localmente** (E1-7): xfrm/IPsec real, `ip_forward` del host en contenedores, NSG de Azure, el agente de `run-command`, ni Docker-in-Docker del honeypot si se usan contenedores. Las tareas que no aplican en contenedor llevan `when: ansible_virtualization_type != 'docker'`. Se verifican en el primer ciclo real.
+- **No se valida localmente** (E1-7): xfrm/IPsec real, `ip_forward` del host en contenedores, NSG de Azure, el agente de `run-command`, ni el pull real a través de `Allow-Out-Maintenance-Egress` (Docker dentro del contenedor `honeyserver` sí se ejercita con `make honeypot-rehearse`). Las tareas que no aplican en contenedor llevan `when: ansible_virtualization_type != 'docker'`. Se verifican en el primer ciclo real.
 
 ## Estado del entorno (2026-10-29)
 - Docker instalado.
