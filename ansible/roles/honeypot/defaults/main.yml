@@ -46,8 +46,12 @@ honeypot_image_env: >-
   {{ dict(lookup('ansible.builtin.file', honeypot_repo_root ~ '/.env.example').splitlines()
      | select('match', '^[A-Z_]+_IMAGE=') | map('split', '=')) }}
 honeypot_image_refs: "{{ honeypot_image_env.values() | list }}"
-# Directorios del bind (D4) y la imagen que escribe en cada uno.
+# Directorios del bind (D4), la imagen que escribe en cada uno y el JSON que logcollector
+# debe poder abrir desde el arranque del agente (un archivo ausente al arrancar no se ingiere).
+# owner (opcional) sustituye al UID:GID de honeypot-uids.json. Dionaea: el entrypoint corre
+# como root y baja a 1000; el descubrimiento de install ve el UID del entrypoint, no el del
+# proceso que escribe. Sin owner, se usa el valor descubierto.
 honeypot_bind_dirs:
-  - { dir: cowrie/log, image_var: COWRIE_IMAGE }
-  - { dir: dionaea/lib, image_var: DIONAEA_IMAGE }
-  - { dir: tanner/log, image_var: TANNER_IMAGE }
+  - { dir: cowrie/log, image_var: COWRIE_IMAGE, file: cowrie.json }
+  - { dir: dionaea/lib, image_var: DIONAEA_IMAGE, file: dionaea.json, owner: ["1000", "1000"] }
+  - { dir: tanner/log, image_var: TANNER_IMAGE, file: tanner_report.json }

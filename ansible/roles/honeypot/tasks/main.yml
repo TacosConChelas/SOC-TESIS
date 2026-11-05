@@ -52,6 +52,18 @@
     mode: "0755"
   tags: [install]
 
+# Si la clave ya se descargó no se pide de nuevo: get_url con dest existente hace una
+# peticion condicional (If-Modified-Since) que necesita red, y la pasada completa corre
+# con el egreso cerrado. La huella se sigue exigiendo abajo sobre la clave local.
+- name: Leer si las claves apt ya están en disco
+  ansible.builtin.stat:
+    path: "/etc/soc-tesis/keys/{{ item.name }}.asc"
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: honeypot_key_files
+  tags: [install]
+
 - name: Descargar las claves apt de Docker y Wazuh
   ansible.builtin.get_url:
     url: "{{ item.key_url }}"
@@ -60,6 +72,8 @@
   loop: "{{ honeypot_apt_sources }}"
   loop_control:
     label: "{{ item.name }}"
+    index_var: honeypot_key_idx
+  when: not honeypot_key_files.results[honeypot_key_idx].stat.exists
   tags: [install]
 
 - name: Leer la huella de cada clave descargada
@@ -289,12 +303,29 @@
   ansible.builtin.file:
     path: "{{ honeypot_data_root }}/{{ item.dir }}"
     state: directory
-    owner: "{{ (honeypot_uids_file.content | b64decode | from_json)[item.dir][0] }}"
-    group: "{{ (honeypot_uids_file.content | b64decode | from_json)[item.dir][1] }}"
+    owner: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[0] }}"
+    group: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[1] }}"
     mode: "0755"
   loop: "{{ honeypot_bind_dirs }}"
   loop_control:
     label: "{{ item.dir }}"
+  tags: [config]
+
+# logcollector abre sus localfile al arrancar: un archivo que aun no existe no se ingiere
+# despues (ERROR 1103 y nunca lo reintenta). Se dejan vacios y con el dueño de la imagen
+# para que el primer arranque del agente los abra. force: false nunca pisa un archivo con
+# eventos; copy con contenido hace la tarea idempotente (state: touch cambiaria la fecha).
+- name: Crear vacíos los JSON de los honeypots antes del arranque del agente (D4)
+  ansible.builtin.copy:
+    dest: "{{ honeypot_data_root }}/{{ item.dir }}/{{ item.file }}"
+    content: ""
+    owner: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[0] }}"
+    group: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[1] }}"
+    mode: "0644"
+    force: false
+  loop: "{{ honeypot_bind_dirs }}"
+  loop_control:
+    label: "{{ item.dir }}/{{ item.file }}"
   tags: [config]
 
 - name: Apuntar el agente al relay (D4)
@@ -418,3 +449,71 @@
   no_log: true
   notify: Reiniciar wazuh-agent
   tags: [config]
+
+# --- start: nunca descarga ----------------------------------------------------------------
+- name: Sondear el egreso a Internet (debe estar cerrado, E1-3/E1-6)
+  ansible.builtin.uri:
+    url: "{{ item }}"
+    method: HEAD
+    timeout: 5
+    status_code: [-1]
+  loop: "{{ honeypot_egress_probe_urls }}"
+  register: honeypot_egress
+  failed_when: false
+  check_mode: false
+  tags: [start]
+
+- name: Exigir el egreso cerrado antes de arrancar el señuelo
+  ansible.builtin.assert:
+    that:
+      - honeypot_egress.results | rejectattr('status', 'equalto', -1) | list | length == 0
+    fail_msg: >-
+      E1-3: el egreso sigue abierto (responden
+      {{ honeypot_egress.results | rejectattr('status', 'equalto', -1) | map(attribute='item') | join(', ') }}).
+      Cierra la ventana (terraform apply -var maintenance_egress=false) antes de arrancar el señuelo.
+  tags: [start]
+
+- name: Habilitar y arrancar Docker
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - containerd.service
+    - docker.socket
+    - docker.service
+  tags: [start]
+
+- name: Levantar el señuelo sin descargar nada (espera a los healthchecks)
+  community.docker.docker_compose_v2:
+    project_src: "{{ honeypot_dir }}"
+    state: present
+    pull: never
+    build: never
+    wait: true
+    wait_timeout: "{{ honeypot_wait_timeout }}"
+  tags: [start]
+
+- name: Habilitar y arrancar el Wazuh Agent
+  ansible.builtin.systemd_service:
+    name: wazuh-agent
+    enabled: true
+    state: started
+  tags: [start]
+
+- name: Esperar a que el agente quede conectado por el relay (D4)
+  ansible.builtin.command: grep -qx "status='connected'" /var/ossec/var/run/wazuh-agentd.state
+  register: honeypot_agent_state
+  until: honeypot_agent_state.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+  check_mode: false
+  tags: [start]
+
+- name: Marcar que el señuelo arrancó (desde ahora install no toca servicios)
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/honeypot-started
+    content: "started\n"
+    mode: "0644"
+  tags: [start]
