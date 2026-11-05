@@ -1,18 +1,31 @@
 ---
 # Rol logrelay: NGINX stream L4 (D4). Agente Wazuh del honeyserver -> 1514/1515 -> Manager.
 # Diseño: docs/superpowers/specs/2026-10-29-logrelay-role-design.md
+- name: Leer qué paquetes del rol ya están instalados en su versión
+  ansible.builtin.command: >-
+    dpkg-query -W -f='${db:Status-Abbrev}${Package}=${Version}\n'
+    {{ logrelay_apt_packages | map('regex_replace', '=.*$', '') | join(' ') }}
+  register: logrelay_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+# apt solo refresca la caché si falta algún paquete, o uno de NGINX con otra versión:
+# así la pasada completa con el egreso cerrado (Etapa 9) no sale a Internet.
+# ${db:Status-Abbrev} empieza con la marca de retención (h): NGINX está en hold, así
+# que se acepta cualquier estado con la 'i' de instalado (ii, hi). Una entrada con
+# versión exige coincidencia exacta; una sin versión (logrotate, ufw) basta con el nombre.
 - name: Instalar NGINX con stream, logrotate y ufw en la versión fijada
   ansible.builtin.apt:
-    name:
-      - "nginx={{ logrelay_nginx_version }}"
-      - "nginx-core={{ logrelay_nginx_version }}"
-      - "nginx-common={{ logrelay_nginx_version }}"
-      - "libnginx-mod-stream={{ logrelay_nginx_version }}"
-      - logrotate
-      - ufw
+    name: "{{ logrelay_apt_packages }}"
     state: present
-    update_cache: true
-    cache_valid_time: 3600
+    update_cache: >-
+      {{ True if (logrelay_apt_packages | reject('in', logrelay_installed)
+      | reject('in', logrelay_installed | map('regex_replace', '=.*$', '') | list)
+      | list | length > 0) else omit }}
+  vars:
+    logrelay_installed: "{{ logrelay_dpkg.stdout_lines | select('match', '^.i ') | map('regex_replace', '^.i ', '') | list }}"
   tags: [install]
 
 - name: Retener los paquetes de NGINX en la versión fijada

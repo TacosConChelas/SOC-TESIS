@@ -6,5 +6,13 @@ logrelay_agent_ip: "10.50.10.10"
 logrelay_admin_cidr: "192.168.1.0/24" # lab_cidr de terraform/lab
 # Baseline D1 decía 14.21; Ubuntu lo retiró (2026-10-29), vigente en jammy-updates/security.
 logrelay_nginx_version: "1.18.0-6ubuntu14.22"
+# Única lista de paquetes del rol: la lectura con dpkg-query y la tarea apt la usan las dos.
+logrelay_apt_packages:
+  - "nginx={{ logrelay_nginx_version }}"
+  - "nginx-core={{ logrelay_nginx_version }}"
+  - "nginx-common={{ logrelay_nginx_version }}"
+  - "libnginx-mod-stream={{ logrelay_nginx_version }}"
+  - logrotate
+  - ufw
 logrelay_log_dir: /var/log/soc-relay
 logrelay_log_keep_days: 7
