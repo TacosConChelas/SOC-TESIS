@@ -2,12 +2,21 @@
 # VM strongSwan: respondedora del túnel. El bootstrap de IKE/PSK (paquete,
 # swanctl.conf y secreto) se hace UNA vez con `az vm run-command`; este rol
 # converge sobre eso y NO toca el archivo de secretos (ADR-006 A3/E1-1/E1-5).
+- name: Leer si strongSwan ya está instalado
+  ansible.builtin.command: dpkg-query -W -f='${db:Status-Abbrev}${Package}\n' strongswan-swanctl
+  register: strongswan_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+# apt solo refresca la caché si falta el paquete: así la pasada completa con el
+# egreso cerrado (Etapa 9) no sale a Internet. omit y no False: ver common.
 - name: Instalar strongSwan con swanctl
   ansible.builtin.apt:
     name: strongswan-swanctl
     state: present
-    update_cache: true
-    cache_valid_time: 3600
+    update_cache: "{{ True if (strongswan_dpkg.stdout_lines | select('match', '^.i strongswan-swanctl$') | list | length == 0) else omit }}"
   tags: [install]
 
 - name: Escribir el sysctl de reenvío
