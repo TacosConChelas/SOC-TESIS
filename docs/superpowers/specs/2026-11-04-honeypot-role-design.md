@@ -171,7 +171,7 @@ Si cambian los digests en producción (`honeypot-started` existe), el bloque se 
 **Dependencias:**
 - Compose, `.env.example` y `config/` versionados (§2).
 - `pin-check` ampliado (parte de la implementación): lee directamente el índice `download.docker.com/linux/ubuntu/dists/jammy/stable/binary-amd64/Packages`, igual que ya hace con el de Wazuh y sin configurar el repo en el contenedor. Exige que `docker-ce`, `docker-ce-cli`, `containerd.io` y `docker-compose-plugin` existan en la versión de los `defaults` del rol y que `wazuh-agent` tenga `${wazuh_expected_version}-1`. También avisa si la clave de Wazuh caduca en menos de 60 días.
-- Baseline `17_SOFTWARE_BASELINE.md` actualizado a `wazuh-agent` 4.14.9-1 (Linux y MSI de Windows), a cargo del operador. Ya está comprobado que `4.14.9-1` existe en `packages.wazuh.com/4.x/apt` para agent, manager, indexer y dashboard (índice consultado el 2026-11-04).
+- Baseline `17_SOFTWARE_BASELINE.md` actualizado a `wazuh-agent` 4.14.10-1 (Linux y MSI de Windows), a cargo del operador. Ya está comprobado que `4.14.10-1` existe en `packages.wazuh.com/4.x/apt` para agent, manager, indexer y dashboard (índice consultado el 2026-11-05).
 - `community.docker` en `requirements.yml` para el controlador real.
 
 ## 8. Fuera de alcance

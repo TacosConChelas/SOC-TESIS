@@ -347,7 +347,7 @@
   notify: Reiniciar wazuh-agent
   tags: [config]
 
-# El agente 4.14.9 trae un localfile de journald SIN filtro (todo el journal del sistema
+# El agente de Wazuh trae un localfile de journald SIN filtro (todo el journal del sistema
 # iria al Manager: ruido y contra la minimizacion de datos, doc 19 §7). Se quita para que
 # quede uno solo, el de Mailoney. La regex exige el orden y los hijos del bloque original
 # (log_format, location, nada mas), asi que nunca coincide con el nuestro. Verificado
