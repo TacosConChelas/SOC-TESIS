@@ -31,6 +31,7 @@
 | En Azure, con el egreso cerrado, `curl` da **timeout**, no error de DNS | `Allow-Out-DNS` (prio 100) sigue permitido; en local la red `internal` no tenía DNS (`curl: (6)`). Los checks aceptan cualquier fallo. |
 | Se instala también **`charon-systemd`** (rol `strongswan` y bootstrap) | Hallado al ejecutar la Tarea A2: `strongswan-swanctl` solo trae la CLI, y el daemon IKE y `strongswan.service` vienen en `charon-systemd`. En Azure, la Etapa 8 (`Asegurar strongSwan activo`) habría fallado y el túnel no habría levantado. En local no se veía porque esa tarea se salta en contenedor. |
 | El ciclo `deallocate`/`start` es una **prueba explícita** (Día 3) | Es el mayor riesgo del diseño y en local solo se aproxima. |
+| Red Docker local en `10.50.0.0/16` | Choca con la ruta a Azure en el equipo del operador; `make clean` tras A3. |
 
 ---
 
@@ -251,8 +252,10 @@ Expected: sin errores; `secret-scan` sin hallazgos.
 - [ ] `nix-shell --run 'make pin-check'` → sin pines retirados. **El instalador `/4.14/` de Wazuh es flotante:** si el gate de versión cambió (como pasó con 4.14.10), se para aquí, se sube el baseline y se repite el ensayo. No se descubre en Azure con el egreso abierto.
 - [ ] `nix-shell --run 'make plan-check-selftest tags-contract'` → ok.
 - [ ] `az vm list-usage -l centralus --query "[?name.value=='standardBasv2Family']"` → `limit` ≥ 10 (las 4 VMs usan las 10 vCPU; ADR-003).
-- [ ] Secretos listos, **fuera del repo**: `~/soc-tesis-secrets/wazuh/authd.pass` (0600), PSK en la Pi (`openssl rand -hex 32`, 0600 root) y una copia 0600 en el equipo del operador para `psk-deliver.sh`; llave SSH del operador en `ANSIBLE_PRIVATE_KEY_FILE`.
-- [ ] Pi: borrador `10-azure-lab.conf` completo con P3/P4/P8 (fuera de `/etc/swanctl/conf.d/` hasta la Etapa 5). Sin NAT/masquerade hacia `10.50.0.0/16`.
+- [ ] Secretos listos, **fuera del repo**: PSK en la Pi (`/root/soc-tesis-ipsec/psk.hex`, 0600 root) con copia del operador en `~/soc-tesis-secrets/ipsec/psk.hex` (preparado 2026-11-06, hash `1993d69d26f6`), `~/soc-tesis-secrets/wazuh/authd.pass` (0600); llave SSH del operador en `ANSIBLE_PRIVATE_KEY_FILE`.
+- [ ] Pi preparada (2026-11-06): IKE con P3/P4, PSK, `ip_forward=1`, nftables con `rt ipsec exists/missing` y .73 en `vpn_clients`, SSH solo con llave; strongSwan inactivo y `conf.d` vacío hasta la Etapa 5. Comprobar: `ssh soc71 'systemctl is-active strongswan; sudo ls -A /etc/swanctl/conf.d'` → `inactive` y vacío.
+- [ ] IP pública del lab dentro de `lab_source_cidrs` (`201.96.0.0/12`): `curl -4 -s https://api.ipify.org`. Si cae fuera, el NSG bloquea el IKE: parar y actualizar `lab_source_cidrs`.
+- [ ] **Al terminar los ensayos:** `nix-shell --run 'make clean'` y `docker network ls | grep soc-local-operate` → vacío. Esa red usa `10.50.0.0/16`, el mismo rango que Azure; si queda viva, el tráfico del operador a las VMs se queda en Docker en vez de ir a la Pi.
 
 ---
 
@@ -260,9 +263,7 @@ Expected: sin errores; `secret-scan` sin hallazgos.
 
 Comandos desde `ansible/` dentro de `nix-shell`, salvo los de la Pi. Variables de sesión:
 ```bash
-export EXPECTED_AZ_SUBSCRIPTION_NAME='…'
-export ANSIBLE_PRIVATE_KEY_FILE=~/.ssh/<llave del lab>
-export ANSIBLE_SSH_ARGS="-C -o ControlMaster=auto -o ControlPersist=60s -o IdentitiesOnly=yes -o UserKnownHostsFile=$HOME/soc-tesis-secrets/azure_known_hosts"
+source ~/soc-tesis-secrets/azure-session.env   # define EXPECTED_AZ_SUBSCRIPTION_NAME, ANSIBLE_PRIVATE_KEY_FILE y ANSIBLE_SSH_ARGS
 EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 ```
 
@@ -283,11 +284,12 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 **Etapa 4 · Bootstrap por run-command**
 - [ ] 4a: `bash azure/host-keys.sh ~/soc-tesis-secrets/azure_known_hosts` → 4 huellas. Anotarlas en la evidencia.
 - [ ] 4b, ensayo: `umask 077; openssl rand -hex 32 > ~/soc-tesis-secrets/psk-ensayo; bash azure/psk-deliver.sh ~/soc-tesis-secrets/psk-ensayo` → `psk-deliver: ok`, la conexión `lab` listada, `psk-sha256` = `psk-local`. **Si falla porque `PSK` llega vacío**, el script remoto se detiene sin escribir el secreto: se ajusta la forma del parámetro (P-A2) y se repite. Nunca se prueba la corrección con el PSK real.
-- [ ] 4b, real: `bash azure/psk-deliver.sh ~/soc-tesis-secrets/psk` → ok y hashes iguales. Después `shred -u ~/soc-tesis-secrets/psk-ensayo`.
-- [ ] Higiene: `grep -rFf ~/soc-tesis-secrets/psk ~/.zsh_history ~/.bash_history .. 2>/dev/null | wc -l` → `0`. `az vm run-command list -g rg-soc-tesis-lab --vm-name vm-strongswan -o tsv | wc -l` → `0`.
+- [ ] 4b, real: `bash azure/psk-deliver.sh ~/soc-tesis-secrets/ipsec/psk.hex` → ok y hashes iguales. Después `shred -u ~/soc-tesis-secrets/psk-ensayo`.
+- [ ] Higiene: `grep -rFf ~/soc-tesis-secrets/ipsec/psk.hex ~/.zsh_history ~/.bash_history .. 2>/dev/null | wc -l` → `0`. `az vm run-command list -g rg-soc-tesis-lab --vm-name vm-strongswan -o tsv | wc -l` → `0`.
 
 **Etapa 5 · Túnel** — **Gate:** sin túnel no se sigue.
-- [ ] En la Pi: copiar el borrador a `/etc/swanctl/conf.d/`, `swanctl --load-all`, `swanctl --initiate --child lab`. Fuera del repo (A2, `handoff_opencode_red_vpn.md` Etapa D).
+- [ ] En el equipo del operador (R1, no persistente): `sudo ip route replace 10.50.0.0/16 via 192.168.1.10` y `ip route get 10.50.20.10` → `via 192.168.1.10`.
+- [ ] En la Pi: `ssh -t soc71 sudo /root/soc-tesis-ipsec/activar.sh <strongswan_public_ip>` (P8: arranca sin `enable`; tras un reinicio de la Pi se vuelve a ejecutar).
 - [ ] `swanctl --list-sas` (Pi) → `ESTABLISHED` + `INSTALLED`. `ping -c3 10.50.20.10` desde la Pi y desde 192.168.1.73.
 - [ ] `ansible all -m ping` → 4 `pong` (honeyserver por el 22222) con `StrictHostKeyChecking` activo.
 - [ ] **Origen sin NAT:** `ansible logrelay,wazuh -m shell -a 'echo $SSH_CLIENT'` → empieza por `192.168.1.`. Si no, **parar**: UFW cortaría el SSH (corregir NAT en la Pi o `logrelay_admin_cidr`/su equivalente de wazuh antes de la Etapa 6).
@@ -303,12 +305,12 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - [ ] `terraform -chdir=../terraform/lab apply -var maintenance_egress=false` (el plan solo quita las 4 reglas).
 - [ ] `ansible all -m command -a 'curl -m5 -sS -o /dev/null http://1.1.1.1'` y `… https://example.com` → **fallan en las 4** (timeout; el DNS sí resuelve).
 - [ ] `ansible all -m ping` → 4 `pong` (el túnel sigue).
-- [ ] Cierre del día: `az vm deallocate` en orden inverso; `swanctl --terminate --ike lab` en la Pi.
+- [ ] Cierre del día: `az vm deallocate` en orden inverso; `swanctl --terminate --ike lab` en la Pi. Tras reiniciar el equipo del operador, repetir la ruta R1 (`sudo ip route replace 10.50.0.0/16 via 192.168.1.10`): no persiste.
 
 ## Día 2 — Wazuh, honeypot, cierre y arranque (~3 h)
 
-- [ ] Repetir la Tarea A3 (`pin-check` como mínimo). `make time-guard`.
-- [ ] `az vm start` en orden: strongswan → wazuh → logrelay → honeyserver. En la Pi: `swanctl --list-sas`; si no hay SA, `--initiate`. `ansible all -m ping` → 4 `pong`. **Primera observación del ciclo:** anotar cuánto tardó la SA y si hizo falta intervenir.
+- [ ] Repetir la Tarea A3 (`pin-check` como mínimo); si se repite el ensayo, `make clean` después. `make time-guard`.
+- [ ] `az vm start` en orden: strongswan → wazuh → logrelay → honeyserver. En la Pi: `swanctl --list-sas`; si no hay SA, `--initiate`. Si se reinició el equipo del operador, reponer la ruta R1 (`sudo ip route replace 10.50.0.0/16 via 192.168.1.10`). `ansible all -m ping` → 4 `pong`. **Primera observación del ciclo:** anotar cuánto tardó la SA y si hizo falta intervenir.
 - [ ] **Abrir egreso** (Etapa 3, gate escrito).
 
 **Etapa 6b · Wazuh** (descarga >1 GB, 10–25 min)
@@ -341,7 +343,7 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - [ ] Pasada completa sin tags: `ansible-playbook site.yml | tee ../$EV/9-full.log` → `changed=0 failed=0` en las 4 (en local esto lo cubría `stage9-rehearse`).
 - [ ] `ansible-playbook site.yml --check --diff` → sin cambios.
 - [ ] `terraform -chdir=../terraform/lab plan -var maintenance_egress=false -detailed-exitcode` → 0.
-- [ ] Evidencia en `evidence/azure/<fecha>/`: logs, huellas, versiones, tabla del ciclo, `SHA256SUMS`. Higiene: `grep -rFf ~/soc-tesis-secrets/psk ../$EV` y lo mismo con `authd.pass` → 0.
+- [ ] Evidencia en `evidence/azure/<fecha>/`: logs, huellas, versiones, tabla del ciclo, `SHA256SUMS`. Higiene: `grep -rFf ~/soc-tesis-secrets/ipsec/psk.hex ../$EV` y lo mismo con `authd.pass` → 0.
 - [ ] Cost Management: comparar el gasto real con el ≈ USD 35/mes de ADR-006 §6.
 - [ ] `deallocate` en orden inverso.
 
