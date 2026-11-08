@@ -1,0 +1,220 @@
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/honeypot/tasks/main.yml:116:3
+
+114
+115 - name: Agregar los repos de Docker y de Wazuh
+116   ansible.builtin.apt_repository:
+      ^ column 3
+
+
+PLAY [Base comun de las VMs del laboratorio] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+[WARNING]: Host 'strongswan' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'logrelay' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+ok: [strongswan]
+ok: [logrelay]
+
+TASK [common : Desactivar la actualización automática de apt] ******************
+changed: [strongswan]
+changed: [logrelay]
+
+TASK [common : Detener y enmascarar los timers de apt] *************************
+changed: [strongswan] => (item=apt-daily.timer)
+changed: [logrelay] => (item=apt-daily.timer)
+changed: [strongswan] => (item=apt-daily-upgrade.timer)
+changed: [logrelay] => (item=apt-daily-upgrade.timer)
+
+TASK [common : Leer qué paquetes base ya están instalados] *********************
+ok: [strongswan]
+ok: [logrelay]
+
+TASK [common : Instalar paquetes base] *****************************************
+ok: [logrelay]
+ok: [strongswan]
+
+TASK [common : Bloquear el arranque automático de servicios durante la instalación] ***
+changed: [strongswan]
+changed: [logrelay]
+
+TASK [common : Fijar la zona horaria (enlace de /etc/localtime)] ***************
+changed: [strongswan]
+changed: [logrelay]
+
+TASK [common : Fijar la zona horaria (/etc/timezone)] **************************
+changed: [strongswan]
+changed: [logrelay]
+
+TASK [common : Asegurar el directorio de drop-ins de sshd] *********************
+ok: [strongswan]
+ok: [logrelay]
+
+TASK [common : Endurecer sshd con un drop-in (sin Port: no pisa el 22222 de honeyserver)] ***
+changed: [strongswan]
+changed: [logrelay]
+
+TASK [common : Leer la configuración efectiva de sshd] *************************
+ok: [strongswan]
+ok: [logrelay]
+
+TASK [common : Comprobar los valores efectivos de sshd] ************************
+ok: [strongswan] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+ok: [logrelay] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [common : Crear el directorio de marcadores] ******************************
+changed: [strongswan]
+changed: [logrelay]
+
+TASK [common : Escribir el marcador del rol common] ****************************
+changed: [strongswan]
+changed: [logrelay]
+
+RUNNING HANDLER [common : Recargar sshd] ***************************************
+changed: [strongswan]
+changed: [logrelay]
+
+PLAY [VM strongSwan (respondedora del tunel)] **********************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [strongswan]
+
+TASK [strongswan : Leer si strongSwan ya está instalado] ***********************
+ok: [strongswan]
+
+TASK [strongswan : Instalar strongSwan (swanctl y charon-systemd)] *************
+ok: [strongswan]
+
+TASK [strongswan : Escribir el sysctl de reenvío] ******************************
+ok: [strongswan]
+
+TASK [strongswan : Aplicar el sysctl de reenvío (solo host real)] **************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/strongswan/tasks/main.yml:36:9
+
+34     cmd: sysctl -p /etc/sysctl.d/99-soc-strongswan.conf
+35   changed_when: false
+36   when: ansible_virtualization_type != 'docker'
+           ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [strongswan]
+
+PLAY [VM Wazuh] ****************************************************************
+skipping: no hosts matched
+
+PLAY [VM logrelay] *************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [logrelay]
+
+TASK [logrelay : Leer qué paquetes del rol ya están instalados en su versión] ***
+ok: [logrelay]
+
+TASK [logrelay : Instalar NGINX con stream, logrotate y ufw en la versión fijada] ***
+changed: [logrelay]
+
+TASK [logrelay : Retener los paquetes de NGINX en la versión fijada] ***********
+changed: [logrelay] => (item=nginx)
+changed: [logrelay] => (item=nginx-core)
+changed: [logrelay] => (item=nginx-common)
+changed: [logrelay] => (item=libnginx-mod-stream)
+
+TASK [logrelay : Crear el directorio de logs del relay] ************************
+changed: [logrelay]
+
+TASK [logrelay : Escribir nginx.conf (solo stream, validado con nginx -t)] *****
+changed: [logrelay]
+
+TASK [logrelay : Escribir la rotación de logs del relay] ***********************
+changed: [logrelay]
+
+TASK [logrelay : Permitir SSH desde la LAN del laboratorio (solo host real)] ***
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/logrelay/tasks/main.yml:80:9
+
+78     proto: tcp
+79     src: "{{ logrelay_admin_cidr }}"
+80   when: ansible_virtualization_type != 'docker'
+           ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+changed: [logrelay]
+
+TASK [logrelay : Permitir 1514 y 1515 solo desde el agente del honeyserver (solo host real)] ***
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/logrelay/tasks/main.yml:90:9
+
+88     src: "{{ logrelay_agent_ip }}"
+89   loop: ["1514", "1515"]
+90   when: ansible_virtualization_type != 'docker'
+           ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+changed: [logrelay] => (item=1514)
+changed: [logrelay] => (item=1515)
+
+TASK [logrelay : Política de entrada denegada (solo host real)] ****************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/logrelay/tasks/main.yml:97:9
+
+95     default: deny
+96     direction: incoming
+97   when: ansible_virtualization_type != 'docker'
+           ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [logrelay]
+
+TASK [logrelay : Política de salida permitida (solo host real)] ****************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/logrelay/tasks/main.yml:104:9
+
+102     default: allow
+103     direction: outgoing
+104   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [logrelay]
+
+TASK [logrelay : Activar UFW (solo host real)] *********************************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/logrelay/tasks/main.yml:110:9
+
+108   community.general.ufw:
+109     state: enabled
+110   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+changed: [logrelay]
+
+TASK [logrelay : Crear el directorio del drop-in de nginx.service] *************
+changed: [logrelay]
+
+TASK [logrelay : Hacer que nginx arranque tras network-online.target] **********
+changed: [logrelay]
+
+RUNNING HANDLER [logrelay : Recargar nginx si esta activo] *********************
+ok: [logrelay]
+
+PLAY [VM honeyserver (senuelo)] ************************************************
+skipping: no hosts matched
+
+PLAY RECAP *********************************************************************
+logrelay                   : ok=30   changed=19   unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+strongswan                 : ok=20   changed=9    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

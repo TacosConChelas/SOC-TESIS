@@ -1,0 +1,264 @@
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/honeypot/tasks/main.yml:116:3
+
+114
+115 - name: Agregar los repos de Docker y de Wazuh
+116   ansible.builtin.apt_repository:
+      ^ column 3
+
+
+PLAY [Base comun de las VMs del laboratorio] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+ok: [honeyserver]
+
+TASK [common : Desactivar la actualización automática de apt] ******************
+changed: [honeyserver]
+
+TASK [common : Detener y enmascarar los timers de apt] *************************
+changed: [honeyserver] => (item=apt-daily.timer)
+changed: [honeyserver] => (item=apt-daily-upgrade.timer)
+
+TASK [common : Leer qué paquetes base ya están instalados] *********************
+ok: [honeyserver]
+
+TASK [common : Instalar paquetes base] *****************************************
+ok: [honeyserver]
+
+TASK [common : Bloquear el arranque automático de servicios durante la instalación] ***
+changed: [honeyserver]
+
+TASK [common : Fijar la zona horaria (enlace de /etc/localtime)] ***************
+changed: [honeyserver]
+
+TASK [common : Fijar la zona horaria (/etc/timezone)] **************************
+changed: [honeyserver]
+
+TASK [common : Asegurar el directorio de drop-ins de sshd] *********************
+ok: [honeyserver]
+
+TASK [common : Endurecer sshd con un drop-in (sin Port: no pisa el 22222 de honeyserver)] ***
+changed: [honeyserver]
+
+TASK [common : Leer la configuración efectiva de sshd] *************************
+ok: [honeyserver]
+
+TASK [common : Comprobar los valores efectivos de sshd] ************************
+ok: [honeyserver] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [common : Crear el directorio de marcadores] ******************************
+changed: [honeyserver]
+
+TASK [common : Escribir el marcador del rol common] ****************************
+changed: [honeyserver]
+
+RUNNING HANDLER [common : Recargar sshd] ***************************************
+changed: [honeyserver]
+
+PLAY [VM strongSwan (respondedora del tunel)] **********************************
+skipping: no hosts matched
+
+PLAY [VM Wazuh] ****************************************************************
+skipping: no hosts matched
+
+PLAY [VM logrelay] *************************************************************
+skipping: no hosts matched
+
+PLAY [VM honeyserver (senuelo)] ************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [honeyserver]
+
+TASK [honeypot : Omitir el rol si está deshabilitado (el preflight local no instala Docker)] ***
+skipping: [honeyserver]
+
+TASK [honeypot : Comprobar que la administración usa el puerto 22222] **********
+ok: [honeyserver]
+
+TASK [honeypot : Asegurar el directorio de centinelas] *************************
+ok: [honeyserver]
+
+TASK [honeypot : Escribir el marcador del rol honeypot] ************************
+changed: [honeyserver]
+
+TASK [honeypot : Leer si el señuelo ya arrancó alguna vez] *********************
+ok: [honeyserver]
+
+TASK [honeypot : Instalar gnupg (verificación de las huellas)] *****************
+ok: [honeyserver]
+
+TASK [honeypot : Asegurar el directorio de claves descargadas (todavía sin confianza)] ***
+changed: [honeyserver]
+
+TASK [honeypot : Leer si las claves apt ya están en disco] *********************
+ok: [honeyserver] => (item=docker)
+ok: [honeyserver] => (item=wazuh)
+
+TASK [honeypot : Descargar las claves apt de Docker y Wazuh] *******************
+[WARNING]: Module remote_tmp /root/.ansible/tmp did not exist and was created with a mode of 0700, this may cause issues when running as another user. To avoid this, create the remote_tmp dir with the correct permissions manually
+changed: [honeyserver] => (item=docker)
+changed: [honeyserver] => (item=wazuh)
+
+TASK [honeypot : Leer la huella de cada clave descargada] **********************
+ok: [honeyserver] => (item=docker)
+ok: [honeyserver] => (item=wazuh)
+
+TASK [honeypot : Exigir la huella fijada en cada clave (clave primaria, 40 hex)] ***
+ok: [honeyserver] => (item=docker)
+ok: [honeyserver] => (item=wazuh)
+
+TASK [honeypot : Instalar las claves ya verificadas] ***************************
+changed: [honeyserver] => (item=docker)
+changed: [honeyserver] => (item=wazuh)
+
+TASK [honeypot : Agregar los repos de Docker y de Wazuh] ***********************
+changed: [honeyserver] => (item=docker)
+changed: [honeyserver] => (item=wazuh)
+
+TASK [honeypot : Leer las versiones instaladas de los paquetes fijados] ********
+ok: [honeyserver]
+
+TASK [honeypot : Instalar Docker, Compose y el Wazuh Agent en las versiones fijadas (D1)] ***
+changed: [honeyserver]
+
+TASK [honeypot : Retener los paquetes fijados (hold)] **************************
+changed: [honeyserver] => (item=docker-ce=5:29.8.2-1~ubuntu.22.04~jammy)
+changed: [honeyserver] => (item=docker-ce-cli=5:29.8.2-1~ubuntu.22.04~jammy)
+changed: [honeyserver] => (item=containerd.io=2.3.6-1~ubuntu.22.04~jammy)
+changed: [honeyserver] => (item=docker-compose-plugin=5.6.0-1~ubuntu.22.04~jammy)
+changed: [honeyserver] => (item=wazuh-agent=4.14.10-1)
+
+TASK [honeypot : Dejar Docker y el agente detenidos y deshabilitados (E1-3)] ***
+changed: [honeyserver] => (item=docker.socket)
+changed: [honeyserver] => (item=docker.service)
+changed: [honeyserver] => (item=containerd.service)
+ok: [honeyserver] => (item=wazuh-agent.service)
+
+TASK [honeypot : Crear el directorio del proyecto compose] *********************
+changed: [honeyserver]
+
+TASK [honeypot : Copiar docker-compose.yml y .env (sin secretos, D2)] **********
+changed: [honeyserver] => (item={'src': 'docker-compose.yml', 'dest': 'docker-compose.yml'})
+changed: [honeyserver] => (item={'src': '.env.example', 'dest': '.env'})
+
+TASK [honeypot : Copiar config/ de Dionaea y Tanner] ***************************
+changed: [honeyserver]
+
+TASK [honeypot : Leer el centinela de imágenes] ********************************
+ok: [honeyserver]
+
+TASK [honeypot : Arrancar Docker solo para el pull (sin habilitarlo)] **********
+changed: [honeyserver]
+
+TASK [honeypot : Descargar las 7 imágenes por digest (D2)] *********************
+changed: [honeyserver]
+
+TASK [honeypot : Leer los RepoDigests de cada imagen] **************************
+ok: [honeyserver] => (item=cowrie/cowrie:3.1.1@sha256:710f1e4601a663ac8591f58a42b44e4cd3b7ea170c7e6cdb9e54c430a30cd459)
+ok: [honeyserver] => (item=dinotools/dionaea:nightly@sha256:7371e8eeb91fa2d0752f547006b66da962a9ebdb6a3e1ca7ae92e2cff24aad8a)
+ok: [honeyserver] => (item=ghcr.io/phin3has/mailoney:sha-b8310a7@sha256:7fe3e29cb000ee0ce3158c653a5c08a51b1a821c6302027661184eb4ec368f4e)
+ok: [honeyserver] => (item=dtagdevsec/snare:24.04.1@sha256:826f7a077b2e9cfa8647b21c4f6adc0bc47ecba2799dd88eb698104416268611)
+ok: [honeyserver] => (item=dtagdevsec/tanner:24.04.1@sha256:eb971d4f208e99726cd0f5b00fc3500bc8e1e7a37c2929b84da544ed8ae5ee55)
+ok: [honeyserver] => (item=dtagdevsec/redis:24.04.1@sha256:45ea38a8c893d40922f2a4e969cc618213216e685f059a0c24cba7c983aa6345)
+ok: [honeyserver] => (item=dtagdevsec/phpox:24.04.1@sha256:ba11d1b05e856602508c0fc8b197aa792f2f865c2f08740c49e843e1516e5894)
+
+TASK [honeypot : Exigir el digest fijado en cada imagen (paso 5 del baseline)] ***
+ok: [honeyserver] => (item=cowrie/cowrie:3.1.1@sha256:710f1e4601a663ac8591f58a42b44e4cd3b7ea170c7e6cdb9e54c430a30cd459)
+ok: [honeyserver] => (item=dinotools/dionaea:nightly@sha256:7371e8eeb91fa2d0752f547006b66da962a9ebdb6a3e1ca7ae92e2cff24aad8a)
+ok: [honeyserver] => (item=ghcr.io/phin3has/mailoney:sha-b8310a7@sha256:7fe3e29cb000ee0ce3158c653a5c08a51b1a821c6302027661184eb4ec368f4e)
+ok: [honeyserver] => (item=dtagdevsec/snare:24.04.1@sha256:826f7a077b2e9cfa8647b21c4f6adc0bc47ecba2799dd88eb698104416268611)
+ok: [honeyserver] => (item=dtagdevsec/tanner:24.04.1@sha256:eb971d4f208e99726cd0f5b00fc3500bc8e1e7a37c2929b84da544ed8ae5ee55)
+ok: [honeyserver] => (item=dtagdevsec/redis:24.04.1@sha256:45ea38a8c893d40922f2a4e969cc618213216e685f059a0c24cba7c983aa6345)
+ok: [honeyserver] => (item=dtagdevsec/phpox:24.04.1@sha256:ba11d1b05e856602508c0fc8b197aa792f2f865c2f08740c49e843e1516e5894)
+
+TASK [honeypot : Descubrir el UID:GID de las imágenes que escriben en el host (D4)] ***
+ok: [honeyserver] => (item=cowrie/log)
+ok: [honeyserver] => (item=dionaea/lib)
+ok: [honeyserver] => (item=tanner/log)
+
+TASK [honeypot : Guardar los UID:GID descubiertos (config los lee con el daemon apagado)] ***
+changed: [honeyserver]
+
+TASK [honeypot : Escribir el centinela de imágenes] ****************************
+changed: [honeyserver]
+
+TASK [honeypot : Volver a dormir Docker tras el pull, aunque haya fallado (E1-3)] ***
+changed: [honeyserver] => (item=docker.socket)
+ok: [honeyserver] => (item=docker.service)
+changed: [honeyserver] => (item=containerd.service)
+
+TASK [honeypot : Leer los UID:GID descubiertos en install] *********************
+ok: [honeyserver]
+
+TASK [honeypot : Exigir los UID:GID descubiertos] ******************************
+ok: [honeyserver]
+
+TASK [honeypot : Crear los directorios del bind con el dueño de cada imagen (D4)] ***
+changed: [honeyserver] => (item=cowrie/log)
+changed: [honeyserver] => (item=dionaea/lib)
+changed: [honeyserver] => (item=tanner/log)
+
+TASK [honeypot : Crear vacíos los JSON de los honeypots antes del arranque del agente (D4)] ***
+changed: [honeyserver] => (item=cowrie/log/cowrie.json)
+changed: [honeyserver] => (item=dionaea/lib/dionaea.json)
+changed: [honeyserver] => (item=tanner/log/tanner_report.json)
+
+TASK [honeypot : Apuntar el agente al relay (D4)] ******************************
+changed: [honeyserver]
+
+TASK [honeypot : Fijar el client_buffer de D4 (cola 100000, 500 EPS)] **********
+changed: [honeyserver] => (item={'tag': 'queue_size', 'value': 100000})
+ok: [honeyserver] => (item={'tag': 'events_per_second', 'value': 500})
+
+TASK [honeypot : Quitar el localfile de journald sin filtro que trae el paquete] ***
+changed: [honeyserver]
+
+TASK [honeypot : Declarar los localfile de los honeypots (D4)] *****************
+changed: [honeyserver]
+
+TASK [honeypot : Leer ossec.conf para verificarlo] *****************************
+ok: [honeyserver]
+
+TASK [honeypot : Comprobar que ossec.conf quedó con los valores de D4] *********
+ok: [honeyserver] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [honeypot : Validar la configuración del agente] **************************
+ok: [honeyserver]
+
+TASK [honeypot : Comprobar que el directorio de secretos está fuera del repositorio] ***
+ok: [honeyserver -> localhost] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [honeypot : Leer authd.pass en el controlador] ****************************
+ok: [honeyserver -> localhost]
+
+TASK [honeypot : Exigir que authd.pass exista en el controlador] ***************
+ok: [honeyserver] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [honeypot : Entregar authd.pass (contraseña de enrolamiento)] *************
+changed: [honeyserver]
+
+RUNNING HANDLER [honeypot : Reiniciar wazuh-agent] *****************************
+skipping: [honeyserver]
+
+PLAY RECAP *********************************************************************
+honeyserver                : ok=59   changed=32   unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+
