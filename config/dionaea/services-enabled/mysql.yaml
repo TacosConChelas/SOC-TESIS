@@ -1,0 +1,7 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/mysql.html (ejemplo oficial, CC0-1.0)
+# Habilitado por D3/D-H03 (architecture.md sec.11): TCP 3306 MySQL.
+- name: mysql
+  config:
+    databases:
+      information_schema:
+        path: ":memory:"

@@ -1,0 +1,334 @@
+# SOC-Tesis — docker-compose.yml
+#
+# Baseline de orquestación del Honey-Server.
+#
+# IMPORTANTE:
+# - Este archivo congela la TOPOLOGÍA, la exposición de puertos y la
+#   segmentación de red (hp-front / hp-back).
+# - Las imágenes se fijan por digest en `.env` (copiar de `.env.example`,
+#   que trae los 7 digests verificados de D2 — `.knowledge/17_SOFTWARE_BASELINE.md`
+#   §2). No se inventan aquí.
+# - No guardar credenciales ni secretos en este archivo ni en `.env`.
+# - Rutas de bind del host (SOC_TESIS_*_DIR en `.env`): deben existir y ser
+#   legibles por el Wazuh Agent ANTES de `up` (ver README de arranque).
+#
+# Exposición del host:
+#   TCP 22      -> Cowrie SSH
+#   TCP 23      -> Cowrie Telnet
+#   TCP 25      -> Mailoney SMTP
+#   TCP 80      -> Snare HTTP
+#   TCP 443     -> Dionaea HTTPS
+#   UDP/TCP ... -> Dionaea multiprotocolo
+#
+# Administración real del host:
+#   TCP 22222 -> OpenSSH del HOST, fuera de Docker, VPN únicamente.
+#
+# Dionaea:
+#   El servicio HTTP/HTTPS mantiene TCP/80 internamente.
+#   Solo TCP/443 se publica al host para que TCP/80 del host pertenezca a Snare.
+#
+# Redes (F2-05, doc 17 §2.1):
+#   hp-front (bridge)   : cowrie, dionaea, mailoney, snare — superficie pública.
+#   hp-back  (internal) : snare, tanner, tanner_redis, tanner_phpox — sin salida,
+#                          cowrie/dionaea/mailoney NO alcanzan 8090/6379/8088.
+
+services:
+
+  cowrie:
+    image: ${COWRIE_IMAGE:?Set COWRIE_IMAGE in .env (see .env.example, D2 CLOSED)}
+    container_name: soc-tesis-cowrie
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+
+    environment:
+      # Cierra F2-07 (18_DECISIONES_IMPLEMENTACION.md, doc 17 §2.1): Cowrie
+      # expone Telnet además de SSH.
+      COWRIE_TELNET_ENABLED: "yes"
+
+    ports:
+      - "22:2222/tcp"
+      - "23:2223/tcp"
+
+    volumes:
+      - cowrie-data:/cowrie/cowrie-git/var/lib/cowrie
+      # Bind al host: el Wazuh Agent lee cowrie.json desde aquí (D4).
+      - type: bind
+        source: ${SOC_TESIS_COWRIE_LOG_DIR:-/srv/soc-tesis/cowrie/log}
+        target: /cowrie/cowrie-git/var/log/cowrie
+
+    networks:
+      - hp-front
+
+    healthcheck:
+      # Pendiente E3: confirmar que python3 está en el PATH de la imagen al ejecutar.
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 2222), 4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 8
+      start_period: 30s
+
+
+  dionaea:
+    image: ${DIONAEA_IMAGE:?Set DIONAEA_IMAGE in .env (see .env.example, D2 CLOSED)}
+    container_name: soc-tesis-dionaea
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+
+    environment:
+      # E3 (2026-10-13, ver doc 20 §9): sin esto, el entrypoint de la imagen
+      # (`test ! -d /opt/dionaea/var/lib/dionaea && init_lib`) se salta la
+      # copia de `template/lib` -> `var/lib/dionaea` porque el bind del host
+      # YA crea ese directorio (vacío) antes de que Dionaea arranque. Sin la
+      # copia, faltan ftp/root, http/root, tftp/root, binaries/, etc. y
+      # Dionaea aborta (exit 133) en bucle de reinicio. `DIONAEA_FORCE_INIT_DATA=1`
+      # fuerza `cp -van` (no sobrescribe) del árbol de plantilla hacia el bind.
+      DIONAEA_FORCE_INIT_DATA: "1"
+
+    # Public services selected in architecture.md §11 / D3.
+    #
+    # Dionaea HTTP/80 is intentionally NOT published.
+    # Dionaea HTTPS/443 is published.
+    ports:
+      - "21:21/tcp"
+      - "69:69/udp"
+      - "135:135/tcp"
+      - "443:443/tcp"
+      - "445:445/tcp"
+      - "1433:1433/tcp"
+      - "1883:1883/tcp"
+      - "3306:3306/tcp"
+      - "5060:5060/tcp"
+      - "5060:5060/udp"
+      - "5061:5061/tcp"
+      - "5061:5061/udp"
+
+    volumes:
+      # Bind al host: dionaea.json (log_json ihandler) vive dentro de
+      # var/lib/dionaea; el Wazuh Agent lo lee desde aquí (D4).
+      - type: bind
+        source: ${SOC_TESIS_DIONAEA_LIB_DIR:-/srv/soc-tesis/dionaea/lib}
+        target: /opt/dionaea/var/lib/dionaea
+      - dionaea-logs:/opt/dionaea/var/log/dionaea
+      # Config horneada sustituida por la aprobada en D3 (architecture.md §11):
+      # exactamente ftp/tftp/epmap/http+https/smb/mssql/mqtt/mysql/sip, nada más.
+      - ./config/dionaea/services-enabled:/opt/dionaea/etc/dionaea/services-enabled:ro
+      - ./config/dionaea/ihandlers-enabled:/opt/dionaea/etc/dionaea/ihandlers-enabled:ro
+      # dionaea.cfg oficial (E3, 2026-10-13): sin este bind, el entrypoint de
+      # la imagen nunca crea el archivo (ver comentario en el propio archivo).
+      - ./config/dionaea/dionaea.cfg:/opt/dionaea/etc/dionaea/dionaea.cfg:ro
+
+    networks:
+      - hp-front
+
+    healthcheck:
+      # Pendiente E3: confirmar que python3 está en el PATH de la imagen al ejecutar.
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 21), 4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 8
+      start_period: 30s
+
+
+  mailoney:
+    image: ${MAILONEY_IMAGE:?Set MAILONEY_IMAGE in .env (see .env.example, D2 CLOSED)}
+    container_name: soc-tesis-mailoney
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+
+    environment:
+      # D1/D2 doc 17 §1: la release 2.1.0 no ofrece esta variable; por eso se
+      # fija el commit b8310a7. MAILONEY_MAIL_DIR se deja SIN definir
+      # (minimización, doc 19 §7: no se guardan cuerpos de correo).
+      MAILONEY_LOG_JSON: "true"
+
+    ports:
+      - "25:25/tcp"
+
+    # Sin volúmenes (doc 17 §2.1: "ninguno obligatorio"). Los eventos JSON van
+    # a stdout y de ahí al driver journald de Docker (D4), con
+    # CONTAINER_NAME=soc-tesis-mailoney para el filtro del Wazuh Agent.
+    logging:
+      driver: journald
+      options:
+        tag: "soc-tesis-mailoney"
+
+    networks:
+      - hp-front
+
+    healthcheck:
+      # Pendiente E3: confirmar que python3 está en el PATH de la imagen al ejecutar.
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 25), 4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 8
+      start_period: 20s
+
+
+  snare:
+    image: ${SNARE_IMAGE:?Set SNARE_IMAGE in .env (see .env.example, D2 CLOSED)}
+    container_name: soc-tesis-snare
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+
+    # Sin --tanner explícito, Snare puede intentar alcanzar tanner.mushmush.org
+    # (servidor público, fuera de alcance). Snare exige GET tanner:8090/version
+    # al arrancar o termina con exit(1) -> depends_on condicionado a salud.
+    command:
+      - snare
+      - --tanner
+      - tanner
+      - --auto-update
+      - "false"
+      - --host-ip
+      - "0.0.0.0"
+      - --port
+      - "80"
+      - --page-dir
+      - "10"
+
+    ports:
+      - "80:80/tcp"
+
+    depends_on:
+      tanner:
+        condition: service_healthy
+
+    volumes:
+      - snare-data:/var/lib/snare
+      - snare-logs:/var/log/snare
+
+    networks:
+      - hp-front
+      - hp-back
+
+    healthcheck:
+      # Pendiente E3: confirmar que python3 está en el PATH de la imagen al ejecutar.
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 80), 4)"]
+      interval: 15s
+      timeout: 6s
+      retries: 8
+      start_period: 30s
+
+
+  tanner:
+    image: ${TANNER_IMAGE:?Set TANNER_IMAGE in .env (see .env.example, D2 CLOSED)}
+    container_name: soc-tesis-tanner
+    command: tanner
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+
+    # Internal only: no host port publication (D-H12).
+    expose:
+      - "8090"
+
+    depends_on:
+      tanner_redis:
+        condition: service_healthy
+      tanner_phpox:
+        condition: service_started
+
+    tmpfs:
+      - /tmp/tanner
+      - /opt/tanner/files
+
+    volumes:
+      # Bind al host: tanner_report.json; el Wazuh Agent lo lee desde aquí (D4).
+      - type: bind
+        source: ${SOC_TESIS_TANNER_LOG_DIR:-/srv/soc-tesis/tanner/log}
+        target: /var/log/tanner
+      # config.yaml propio (E3, 2026-10-13): la config horneada fija
+      # TANNER.host=tanner (hostname), con el que aiohttp nunca completaba el
+      # bind a :8090 (ver comentario dentro del archivo). Único cambio: 0.0.0.0.
+      - ./config/tanner/config.yaml:/opt/tanner/data/config.yaml:ro
+
+    networks:
+      - hp-back
+
+    healthcheck:
+      # Pendiente E3: confirmar que python3 está en el PATH de la imagen al ejecutar.
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 8090), 4)"]
+      interval: 10s
+      timeout: 6s
+      retries: 8
+      start_period: 30s
+
+
+  tanner_redis:
+    image: ${TANNER_REDIS_IMAGE:?Set TANNER_REDIS_IMAGE in .env (see .env.example, D2 CLOSED)}
+    container_name: soc-tesis-tanner-redis
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    # Config horneada de la imagen T-Pot: save "" (sin RDB) permite read_only.
+    # Riesgo aceptado: Redis sin contraseña, solo alcanzable desde hp-back
+    # (doc 17 §2: "Redis sin contraseña: aceptado solo en red interna").
+    read_only: true
+
+    # Internal only: no host port publication (D-H13).
+    expose:
+      - "6379"
+
+    networks:
+      - hp-back
+
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli PING | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+
+
+  tanner_phpox:
+    image: ${TANNER_PHPOX_IMAGE:?Set TANNER_PHPOX_IMAGE in .env (see .env.example, D2 CLOSED)}
+    container_name: soc-tesis-tanner-phpox
+    restart: unless-stopped
+    security_opt:
+      - "no-new-privileges:true"
+    read_only: true
+    tmpfs:
+      - "/tmp:uid=2000,gid=2000,mode=1777"
+
+    # Internal only: no host port publication.
+    expose:
+      - "8088"
+
+    networks:
+      - hp-back
+
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 8088), 4)"]
+      interval: 10s
+      timeout: 6s
+      retries: 6
+      start_period: 20s
+
+
+networks:
+  hp-front:
+    name: soc-tesis-hp-front
+    driver: bridge
+
+  hp-back:
+    name: soc-tesis-hp-back
+    driver: bridge
+    internal: true
+
+
+volumes:
+  cowrie-data:
+    name: soc-tesis-cowrie-data
+
+  dionaea-logs:
+    name: soc-tesis-dionaea-logs
+
+  snare-data:
+    name: soc-tesis-snare-data
+
+  snare-logs:
+    name: soc-tesis-snare-logs

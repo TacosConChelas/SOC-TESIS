@@ -1,0 +1,57 @@
+---
+# Rol honeypot. Diseño: docs/superpowers/specs/2026-11-04-honeypot-role-design.md
+honeypot_enabled: true
+
+# Baseline D1 (17_SOFTWARE_BASELINE.md). Formato "nombre: valor" en la primera columna:
+# lo leen pin-check.sh y honeypot-check.sh con sed.
+honeypot_docker_version: "5:29.8.2-1~ubuntu.22.04~jammy"
+honeypot_containerd_version: "2.3.6-1~ubuntu.22.04~jammy"
+honeypot_compose_version: "5.6.0-1~ubuntu.22.04~jammy"
+honeypot_docker_key_fingerprint: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+honeypot_wazuh_key_fingerprint: "0DCFCA5547B19D2A6099506096B3EE5F29111145"
+# ponytail: fecha copiada de la clave (gpg --show-keys, 2026-11-04); si Wazuh la re-firma
+# con la misma huella, pin-check avisara de mas hasta actualizar este valor.
+honeypot_wazuh_key_expires: "2027-05-15"
+
+honeypot_package_specs:
+  - "docker-ce={{ honeypot_docker_version }}"
+  - "docker-ce-cli={{ honeypot_docker_version }}"
+  - "containerd.io={{ honeypot_containerd_version }}"
+  - "docker-compose-plugin={{ honeypot_compose_version }}"
+  - "wazuh-agent={{ wazuh_expected_version }}-1"
+
+honeypot_apt_sources:
+  - name: docker
+    key_url: https://download.docker.com/linux/ubuntu/gpg
+    fingerprint: "{{ honeypot_docker_key_fingerprint }}"
+    repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable"
+  - name: wazuh
+    key_url: https://packages.wazuh.com/key/GPG-KEY-WAZUH
+    fingerprint: "{{ honeypot_wazuh_key_fingerprint }}"
+    repo: "deb [signed-by=/usr/share/keyrings/wazuh.asc] https://packages.wazuh.com/4.x/apt/ stable main"
+
+honeypot_dir: /opt/soc-tesis
+honeypot_data_root: /srv/soc-tesis
+honeypot_relay_ip: "10.50.30.10"
+honeypot_wait_timeout: 300
+# Destinos fuera de Azure (E1-6): Allow-Out-AzureCloud-443 no los cubre.
+honeypot_egress_probe_urls:
+  - http://1.1.1.1
+  - https://example.com
+
+honeypot_repo_root: "{{ (playbook_dir ~ '/..') | realpath }}"
+honeypot_secrets_dir_real: "{{ wazuh_secrets_dir | expanduser | realpath }}"
+# Lineas *_IMAGE= de .env.example (D2): fuente unica de los 7 digests.
+honeypot_image_env: >-
+  {{ dict(lookup('ansible.builtin.file', honeypot_repo_root ~ '/.env.example').splitlines()
+     | select('match', '^[A-Z_]+_IMAGE=') | map('split', '=')) }}
+honeypot_image_refs: "{{ honeypot_image_env.values() | list }}"
+# Directorios del bind (D4), la imagen que escribe en cada uno y el JSON que logcollector
+# debe poder abrir desde el arranque del agente (un archivo ausente al arrancar no se ingiere).
+# owner (opcional) sustituye al UID:GID de honeypot-uids.json. Dionaea: el entrypoint corre
+# como root y baja a 1000; el descubrimiento de install ve el UID del entrypoint, no el del
+# proceso que escribe. Sin owner, se usa el valor descubierto.
+honeypot_bind_dirs:
+  - { dir: cowrie/log, image_var: COWRIE_IMAGE, file: cowrie.json }
+  - { dir: dionaea/lib, image_var: DIONAEA_IMAGE, file: dionaea.json, owner: ["1000", "1000"] }
+  - { dir: tanner/log, image_var: TANNER_IMAGE, file: tanner_report.json }

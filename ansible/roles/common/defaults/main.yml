@@ -1,0 +1,6 @@
+---
+# Rol common. Diseño: docs/superpowers/specs/2026-10-29-common-role-design.md
+common_timezone: "UTC"
+common_ssh_max_auth_tries: 3
+common_ntp_retries: 12
+common_ntp_delay: 10

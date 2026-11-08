@@ -1,0 +1,9 @@
+---
+# El controlador real (192.168.1.73) necesita estas colecciones: community.general para
+# community.general.ufw y community.docker para el rol honeypot.
+# En el nix-shell local ya vienen con el paquete `ansible`.
+collections:
+  - name: community.general
+    version: "12.6.1"
+  - name: community.docker
+    version: "5.2.0"

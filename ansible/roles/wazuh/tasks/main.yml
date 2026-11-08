@@ -1,0 +1,527 @@
+---
+# Rol wazuh: all-in-one con el asistente oficial (D5).
+# Diseño: docs/superpowers/specs/2026-10-30-wazuh-role-design.md
+- name: Omitir el rol si está deshabilitado (el preflight local no instala Wazuh)
+  ansible.builtin.meta: end_role
+  when: not (wazuh_enabled | bool)
+  tags: [install, config, start]
+
+# --- Instalación (único tag que descarga) ------------------------------------------
+- name: Asegurar el directorio de centinelas
+  ansible.builtin.file:
+    path: /etc/soc-tesis
+    state: directory
+    mode: "0755"
+  tags: [install, config]
+
+- name: Leer si Wazuh ya está instalado
+  ansible.builtin.stat:
+    path: /var/ossec/bin/wazuh-control
+  register: wazuh_control
+  tags: [install]
+
+- name: Comprobar la memoria mínima antes de instalar
+  ansible.builtin.assert:
+    that: ansible_memtotal_mb | int >= wazuh_min_memory_mb | int
+    fail_msg: "Memoria insuficiente para el all-in-one: {{ ansible_memtotal_mb }} MiB (mínimo {{ wazuh_min_memory_mb }})."
+  when: not wazuh_control.stat.exists
+  tags: [install]
+
+- name: Leer el disco libre en / (con df, porque en contenedor facts.mounts no lista el overlay)
+  ansible.builtin.command: df -m --output=avail /
+  register: wazuh_disk_free
+  changed_when: false
+  check_mode: false
+  when: not wazuh_control.stat.exists
+  tags: [install]
+
+- name: Comprobar el disco libre antes de instalar
+  ansible.builtin.assert:
+    that: (wazuh_disk_free.stdout_lines | last | trim | int) >= wazuh_min_disk_mb | int
+    fail_msg: "Disco libre insuficiente en / (mínimo {{ wazuh_min_disk_mb }} MiB)."
+  when: not wazuh_control.stat.exists
+  tags: [install]
+
+- name: Persistir vm.max_map_count para el Indexer
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-soc-wazuh.conf
+    content: |
+      vm.max_map_count = 262144
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [install]
+
+- name: Aplicar vm.max_map_count (solo host real)
+  ansible.builtin.command: sysctl -p /etc/sysctl.d/99-soc-wazuh.conf
+  changed_when: false
+  when: ansible_virtualization_type != 'docker'
+  tags: [install]
+
+- name: Leer vm.max_map_count vigente
+  ansible.builtin.command: sysctl -n vm.max_map_count
+  register: wazuh_map_count
+  changed_when: false
+  check_mode: false
+  tags: [install]
+
+- name: Comprobar el mínimo de vm.max_map_count del Indexer
+  ansible.builtin.assert:
+    that: wazuh_map_count.stdout | int >= 262144
+    fail_msg: "vm.max_map_count={{ wazuh_map_count.stdout }}; el Indexer necesita 262144 como mínimo."
+  tags: [install]
+
+- name: Descargar el asistente de instalación
+  ansible.builtin.get_url:
+    url: "{{ wazuh_installer_url }}"
+    dest: /root/wazuh-install.sh
+    mode: "0700"
+  when: not wazuh_control.stat.exists
+  tags: [install]
+
+- name: Instalar Wazuh all-in-one
+  when: not wazuh_control.stat.exists
+  tags: [install]
+  block:
+    - name: Ejecutar el asistente (-a); sin salida porque imprime las contraseñas
+      ansible.builtin.command:
+        cmd: bash /root/wazuh-install.sh -a
+        chdir: /root
+      async: 3600
+      poll: 20
+      changed_when: true
+      no_log: true
+      tags: [install]
+  rescue:
+    - name: Leer el final del log del asistente
+      ansible.builtin.command: tail -n 40 /var/log/wazuh-install.log
+      register: wazuh_install_tail
+      changed_when: false
+      failed_when: false
+      tags: [install]
+
+    - name: Fallo de la instalación de Wazuh
+      ansible.builtin.fail:
+        msg: "El asistente de Wazuh falló. Final del log: {{ wazuh_install_tail.stdout | default('(sin log)') }}"
+      tags: [install]
+
+# --- Gate de versión y verificación de componentes (siempre, solo lectura) -----------
+- name: Leer la versión instalada de Wazuh
+  ansible.builtin.command: /var/ossec/bin/wazuh-control info
+  register: wazuh_control_info
+  changed_when: false
+  check_mode: false
+  tags: [install]
+
+- name: Exigir la versión esperada (gate de D1)
+  ansible.builtin.assert:
+    that:
+      - ('WAZUH_VERSION="v' ~ wazuh_expected_version ~ '"') in wazuh_control_info.stdout
+    fail_msg: >-
+      La versión instalada de Wazuh no es la esperada ({{ wazuh_expected_version }}):
+      desviación del baseline D1. Verifica la versión vigente y, si la aceptas, actualiza
+      wazuh_expected_version (y el baseline) antes de reintentar.
+  tags: [install]
+
+- name: Comprobar que los cuatro componentes están instalados
+  ansible.builtin.command: "dpkg -s {{ item }}"
+  loop:
+    - wazuh-manager
+    - wazuh-indexer
+    - wazuh-dashboard
+    - filebeat
+  changed_when: false
+  check_mode: false
+  tags: [install]
+
+- name: Retener los paquetes de Wazuh en la versión instalada
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - wazuh-manager
+    - wazuh-indexer
+    - wazuh-dashboard
+    - filebeat
+  tags: [install]
+
+- name: Marcar la instalación como verificada
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/wazuh-installed
+    content: "version={{ wazuh_expected_version }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [install]
+
+# --- Configuración ----------------------------------------------------------------
+- name: Leer si los secretos ya se entregaron
+  ansible.builtin.stat:
+    path: /etc/soc-tesis/wazuh-secrets-handed-over
+  register: wazuh_handed_over
+  tags: [config]
+
+- name: Comprobar que el directorio de secretos está fuera del repositorio
+  ansible.builtin.assert:
+    that:
+      - not ((wazuh_secrets_dir_real ~ '/').startswith(wazuh_repo_root ~ '/'))
+    fail_msg: >-
+      wazuh_secrets_dir ({{ wazuh_secrets_dir_real }}) está dentro del repositorio ({{ wazuh_repo_root }}):
+      los secretos de Wazuh nunca pueden vivir en el repo.
+  delegate_to: localhost
+  become: false
+  run_once: true
+  tags: [config]
+
+- name: Leer authd.pass en el controlador
+  ansible.builtin.stat:
+    path: "{{ wazuh_secrets_dir_real }}/authd.pass"
+  register: wazuh_authd_local
+  delegate_to: localhost
+  become: false
+  tags: [config]
+
+- name: Exigir que authd.pass exista en el controlador
+  ansible.builtin.assert:
+    that: wazuh_authd_local.stat.exists
+    fail_msg: "Falta {{ wazuh_secrets_dir_real }}/authd.pass (D8: se genera con openssl rand -base64 32)."
+  tags: [config]
+
+- name: Entregar authd.pass (contraseña de enrolamiento)
+  ansible.builtin.copy:
+    src: "{{ wazuh_secrets_dir_real }}/authd.pass"
+    dest: /var/ossec/etc/authd.pass
+    owner: root
+    group: wazuh
+    mode: "0640"
+  no_log: true
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Activar la contraseña de enrolamiento en ossec.conf
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '<use_password>\s*no\s*</use_password>'
+    replace: "<use_password>yes</use_password>"
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Apagar logall y logall_json (sin índice archives)
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: "<{{ item }}>\\s*yes\\s*</{{ item }}>"
+    replace: "<{{ item }}>no</{{ item }}>"
+  loop:
+    - logall
+    - logall_json
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Apagar la detección de vulnerabilidades
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(<vulnerability-detection>\s*<enabled>)\s*yes\s*(</enabled>)'
+    replace: '\1no\2'
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Apagar Active Response
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(<active-response>\s*<disabled>)\s*no\s*(</disabled>)'
+    replace: '\1yes\2'
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Activar un bloque de Active Response deshabilitado
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(?s)[ \t]*<!--\s*<active-response>.*?</active-response>\s*-->'
+    replace: |-
+        <active-response>
+          <disabled>yes</disabled>
+        </active-response>
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Leer ossec.conf para verificarlo
+  ansible.builtin.slurp:
+    src: /var/ossec/etc/ossec.conf
+  register: wazuh_ossec
+  check_mode: false
+  tags: [config]
+
+- name: Comprobar que ossec.conf quedó con los valores de D5
+  ansible.builtin.assert:
+    that:
+      - (wazuh_ossec.content | b64decode) is search('<use_password>yes</use_password>')
+      - (wazuh_ossec.content | b64decode) is search('<use_source_ip>no</use_source_ip>')
+      - (wazuh_ossec.content | b64decode) is search('<logall>no</logall>')
+      - (wazuh_ossec.content | b64decode) is search('<logall_json>no</logall_json>')
+      - (wazuh_ossec.content | b64decode) is search('(?s)<vulnerability-detection>\s*<enabled>no</enabled>')
+      - (wazuh_ossec.content | b64decode) is search('(?s)<active-response>\s*<disabled>yes</disabled>')
+    fail_msg: >-
+      ossec.conf no tiene los valores de D5 (las sustituciones no coincidieron con el formato
+      del archivo instalado). Revisa /var/ossec/etc/ossec.conf y ajusta las expresiones del rol.
+  tags: [config]
+
+- name: Dejar el gancho de reglas locales
+  ansible.builtin.copy:
+    src: local_rules.xml
+    dest: /var/ossec/etc/rules/local_rules.xml
+    owner: wazuh
+    group: wazuh
+    mode: "0660"
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Dejar la API de Wazuh solo en loopback
+  ansible.builtin.lineinfile:
+    path: /var/ossec/api/configuration/api.yaml
+    regexp: '^#?\s*host:'
+    line: "host: ['127.0.0.1']"
+    insertbefore: '^#?\s*port:'
+    firstmatch: true
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+- name: Fijar el heap del Indexer
+  ansible.builtin.lineinfile:
+    path: /etc/wazuh-indexer/jvm.options
+    regexp: "^{{ item }}"
+    line: "{{ item }}{{ wazuh_indexer_heap }}"
+  loop:
+    - "-Xms"
+    - "-Xmx"
+  notify: Reiniciar wazuh-indexer
+  tags: [config]
+
+- name: Validar la configuración del Manager
+  ansible.builtin.command: /var/ossec/bin/wazuh-analysisd -t
+  changed_when: false
+  check_mode: false
+  tags: [config]
+
+# --- Política ISM y entrega de secretos (una sola vez) -------------------------------
+- name: Comprobar que el tar de contraseñas sigue en la VM
+  ansible.builtin.stat:
+    path: /root/wazuh-install-files.tar
+  register: wazuh_tar
+  tags: [config]
+
+- name: Detener si faltan las contraseñas y los secretos no se entregaron
+  ansible.builtin.fail:
+    msg: >-
+      No existe /root/wazuh-install-files.tar y no hay centinela wazuh-secrets-handed-over:
+      no se puede aplicar la política ISM ni entregar los secretos. Reinstala o recupera el tar.
+  when: not wazuh_handed_over.stat.exists and not wazuh_tar.stat.exists
+  tags: [config]
+
+- name: Esperar a que el Indexer responda
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: 9200
+    timeout: 300
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Leer la contraseña de admin del Indexer (solo en memoria)
+  ansible.builtin.shell: |
+    set -o pipefail
+    tar -axf /root/wazuh-install-files.tar wazuh-install-files/wazuh-passwords.txt -O \
+      | grep -P "\'admin\'" -A 1 | tail -n 1 | sed -E "s/.*'([^']*)'.*/\1/"
+  args:
+    executable: /bin/bash
+  register: wazuh_admin_pass
+  changed_when: false
+  no_log: true
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Escribir la política ISM (no contiene secretos)
+  ansible.builtin.template:
+    src: ism-retention.json.j2
+    dest: /etc/soc-tesis/wazuh-ism-policy.json
+    owner: root
+    group: root
+    mode: "0644"
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Aplicar la política ISM de retención
+  ansible.builtin.command:
+    argv:
+      - curl
+      - -sk
+      - -K
+      - "-"
+      - -X
+      - PUT
+      - -H
+      - "Content-Type: application/json"
+      - --data-binary
+      - "@/etc/soc-tesis/wazuh-ism-policy.json"
+      - -o
+      - /dev/null
+      - -w
+      - "%{http_code}"
+      - https://127.0.0.1:9200/_plugins/_ism/policies/wazuh-alert-retention-policy
+    stdin: 'user = "admin:{{ wazuh_admin_pass.stdout }}"'
+  register: wazuh_ism
+  changed_when: wazuh_ism.stdout in ['200', '201']
+  failed_when: wazuh_ism.stdout not in ['200', '201', '409']
+  until: wazuh_ism.stdout in ['200', '201', '409']
+  retries: 12
+  delay: 10
+  no_log: true
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Crear el directorio de secretos en el controlador
+  ansible.builtin.file:
+    path: "{{ wazuh_secrets_dir_real }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Traer wazuh-install-files.tar al controlador
+  ansible.builtin.fetch:
+    src: /root/wazuh-install-files.tar
+    dest: "{{ wazuh_secrets_dir_real }}/wazuh-install-files.tar"
+    flat: true
+    validate_checksum: true
+  no_log: true
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Dejar el tar traído solo para el operador
+  ansible.builtin.file:
+    path: "{{ wazuh_secrets_dir_real }}/wazuh-install-files.tar"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Calcular el sha256 del tar en la VM
+  ansible.builtin.stat:
+    path: /root/wazuh-install-files.tar
+    checksum_algorithm: sha256
+  register: wazuh_tar_remote
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Calcular el sha256 del tar en el controlador
+  ansible.builtin.stat:
+    path: "{{ wazuh_secrets_dir_real }}/wazuh-install-files.tar"
+    checksum_algorithm: sha256
+  register: wazuh_tar_local
+  delegate_to: localhost
+  become: false
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Exigir que las dos copias coincidan antes de destruir la de la VM
+  ansible.builtin.assert:
+    that:
+      - wazuh_tar_remote.stat.checksum == wazuh_tar_local.stat.checksum
+    fail_msg: "El tar traído al controlador no coincide con el de la VM: no se destruye el original."
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Destruir el tar de contraseñas en la VM
+  ansible.builtin.command:
+    cmd: shred -u /root/wazuh-install-files.tar
+    removes: /root/wazuh-install-files.tar
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Borrar el log del asistente (contiene el resumen con contraseñas)
+  ansible.builtin.file:
+    path: /var/log/wazuh-install.log
+    state: absent
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+- name: Marcar los secretos como entregados
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/wazuh-secrets-handed-over
+    content: "retencion_dias={{ wazuh_retention_days }}\n"
+    owner: root
+    group: root
+    mode: "0644"
+  when: not wazuh_handed_over.stat.exists
+  tags: [config]
+
+# --- Firewall del host (solo host real, mismo patrón que logrelay) -------------------
+- name: Permitir SSH desde la LAN del laboratorio (solo host real)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    src: "{{ wazuh_admin_cidr }}"
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Permitir 1514 y 1515 desde el relay y la LAN (solo host real)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.0 }}"
+    proto: tcp
+    src: "{{ item.1 }}"
+  loop: "{{ ['1514', '1515'] | product([wazuh_relay_ip, wazuh_admin_cidr]) | list }}"
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Permitir el Dashboard desde la LAN (solo host real)
+  community.general.ufw:
+    rule: allow
+    port: "443"
+    proto: tcp
+    src: "{{ wazuh_admin_cidr }}"
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Política de entrada denegada (solo host real)
+  community.general.ufw:
+    default: deny
+    direction: incoming
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Política de salida permitida (solo host real)
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Activar UFW (solo host real)
+  community.general.ufw:
+    state: enabled
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+# --- Arranque (nunca descarga) ------------------------------------------------------
+- name: Habilitar y arrancar los servicios de Wazuh en orden
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - wazuh-indexer
+    - wazuh-manager
+    - filebeat
+    - wazuh-dashboard
+  tags: [start]
+
+- name: Esperar a que respondan los puertos de Wazuh
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ item }}"
+    timeout: 300
+  loop: [9200, 1514, 1515, 443]
+  tags: [start]

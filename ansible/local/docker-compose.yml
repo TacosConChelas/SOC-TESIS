@@ -1,0 +1,103 @@
+# Ensayo local de las 4 VMs de Azure (ADR-006 Fase 0 / E1-7).
+#
+# Dos redes:
+#   operate  internal=true, 10.50.0.0/16  -> IPs simuladas .10/.20/.30/.40
+#   install  bridge,        172.28.0.0/24 -> "ventana de egreso" (Etapa 3/7)
+#
+# `up` arranca con ambas conectadas (egreso abierto). El target
+# `toggle-operate` desconecta `install` y simula el cierre del egreso.
+name: soc-local
+
+x-vm: &vm
+  build:
+    context: .
+  image: soc-tesis/ansible-local:22.04
+  privileged: true
+  cgroup: host
+  restart: "no"
+  stop_grace_period: 5s
+  security_opt:
+    - seccomp=unconfined
+  volumes:
+    - ./.keys:/keys:ro
+    - /sys/fs/cgroup:/sys/fs/cgroup:rw
+  tmpfs:
+    - /run
+    - /run/lock
+
+services:
+  strongswan:
+    <<: *vm
+    container_name: soc-local-strongswan
+    hostname: strongswan
+    environment:
+      SSHD_PORT: "22"
+    networks:
+      operate:
+        ipv4_address: 10.50.20.10
+      install:
+        gw_priority: 10
+
+  wazuh:
+    <<: *vm
+    container_name: soc-local-wazuh
+    hostname: wazuh
+    environment:
+      SSHD_PORT: "22"
+    networks:
+      operate:
+        ipv4_address: 10.50.40.10
+      install:
+        gw_priority: 10
+
+  logrelay:
+    <<: *vm
+    container_name: soc-local-logrelay
+    hostname: logrelay
+    environment:
+      SSHD_PORT: "22"
+    networks:
+      operate:
+        ipv4_address: 10.50.30.10
+      install:
+        gw_priority: 10
+
+  honeyserver:
+    <<: *vm
+    container_name: soc-local-honeyserver
+    hostname: honeyserver
+    environment:
+      # El 22 es el señuelo; la administración va por el 22222 (A6/E1-2).
+      SSHD_PORT: "22222"
+    # Docker dentro del contenedor (rol honeypot): /var/lib/docker y
+    # /var/lib/containerd en volumenes, para no apilar overlayfs sobre el
+    # overlay del contenedor (Docker 29 usa el snapshotter de containerd).
+    volumes:
+      - ./.keys:/keys:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - honeyserver-docker:/var/lib/docker
+      - honeyserver-containerd:/var/lib/containerd
+    networks:
+      operate:
+        ipv4_address: 10.50.10.10
+      install:
+        gw_priority: 10
+
+networks:
+  operate:
+    name: soc-local-operate
+    internal: true
+    ipam:
+      config:
+        - subnet: 10.50.0.0/16
+  install:
+    name: soc-local-install
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  honeyserver-docker:
+    name: soc-local-honeyserver-docker
+  honeyserver-containerd:
+    name: soc-local-honeyserver-containerd

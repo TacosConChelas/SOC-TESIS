@@ -1,0 +1,519 @@
+---
+# Rol honeypot: Docker + 7 imagenes fijadas (D2) + Wazuh Agent por el relay (D4).
+# Diseño: docs/superpowers/specs/2026-11-04-honeypot-role-design.md
+# E1-3: mientras el egreso este abierto, nada del señuelo queda activo ni
+# habilitado. El daemon de Docker solo corre durante el pull de `install` y
+# desde `start` en adelante. Señuelo en el 22, administración en el 22222 (A6/E1-2).
+- name: Omitir el rol si está deshabilitado (el preflight local no instala Docker)
+  ansible.builtin.meta: end_role
+  when: not (honeypot_enabled | bool)
+  tags: [install, config, start]
+
+- name: Comprobar que la administración usa el puerto 22222
+  ansible.builtin.assert:
+    that:
+      - ansible_port | default(22) | int == 22222
+    fail_msg: "honeyserver debe administrarse por 22222; el 22 es el señuelo"
+    quiet: true
+  tags: [install, config, start]
+
+- name: Asegurar el directorio de centinelas
+  ansible.builtin.file:
+    path: /etc/soc-tesis
+    state: directory
+    mode: "0755"
+  tags: [install, config, start]
+
+- name: Escribir el marcador del rol honeypot
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/honeypot
+    content: "role=honeypot\n"
+    mode: "0644"
+  tags: [config]
+
+- name: Leer si el señuelo ya arrancó alguna vez
+  ansible.builtin.stat:
+    path: /etc/soc-tesis/honeypot-started
+  register: honeypot_started
+  tags: [install, config, start]
+
+# --- install: claves, repos y paquetes (único tag que descarga) -------------------------
+- name: Instalar gnupg (verificación de las huellas)
+  ansible.builtin.apt:
+    name: gnupg
+    state: present
+    lock_timeout: 120
+  tags: [install]
+
+- name: Asegurar el directorio de claves descargadas (todavía sin confianza)
+  ansible.builtin.file:
+    path: /etc/soc-tesis/keys
+    state: directory
+    mode: "0755"
+  tags: [install]
+
+# Si la clave ya se descargó no se pide de nuevo: get_url con dest existente hace una
+# peticion condicional (If-Modified-Since) que necesita red, y la pasada completa corre
+# con el egreso cerrado. La huella se sigue exigiendo abajo sobre la clave local.
+- name: Leer si las claves apt ya están en disco
+  ansible.builtin.stat:
+    path: "/etc/soc-tesis/keys/{{ item.name }}.asc"
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: honeypot_key_files
+  tags: [install]
+
+- name: Descargar las claves apt de Docker y Wazuh
+  ansible.builtin.get_url:
+    url: "{{ item.key_url }}"
+    dest: "/etc/soc-tesis/keys/{{ item.name }}.asc"
+    mode: "0644"
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+    index_var: honeypot_key_idx
+  when: not honeypot_key_files.results[honeypot_key_idx].stat.exists
+  tags: [install]
+
+- name: Leer la huella de cada clave descargada
+  ansible.builtin.command: gpg --show-keys --with-colons /etc/soc-tesis/keys/{{ item.name }}.asc
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: honeypot_key_info
+  changed_when: false
+  check_mode: false
+  tags: [install]
+
+- name: Exigir la huella fijada en cada clave (clave primaria, 40 hex)
+  ansible.builtin.assert:
+    that:
+      - (item.stdout_lines | select('match', '^fpr:') | first) == ('fpr:::::::::' ~ item.item.fingerprint ~ ':')
+    fail_msg: >-
+      La clave apt de {{ item.item.name }} ({{ item.item.key_url }}) no tiene la huella fijada
+      {{ item.item.fingerprint }}: no se instala nada desde ese repo.
+    quiet: true
+  loop: "{{ honeypot_key_info.results }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  tags: [install]
+
+- name: Instalar las claves ya verificadas
+  ansible.builtin.copy:
+    src: "/etc/soc-tesis/keys/{{ item.name }}.asc"
+    dest: "/usr/share/keyrings/{{ item.name }}.asc"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  tags: [install]
+
+- name: Agregar los repos de Docker y de Wazuh
+  ansible.builtin.apt_repository:
+    repo: "{{ item.repo }}"
+    filename: "{{ item.name }}"
+    update_cache: false
+    state: present
+  loop: "{{ honeypot_apt_sources }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: honeypot_repos
+  tags: [install]
+
+- name: Leer las versiones instaladas de los paquetes fijados
+  ansible.builtin.command: >-
+    dpkg-query -W -f '${Package}=${Version}\n'
+    {{ honeypot_package_specs | map('regex_replace', '=.*$', '') | join(' ') }}
+  register: honeypot_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+# apt solo refresca la caché si cambió un repo o falta un paquete en su versión:
+# así la pasada completa con el egreso cerrado (Etapa 9) no sale a Internet.
+- name: Instalar Docker, Compose y el Wazuh Agent en las versiones fijadas (D1)
+  ansible.builtin.apt:
+    name: "{{ honeypot_package_specs }}"
+    install_recommends: false
+    update_cache: true
+    lock_timeout: 120
+  when: honeypot_repos is changed or (honeypot_package_specs | difference(honeypot_dpkg.stdout_lines) | length > 0)
+  tags: [install]
+
+- name: Retener los paquetes fijados (hold)
+  ansible.builtin.dpkg_selections:
+    name: "{{ item | regex_replace('=.*$', '') }}"
+    selection: hold
+  loop: "{{ honeypot_package_specs }}"
+  tags: [install]
+
+# El policy-rc.d de common impide que el postinst arranque servicios, pero no que los
+# habilite. Solo antes del primer start: después, install no toca servicios.
+- name: Dejar Docker y el agente detenidos y deshabilitados (E1-3)
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - docker.socket
+    - docker.service
+    - containerd.service
+    - wazuh-agent.service
+  when: not honeypot_started.stat.exists
+  tags: [install]
+
+# --- Proyecto compose (lo necesita el pull de install) ------------------------------------
+- name: Crear el directorio del proyecto compose
+  ansible.builtin.file:
+    path: "{{ honeypot_dir }}"
+    state: directory
+    mode: "0755"
+  tags: [install, config]
+
+- name: Copiar docker-compose.yml y .env (sin secretos, D2)
+  ansible.builtin.copy:
+    src: "{{ honeypot_repo_root }}/{{ item.src }}"
+    dest: "{{ honeypot_dir }}/{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: docker-compose.yml, dest: docker-compose.yml }
+    - { src: .env.example, dest: .env }
+  tags: [install, config]
+
+- name: Copiar config/ de Dionaea y Tanner
+  ansible.builtin.copy:
+    src: "{{ honeypot_repo_root }}/config/"
+    dest: "{{ honeypot_dir }}/config/"
+    owner: root
+    group: root
+    mode: "0644"
+    directory_mode: "0755"
+  tags: [install, config]
+
+# --- Imágenes por digest (solo si cambiaron) -------------------------------------------
+- name: Leer el centinela de imágenes
+  ansible.builtin.slurp:
+    src: /etc/soc-tesis/honeypot-images
+  register: honeypot_images_sentinel
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+- name: Descargar y verificar las imágenes (solo si cambiaron los digests)
+  when: (honeypot_images_sentinel.content | default('') | b64decode) != (honeypot_image_refs | join(' '))
+  tags: [install]
+  block:
+    - name: Arrancar Docker solo para el pull (sin habilitarlo)
+      ansible.builtin.systemd_service:
+        name: docker.service
+        state: started
+      tags: [install]
+
+    - name: Descargar las 7 imágenes por digest (D2)
+      community.docker.docker_compose_v2_pull:
+        project_src: "{{ honeypot_dir }}"
+        policy: missing
+      tags: [install]
+
+    - name: Leer los RepoDigests de cada imagen
+      ansible.builtin.command: >-
+        docker image inspect --format '{% raw %}{{join .RepoDigests " "}}{% endraw %}'
+        {{ item | regex_replace(':[^/@]+@', '@') }}
+      loop: "{{ honeypot_image_refs }}"
+      register: honeypot_digests
+      changed_when: false
+      tags: [install]
+
+    - name: Exigir el digest fijado en cada imagen (paso 5 del baseline)
+      ansible.builtin.assert:
+        that:
+          - (item.item | regex_replace(':[^/@]+@', '@')) in item.stdout.split()
+        fail_msg: "La imagen {{ item.item }} no tiene el digest de .env.example (RepoDigests: {{ item.stdout }})."
+        quiet: true
+      loop: "{{ honeypot_digests.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      tags: [install]
+
+    # Contenedor efímero y sin red: lee el usuario por defecto de la imagen.
+    - name: Descubrir el UID:GID de las imágenes que escriben en el host (D4)
+      ansible.builtin.command: >-
+        docker run --rm --network none --entrypoint python3 {{ honeypot_image_env[item.image_var] }}
+        -c 'import os; print(os.getuid(), os.getgid())'
+      loop: "{{ honeypot_bind_dirs }}"
+      loop_control:
+        label: "{{ item.dir }}"
+      register: honeypot_uid_probe
+      changed_when: false
+      tags: [install]
+
+    - name: Guardar los UID:GID descubiertos (config los lee con el daemon apagado)
+      ansible.builtin.copy:
+        dest: /etc/soc-tesis/honeypot-uids.json
+        content: >-
+          {{ dict(honeypot_uid_probe.results | map(attribute='item.dir')
+             | zip(honeypot_uid_probe.results | map(attribute='stdout') | map('split'))) | to_nice_json }}
+        mode: "0644"
+      tags: [install]
+
+    - name: Escribir el centinela de imágenes
+      ansible.builtin.copy:
+        dest: /etc/soc-tesis/honeypot-images
+        content: "{{ honeypot_image_refs | join(' ') }}"
+        mode: "0644"
+      tags: [install]
+
+  always:
+    - name: Volver a dormir Docker tras el pull, aunque haya fallado (E1-3)
+      ansible.builtin.systemd_service:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - docker.socket
+        - docker.service
+        - containerd.service
+      when: not honeypot_started.stat.exists
+      tags: [install]
+
+# --- config: no descarga ni arranca -----------------------------------------------------
+- name: Leer los UID:GID descubiertos en install
+  ansible.builtin.slurp:
+    src: /etc/soc-tesis/honeypot-uids.json
+  register: honeypot_uids_file
+  failed_when: false
+  check_mode: false
+  tags: [config]
+
+- name: Exigir los UID:GID descubiertos
+  ansible.builtin.assert:
+    that: honeypot_uids_file.content is defined
+    fail_msg: "Falta /etc/soc-tesis/honeypot-uids.json: corre antes --tags install (los UID se leen con el daemon arriba)."
+    quiet: true
+  tags: [config]
+
+- name: Crear los directorios del bind con el dueño de cada imagen (D4)
+  ansible.builtin.file:
+    path: "{{ honeypot_data_root }}/{{ item.dir }}"
+    state: directory
+    owner: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[0] }}"
+    group: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[1] }}"
+    mode: "0755"
+  loop: "{{ honeypot_bind_dirs }}"
+  loop_control:
+    label: "{{ item.dir }}"
+  tags: [config]
+
+# logcollector abre sus localfile al arrancar: un archivo que aun no existe no se ingiere
+# despues (ERROR 1103 y nunca lo reintenta). Se dejan vacios y con el dueño de la imagen
+# para que el primer arranque del agente los abra. force: false nunca pisa un archivo con
+# eventos; copy con contenido hace la tarea idempotente (state: touch cambiaria la fecha).
+- name: Crear vacíos los JSON de los honeypots antes del arranque del agente (D4)
+  ansible.builtin.copy:
+    dest: "{{ honeypot_data_root }}/{{ item.dir }}/{{ item.file }}"
+    content: ""
+    owner: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[0] }}"
+    group: "{{ (item.owner | default((honeypot_uids_file.content | b64decode | from_json)[item.dir]))[1] }}"
+    mode: "0644"
+    force: false
+  loop: "{{ honeypot_bind_dirs }}"
+  loop_control:
+    label: "{{ item.dir }}/{{ item.file }}"
+  tags: [config]
+
+- name: Apuntar el agente al relay (D4)
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(<server>\s*<address>)[^<]*(</address>)'
+    replace: '\g<1>{{ honeypot_relay_ip }}\g<2>'
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+- name: Fijar el client_buffer de D4 (cola 100000, 500 EPS)
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(?s)(<client_buffer>(?:(?!</client_buffer>).)*?<{{ item.tag }}>)\s*\d+\s*(</{{ item.tag }}>)'
+    replace: '\g<1>{{ item.value }}\g<2>'
+  loop:
+    - { tag: queue_size, value: 100000 }
+    - { tag: events_per_second, value: 500 }
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+# El agente de Wazuh trae un localfile de journald SIN filtro (todo el journal del sistema
+# iria al Manager: ruido y contra la minimizacion de datos, doc 19 §7). Se quita para que
+# quede uno solo, el de Mailoney. La regex exige el orden y los hijos del bloque original
+# (log_format, location, nada mas), asi que nunca coincide con el nuestro. Verificado
+# contra el ossec.conf real: 1 coincidencia antes, 0 despues.
+- name: Quitar el localfile de journald sin filtro que trae el paquete
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '[ \t]*<localfile>\s*<log_format>journald</log_format>\s*<location>journald</location>\s*</localfile>[ \t]*\n?'
+    replace: ''
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+- name: Declarar los localfile de los honeypots (D4)
+  ansible.builtin.blockinfile:
+    path: /var/ossec/etc/ossec.conf
+    marker: "<!-- {mark} SOC-TESIS D4 localfile (rol honeypot) -->"
+    insertafter: EOF
+    block: |
+      <ossec_config>
+      {% for item in [('cowrie/log/cowrie.json', 'cowrie'), ('dionaea/lib/dionaea.json', 'dionaea'), ('tanner/log/tanner_report.json', 'tanner')] %}
+        <localfile>
+          <location>{{ honeypot_data_root }}/{{ item[0] }}</location>
+          <log_format>json</log_format>
+          <only-future-events>no</only-future-events>
+          <label key="@honeypot">{{ item[1] }}</label>
+        </localfile>
+      {% endfor %}
+        <!-- Mailoney por journald (decisión 2026-11-04): <label> solo aplica a json. -->
+        <localfile>
+          <location>journald</location>
+          <log_format>journald</log_format>
+          <only-future-events>no</only-future-events>
+          <filter field="CONTAINER_NAME">^soc-tesis-mailoney$</filter>
+        </localfile>
+      </ossec_config>
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+- name: Leer ossec.conf para verificarlo
+  ansible.builtin.slurp:
+    src: /var/ossec/etc/ossec.conf
+  register: honeypot_ossec
+  check_mode: false
+  tags: [config]
+
+- name: Comprobar que ossec.conf quedó con los valores de D4
+  ansible.builtin.assert:
+    that:
+      - (honeypot_ossec.content | b64decode) is search('<address>' ~ honeypot_relay_ip ~ '</address>')
+      - (honeypot_ossec.content | b64decode) is search('<queue_size>100000</queue_size>')
+      - (honeypot_ossec.content | b64decode) is search('<events_per_second>500</events_per_second>')
+      - (honeypot_ossec.content | b64decode | regex_findall('<location>journald</location>') | length) == 1
+    fail_msg: >-
+      ossec.conf no tiene los valores de D4: o las sustituciones no coincidieron con el formato del
+      archivo instalado, o el localfile de journald del paquete cambio de forma y la tarea que lo
+      quita ya no lo reconoce (debe quedar uno solo, el de Mailoney). Revisa
+      /var/ossec/etc/ossec.conf y reporta antes de cambiar el rol.
+  tags: [config]
+
+- name: Validar la configuración del agente
+  ansible.builtin.command: /var/ossec/bin/wazuh-logcollector -t
+  changed_when: false
+  check_mode: false
+  tags: [config]
+
+- name: Comprobar que el directorio de secretos está fuera del repositorio
+  ansible.builtin.assert:
+    that:
+      - not ((honeypot_secrets_dir_real ~ '/').startswith(honeypot_repo_root ~ '/'))
+    fail_msg: >-
+      wazuh_secrets_dir ({{ honeypot_secrets_dir_real }}) está dentro del repositorio ({{ honeypot_repo_root }}):
+      los secretos nunca pueden vivir en el repo.
+  delegate_to: localhost
+  become: false
+  run_once: true
+  tags: [config]
+
+- name: Leer authd.pass en el controlador
+  ansible.builtin.stat:
+    path: "{{ honeypot_secrets_dir_real }}/authd.pass"
+  register: honeypot_authd_local
+  delegate_to: localhost
+  become: false
+  tags: [config]
+
+- name: Exigir que authd.pass exista en el controlador
+  ansible.builtin.assert:
+    that: honeypot_authd_local.stat.exists
+    fail_msg: "Falta {{ honeypot_secrets_dir_real }}/authd.pass (D8: el mismo que entrega el rol wazuh)."
+  tags: [config]
+
+- name: Entregar authd.pass (contraseña de enrolamiento)
+  ansible.builtin.copy:
+    src: "{{ honeypot_secrets_dir_real }}/authd.pass"
+    dest: /var/ossec/etc/authd.pass
+    owner: root
+    group: wazuh
+    mode: "0640"
+  no_log: true
+  notify: Reiniciar wazuh-agent
+  tags: [config]
+
+# --- start: nunca descarga ----------------------------------------------------------------
+- name: Sondear el egreso a Internet (debe estar cerrado, E1-3/E1-6)
+  ansible.builtin.uri:
+    url: "{{ item }}"
+    method: HEAD
+    timeout: 5
+    status_code: [-1]
+  loop: "{{ honeypot_egress_probe_urls }}"
+  register: honeypot_egress
+  failed_when: false
+  check_mode: false
+  tags: [start]
+
+- name: Exigir el egreso cerrado antes de arrancar el señuelo
+  ansible.builtin.assert:
+    that:
+      - honeypot_egress.results | rejectattr('status', 'equalto', -1) | list | length == 0
+    fail_msg: >-
+      E1-3: el egreso sigue abierto (responden
+      {{ honeypot_egress.results | rejectattr('status', 'equalto', -1) | map(attribute='item') | join(', ') }}).
+      Cierra la ventana (terraform apply -var maintenance_egress=false) antes de arrancar el señuelo.
+  tags: [start]
+
+- name: Habilitar y arrancar Docker
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - containerd.service
+    - docker.socket
+    - docker.service
+  tags: [start]
+
+- name: Levantar el señuelo sin descargar nada (espera a los healthchecks)
+  community.docker.docker_compose_v2:
+    project_src: "{{ honeypot_dir }}"
+    state: present
+    pull: never
+    build: never
+    wait: true
+    wait_timeout: "{{ honeypot_wait_timeout }}"
+  tags: [start]
+
+- name: Habilitar y arrancar el Wazuh Agent
+  ansible.builtin.systemd_service:
+    name: wazuh-agent
+    enabled: true
+    state: started
+  tags: [start]
+
+- name: Esperar a que el agente quede conectado por el relay (D4)
+  ansible.builtin.command: grep -qx "status='connected'" /var/ossec/var/run/wazuh-agentd.state
+  register: honeypot_agent_state
+  until: honeypot_agent_state.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+  check_mode: false
+  tags: [start]
+
+- name: Marcar que el señuelo arrancó (desde ahora install no toca servicios)
+  ansible.builtin.copy:
+    dest: /etc/soc-tesis/honeypot-started
+    content: "started\n"
+    mode: "0644"
+  tags: [start]

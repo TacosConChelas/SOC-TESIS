@@ -1,0 +1,6 @@
+---
+# policy-rc.d (rol common) bloquea invoke-rc.d, pero no systemctl: se usa systemctl.
+- name: Recargar nginx si esta activo
+  ansible.builtin.shell: |
+    if systemctl is-active --quiet nginx; then systemctl reload nginx; fi
+  changed_when: false

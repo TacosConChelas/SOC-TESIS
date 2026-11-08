@@ -1,0 +1,6 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/smb.html (ejemplo oficial, CC0-1.0)
+# Habilitado por D3/D-H03 (architecture.md sec.11): TCP 445 SMB. Valores por defecto
+# (sin personalidad Windows/Samba concreta): decision no tomada por el responsable,
+# se deja la config minima oficial en lugar de inventar una identidad de SO.
+- name: smb
+  config: {}

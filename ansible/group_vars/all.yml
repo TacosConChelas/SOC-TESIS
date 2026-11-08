@@ -1,0 +1,8 @@
+---
+# Variables compartidas por varios roles (spec 2026-11-04-honeypot-role-design.md §3).
+# Baseline D1. El asistente de Wazuh instala el ultimo parche 4.14.x: si difiere, el gate
+# del rol wazuh falla. El agente del honeyserver usa la misma version: un agente mas
+# nuevo que el Manager no es valido. Formato exacto: lo leen scripts con sed.
+wazuh_expected_version: "4.14.10"
+# Directorio de secretos en el CONTROLADOR; debe quedar fuera del repositorio.
+wazuh_secrets_dir: "~/soc-tesis-secrets/wazuh"

@@ -1,0 +1,142 @@
+---
+# Rol logrelay: NGINX stream L4 (D4). Agente Wazuh del honeyserver -> 1514/1515 -> Manager.
+# Diseño: docs/superpowers/specs/2026-10-29-logrelay-role-design.md
+- name: Leer qué paquetes del rol ya están instalados en su versión
+  ansible.builtin.command: >-
+    dpkg-query -W -f='${db:Status-Abbrev}${Package}=${Version}\n'
+    {{ logrelay_apt_packages | map('regex_replace', '=.*$', '') | join(' ') }}
+  register: logrelay_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+# apt solo refresca la caché si falta algún paquete, o uno de NGINX con otra versión:
+# así la pasada completa con el egreso cerrado (Etapa 9) no sale a Internet.
+# ${db:Status-Abbrev} empieza con la marca de retención (h): NGINX está en hold, así
+# que se acepta cualquier estado con la 'i' de instalado (ii, hi). Una entrada con
+# versión exige coincidencia exacta; una sin versión (logrotate, ufw) basta con el nombre.
+- name: Instalar NGINX con stream, logrotate y ufw en la versión fijada
+  ansible.builtin.apt:
+    name: "{{ logrelay_apt_packages }}"
+    state: present
+    update_cache: >-
+      {{ True if (logrelay_apt_packages | reject('in', logrelay_installed)
+      | reject('in', logrelay_installed | map('regex_replace', '=.*$', '') | list)
+      | list | length > 0) else omit }}
+  vars:
+    logrelay_installed: "{{ logrelay_dpkg.stdout_lines | select('match', '^.i ') | map('regex_replace', '^.i ', '') | list }}"
+  tags: [install]
+
+- name: Retener los paquetes de NGINX en la versión fijada
+  ansible.builtin.dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop:
+    - nginx
+    - nginx-core
+    - nginx-common
+    - libnginx-mod-stream
+  tags: [install]
+
+- name: Crear el directorio de logs del relay
+  ansible.builtin.file:
+    path: "{{ logrelay_log_dir }}"
+    state: directory
+    owner: root
+    group: adm
+    mode: "0750"
+  tags: [config]
+
+- name: Escribir nginx.conf (solo stream, validado con nginx -t)
+  ansible.builtin.template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: /usr/sbin/nginx -t -c %s
+  notify: Recargar nginx si esta activo
+  tags: [config]
+
+- name: Escribir la rotación de logs del relay
+  ansible.builtin.template:
+    src: soc-relay.logrotate.j2
+    dest: /etc/logrotate.d/soc-relay
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [config]
+
+# UFW solo en host real (E1-7): en contenedor cortaria el SSH del ensayo.
+# Orden: reglas allow -> politicas -> activar (la salida queda permitida; el
+# egreso lo controla el NSG, cerrado fuera de la ventana de mantenimiento).
+- name: Permitir SSH desde la LAN del laboratorio (solo host real)
+  community.general.ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+    src: "{{ logrelay_admin_cidr }}"
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Permitir 1514 y 1515 solo desde el agente del honeyserver (solo host real)
+  community.general.ufw:
+    rule: allow
+    port: "{{ item }}"
+    proto: tcp
+    src: "{{ logrelay_agent_ip }}"
+  loop: ["1514", "1515"]
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Política de entrada denegada (solo host real)
+  community.general.ufw:
+    default: deny
+    direction: incoming
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Política de salida permitida (solo host real)
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Activar UFW (solo host real)
+  community.general.ufw:
+    state: enabled
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+# NGINX escucha en una IP concreta: sin esto, un arranque en frio puede alcanzarlo
+# antes de que la NIC tenga IP ("Cannot assign requested address").
+- name: Crear el directorio del drop-in de nginx.service
+  ansible.builtin.file:
+    path: /etc/systemd/system/nginx.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags: [config]
+
+- name: Hacer que nginx arranque tras network-online.target
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/nginx.service.d/10-soc-relay.conf
+    content: |
+      [Unit]
+      Wants=network-online.target
+      After=network-online.target
+    owner: root
+    group: root
+    mode: "0644"
+  tags: [config]
+
+- name: Habilitar y arrancar NGINX
+  ansible.builtin.systemd_service:
+    name: nginx
+    enabled: true
+    state: started
+    daemon_reload: true
+  tags: [start]

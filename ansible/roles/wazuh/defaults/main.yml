@@ -1,0 +1,13 @@
+---
+# Rol wazuh. Diseño: docs/superpowers/specs/2026-10-30-wazuh-role-design.md
+wazuh_enabled: true
+# wazuh_expected_version y wazuh_secrets_dir viven en group_vars/all.yml (los usa tambien el rol honeypot).
+wazuh_installer_url: "https://packages.wazuh.com/4.14/wazuh-install.sh"
+wazuh_indexer_heap: "8g"
+wazuh_retention_days: 30
+wazuh_relay_ip: "10.50.30.10"
+wazuh_admin_cidr: "192.168.1.0/24"
+wazuh_min_memory_mb: 7000
+wazuh_min_disk_mb: 15000
+wazuh_repo_root: "{{ (playbook_dir ~ '/..') | realpath }}"
+wazuh_secrets_dir_real: "{{ wazuh_secrets_dir | expanduser | realpath }}"

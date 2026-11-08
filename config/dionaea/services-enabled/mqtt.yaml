@@ -1,0 +1,3 @@
+# Fuente: https://dionaea.readthedocs.io/en/latest/service/mqtt.html (ejemplo oficial, CC0-1.0)
+# Habilitado por D3/D-H03 (architecture.md sec.11): TCP 1883 MQTT.
+- name: mqtt

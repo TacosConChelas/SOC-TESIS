@@ -1,0 +1,45 @@
+---
+# VM strongSwan: respondedora del túnel. El bootstrap de IKE/PSK (paquete,
+# swanctl.conf y secreto) se hace UNA vez con `az vm run-command`; este rol
+# converge sobre eso y NO toca el archivo de secretos (ADR-006 A3/E1-1/E1-5).
+- name: Leer si strongSwan ya está instalado
+  ansible.builtin.command: dpkg-query -W -f='${db:Status-Abbrev}${Package}\n' strongswan-swanctl charon-systemd
+  register: strongswan_dpkg
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  tags: [install]
+
+# charon-systemd es el daemon IKE y trae strongswan.service; strongswan-swanctl
+# solo trae la CLI. apt solo refresca la caché si falta alguno: así la pasada
+# completa con el egreso cerrado (Etapa 9) no sale a Internet. omit y no False: ver common.
+- name: Instalar strongSwan (swanctl y charon-systemd)
+  ansible.builtin.apt:
+    name: [strongswan-swanctl, charon-systemd]
+    state: present
+    update_cache: "{{ True if (strongswan_dpkg.stdout_lines | select('match', '^.i (strongswan-swanctl|charon-systemd)$') | list | length < 2) else omit }}"
+  tags: [install]
+
+- name: Escribir el sysctl de reenvío
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/99-soc-strongswan.conf
+    content: |
+      # ADR-006 E1-1: la VM strongSwan reenvía solo lo que entra por el túnel.
+      net.ipv4.ip_forward = 1
+    mode: "0644"
+  tags: [config]
+
+- name: Aplicar el sysctl de reenvío (solo host real)
+  ansible.builtin.command:
+    cmd: sysctl -p /etc/sysctl.d/99-soc-strongswan.conf
+  changed_when: false
+  when: ansible_virtualization_type != 'docker'
+  tags: [config]
+
+- name: Asegurar strongSwan activo (solo host real)
+  ansible.builtin.systemd_service:
+    name: strongswan
+    state: started
+    enabled: true
+  when: ansible_virtualization_type != 'docker'
+  tags: [start]

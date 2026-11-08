@@ -1,0 +1,38 @@
+# Gestionado por Ansible (rol logrelay). D4: NGINX stream L4, sin descifrar ni almacenar.
+user www-data;
+worker_processes auto;
+pid /run/nginx.pid;
+error_log {{ logrelay_log_dir }}/error.log warn;
+# Solo el modulo stream (libnginx-mod-stream, fijado). Los demas modulos llegan como
+# dependencias de nginx-core, no estan fijados y no se cargan.
+include /etc/nginx/modules-enabled/50-mod-stream.conf;
+
+events {
+    worker_connections 768;
+}
+
+stream {
+    log_format relay '$remote_addr [$time_local] $protocol $status $bytes_sent $bytes_received $session_time';
+    access_log {{ logrelay_log_dir }}/stream.log relay;
+
+    upstream manager_1514 {
+        server {{ logrelay_manager_ip }}:1514;
+    }
+    upstream manager_1515 {
+        server {{ logrelay_manager_ip }}:1515;
+    }
+
+    server {
+        listen {{ logrelay_listen_ip }}:1514;
+        allow {{ logrelay_agent_ip }};
+        deny all;
+        proxy_pass manager_1514;
+    }
+
+    server {
+        listen {{ logrelay_listen_ip }}:1515;
+        allow {{ logrelay_agent_ip }};
+        deny all;
+        proxy_pass manager_1515;
+    }
+}

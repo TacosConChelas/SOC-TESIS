@@ -1,0 +1,20 @@
+# Espejo local de inventory/hosts.yml para el ensayo en contenedores.
+# Las IPs imitan las de Azure; no hay túnel, la red Docker `operate` las provee.
+all:
+  vars:
+    ansible_user: soctesis
+  children:
+    azure:
+      hosts:
+        strongswan: { ansible_host: 10.50.20.10 }
+        wazuh:
+          ansible_host: 10.50.40.10
+          wazuh_enabled: false # make wazuh-rehearse lo activa con -e; preflight no instala Wazuh
+          wazuh_indexer_heap: "2g" # el real (8g) no cabe en el ensayo local
+          wazuh_secrets_dir: /tmp/soc-local-secrets # fuera del repo (la guarda del rol lo exige)
+        logrelay: { ansible_host: 10.50.30.10 }
+        honeyserver:
+          ansible_host: 10.50.10.10
+          ansible_port: 22222
+          honeypot_enabled: false # make honeypot-rehearse lo activa con -e; preflight no instala Docker
+          wazuh_secrets_dir: /tmp/soc-local-secrets # authd.pass del ensayo (fuera del repo)
