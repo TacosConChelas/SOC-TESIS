@@ -33,17 +33,17 @@ rm -f "$body"
 
 st=
 for _ in $(seq 60); do
-  st=$(az vm run-command show -g "$RG" --vm-name "$VM" -n "$NAME" --instance-view \
+  st=$(az vm run-command show -g "$RG" --vm-name "$VM" --name "$NAME" --instance-view \
        --query 'instanceView.executionState' -o tsv 2>/dev/null || true)
   case "$st" in Succeeded|Failed|TimedOut|Canceled) break;; esac
   sleep 10
 done
 
-az vm run-command show -g "$RG" --vm-name "$VM" -n "$NAME" --instance-view -o json >"$view"
+az vm run-command show -g "$RG" --vm-name "$VM" --name "$NAME" --instance-view -o json >"$view"
 leak=0; grep -qFf "$PSK_FILE" "$view" && leak=1
-az vm run-command show -g "$RG" --vm-name "$VM" -n "$NAME" --instance-view \
+az vm run-command show -g "$RG" --vm-name "$VM" --name "$NAME" --instance-view \
   --query 'instanceView.{estado:executionState,exit:exitCode,salida:output,error:error}' -o yamlc
-az vm run-command delete -g "$RG" --vm-name "$VM" -n "$NAME" --yes
+az vm run-command delete -g "$RG" --vm-name "$VM" --name "$NAME" --yes
 echo "psk-local:  $(tr -d '\n' <"$PSK_FILE" | sha256sum | cut -c1-12)"
 
 [ "$leak" = 0 ] || { echo "psk-deliver: EL PSK APARECE EN LA INSTANCE VIEW; rotarlo" >&2; exit 1; }

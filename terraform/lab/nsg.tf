@@ -104,7 +104,10 @@ resource "azurerm_network_security_rule" "honeypot_out_dns" {
   source_port_range           = "*"
   destination_port_range      = "53"
   source_address_prefix       = "*"
-  destination_address_prefix  = "AzurePlatformDNS" # D7 §5.2 fila "todas 100": el resolver de Azure (168.63.129.16)
+  # D7 §5.2 fila "todas 100". Esta regla documenta la intencion: el DNS hacia 168.63.129.16 no pasa por
+  # los NSG salvo que se apunte con el tag AzurePlatformDNS, asi que Azure ya lo permite sin esta regla.
+  # NO volver a "AzurePlatformDNS": ese tag solo admite Deny (Allow da SecurityRuleInvalidAccessType, 400).
+  destination_address_prefix  = "168.63.129.16"
   resource_group_name         = azurerm_resource_group.lab.name
   network_security_group_name = azurerm_network_security_group.honeypot.name
 }
@@ -249,7 +252,7 @@ resource "azurerm_network_security_rule" "vpn_out_dns" {
   source_port_range           = "*"
   destination_port_range      = "53"
   source_address_prefix       = "*"
-  destination_address_prefix  = "AzurePlatformDNS"
+  destination_address_prefix  = "168.63.129.16"
   resource_group_name         = azurerm_resource_group.lab.name
   network_security_group_name = azurerm_network_security_group.vpn.name
 }
@@ -428,7 +431,7 @@ resource "azurerm_network_security_rule" "logrelay_out_dns" {
   source_port_range           = "*"
   destination_port_range      = "53"
   source_address_prefix       = "*"
-  destination_address_prefix  = "AzurePlatformDNS"
+  destination_address_prefix  = "168.63.129.16"
   resource_group_name         = azurerm_resource_group.lab.name
   network_security_group_name = azurerm_network_security_group.logrelay.name
 }
@@ -571,7 +574,7 @@ resource "azurerm_network_security_rule" "wazuh_out_dns" {
   source_port_range           = "*"
   destination_port_range      = "53"
   source_address_prefix       = "*"
-  destination_address_prefix  = "AzurePlatformDNS"
+  destination_address_prefix  = "168.63.129.16"
   resource_group_name         = azurerm_resource_group.lab.name
   network_security_group_name = azurerm_network_security_group.wazuh.name
 }
