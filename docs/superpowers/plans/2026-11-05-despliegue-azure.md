@@ -257,6 +257,24 @@ Expected: sin errores; `secret-scan` sin hallazgos.
 - [ ] IP pública del lab dentro de `lab_source_cidrs` (`201.96.0.0/12`): `curl -4 -s https://api.ipify.org`. Si cae fuera, el NSG bloquea el IKE: parar y actualizar `lab_source_cidrs`.
 - [ ] **Al terminar los ensayos:** `nix-shell --run 'make clean'` y `docker network ls | grep soc-local-operate` → vacío. Esa red usa `10.50.0.0/16`, el mismo rango que Azure; si queda viva, el tráfico del operador a las VMs se queda en Docker en vez de ir a la Pi.
 
+**Registro del pre-vuelo del 2026-11-07 (sábado, 21:50–22:20 CST).** No se desplegó: `make time-guard` rechazó el arranque (21:53 > 20:30, E1-9). Verificado sin costo:
+
+| Comprobación | Resultado |
+|---|---|
+| `make clean preflight`, `wazuh-rehearse`, `honeypot-rehearse`, `stage9-rehearse` | rc=0 los cuatro (~3, ~8, ~5 y ~4 min). `secret-scan` limpio (2884 archivos) |
+| `make pin-check`, `plan-check-selftest`, `tags-contract` | ok, sin pines retirados |
+| `make syntax-check`, `ansible-lint` | rc=0, 0 fallos. Los avisos de `yamllint` por defecto (line-length, braces) no son del proyecto: no hay `.yamllint` |
+| Aviso de Ansible | `apt_repository` queda obsoleto en 2.25 (`roles/honeypot/tasks/main.yml:116`); no bloquea |
+| Cuota `standardBasv2Family` en `centralus` | `limit` 10, en uso 0 (sin margen: las 4 VMs usan las 10 vCPU); `rg-soc-tesis-lab` aún no existe |
+| Pi (`soc71`, solo lectura) | `strongswan` inactivo, `/etc/swanctl/conf.d` vacío, `psk.hex` 0600 root, `ip_forward=1`, nftables con `rt ipsec` |
+| IP pública del lab | `201.108.8.253`, dentro de `lab_source_cidrs` (`201.96.0.0/12`). Es dinámica: **repetirlo el Día 1** |
+| Red Docker tras los ensayos | `make clean` aplicado; sin redes ni contenedores `soc-local` |
+
+Notas para el Día 1:
+- Que `conf.d` esté vacío en la Pi es lo esperado hasta la Etapa 5. En `/root/soc-tesis-ipsec/` hay además `10-azure-lab.conf`, `90-azure-lab-secret.conf`, un `.bak` y `backup-20261106T0752Z`, que este plan no menciona (no se revisó su contenido).
+- La ruta R1 no está puesta (`ip route get 10.50.20.10` sale por `192.168.1.254`); se repone en la Etapa 5.
+- Los ensayos del 2026-11-07 no sustituyen el pre-vuelo "del mismo día": repetir al menos `pin-check` (el instalador `/4.14/` de Wazuh es flotante) y `make time-guard` antes de `make stage1`.
+
 ---
 
 # Parte B — Despliegue (Azure, con costo)
