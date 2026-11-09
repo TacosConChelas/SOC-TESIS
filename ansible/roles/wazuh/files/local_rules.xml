@@ -64,6 +64,14 @@
     <mitre><id>T1110</id></mitre>
   </rule>
 
+  <rule id="100111" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100102</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <description>Cowrie: rafaga de inicios de sesion aceptados (5 en 60 s desde la misma IP; el senuelo acepta casi cualquier contrasena de root).</description>
+    <group>authentication_success,honeypot,cowrie,</group>
+    <mitre><id>T1110</id></mitre>
+  </rule>
+
   <!-- Dionaea (100200-100299) -->
   <rule id="100200" level="3">
     <decoded_as>json</decoded_as>

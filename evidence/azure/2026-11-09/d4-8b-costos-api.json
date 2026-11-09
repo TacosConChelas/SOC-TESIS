@@ -1,0 +1,42 @@
+{
+ "consulta": "Microsoft.CostManagement/query ActualCost 2026-11-05..2026-11-09, agrupado por ResourceType",
+ "hecha": "2026-11-09 02:22 CST",
+ "filas": [
+  {
+   "Cost": 0.1751404,
+   "UsageDate": 20261108,
+   "ResourceType": "microsoft.compute/disks",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 1.2261324163476,
+   "UsageDate": 20261108,
+   "ResourceType": "microsoft.compute/virtualmachines",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.0613194444444444,
+   "UsageDate": 20261108,
+   "ResourceType": "microsoft.network/publicipaddresses",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.1030794,
+   "UsageDate": 20261109,
+   "ResourceType": "microsoft.compute/disks",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.121835595721478,
+   "UsageDate": 20261109,
+   "ResourceType": "microsoft.compute/virtualmachines",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.04,
+   "UsageDate": 20261109,
+   "ResourceType": "microsoft.network/publicipaddresses",
+   "Currency": "USD"
+  }
+ ]
+}

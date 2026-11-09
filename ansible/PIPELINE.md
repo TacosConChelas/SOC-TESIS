@@ -87,6 +87,8 @@ Reglas para el PSK (E1-5):
 
 > **Aprendido en Azure (2026-11-08):** antes de Ansible, y sobre todo antes de activar UFW en la Etapa 6, comprobar que el origen llega sin NAT: `ansible logrelay,wazuh -m shell -a 'echo $SSH_CLIENT'` debe empezar por `192.168.1.`. Si no, parar: UFW corta el SSH de administración.
 
+> **Aprendido en Azure (2026-11-09, Día 4):** con `close_action = start` en `children.lab` de la Pi, la SA se levantó sola tras `az vm start` (~26 s desde el inicio del arranque de vm-strongswan) y se recreó en el mismo segundo tras `swanctl --terminate --child lab` en la VM (SPI nuevo, 0 pings perdidos con muestreo de 2 s). Ya no hace falta `activar.sh` tras un ciclo `deallocate`/`start`; sigue haciendo falta tras reiniciar la Pi (P8: sin `enable`, decisión mantenida). `swanctl --list-conns` (5.9.13) no muestra `close_action`: se verifica por comportamiento. Con las VMs apagadas la Pi reintenta IKE hacia su IP pública; no hace falta `--terminate` al cerrar el día.
+
 **Gate:** sin túnel no se continúa.
 
 ## Etapa 6 · Ansible: instalación y configuración [AUTO]
@@ -107,12 +109,15 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 **Rescate si UFW corta el SSH de logrelay.** Si el `ansible all -m ping` posterior a `--tags install,config` falla solo en `logrelay`, ejecutar desde el operador `az vm run-command invoke` sobre la VM logrelay con `--scripts "ufw disable"` (sin pegar IDs ni secretos), confirmar que vuelve el SSH, corregir la regla de UFW del rol y reintentar. `run-command` usa el agente de la VM y no depende del túnel ni de sshd.
 
 ### Notas del rol `wazuh` (Etapa 6)
+- Reglas locales (2026-11-09, Día 4): con tráfico real, 6 logins aceptados dieron 6 × 100102 con MTTD de 0,7 s; 12 fallos dieron 10 × 100101 y 2 × 100110 (una por ráfaga, en el 5.º fallo); sin falsos positivos (0 en la 1002 y 0 en los healthchecks de nivel 0).
+- Cowrie acepta a `root` con cualquier contraseña que no esté en su lista negra por defecto (`root`, `123456`...). Una fuerza bruta con otras contraseñas entra al primer intento y no genera `login.failed`: 100110 solo se activa con contraseñas vetadas o con claves públicas. La regla 100111 cubre ese caso (5 logins aceptados en 60 s desde la misma IP).
 - Requiere en el controlador `~/soc-tesis-secrets/wazuh/authd.pass` (D8, `openssl rand -base64 32`); el rol falla si falta o si ese directorio está dentro del repo.
 - La instalación con el asistente descarga más de 1 GB y tarda de 10 a 25 minutos: planear la ventana de egreso. Antes, `make pin-check` (la versión que instala el asistente puede diferir del baseline).
 - Si el gate de versión falla, es una desviación del baseline D1: se decide si sube `wazuh_expected_version`; el rol no instala nada más.
 - Al terminar, `wazuh-install-files.tar` (contraseñas de admin/API) queda en el controlador (`0600`) y se destruye en la VM. Cambiar la contraseña de admin es un paso manual posterior.
 
 ### Notas del rol `honeypot` (Etapa 6)
+- Validado en un ciclo real (2026-11-09, Día 4): tras `deallocate`/`start` sin tocar nada, 7/7 `healthy` y `RestartCount` 0 en tanner y snare (el fix `mode=1777` funciona).
 - Aprendido en Azure (2026-11-08, Día 3): el `tmpfs` de Compose necesita `mode` explícito (`/tmp/tanner:mode=1777` y `/opt/tanner/files:mode=1777`, commit `0689283`). Sin él, tanner arrancaba bien la primera vez, pero tras un reinicio del contenedor el directorio quedaba `0755` root y fallaba con `PermissionError`.
 
 ## Etapa 7 · Cierre de egreso [GATE + verificación AUTO]
@@ -175,5 +180,7 @@ Orden para reabrir el egreso (o cambiar el rol) cuando el señuelo ya quedó en 
 7. 2ª `--tags start`: debe dar `changed=0`.
 
 **Por qué:** tras un `start`, Docker, containerd y el agente quedan habilitados (E1-3 solo impone que estén dormidos mientras el egreso esté abierto). Si se abre el egreso sin el paso 1, systemd los levanta solos en el siguiente arranque de la VM y el señuelo se conecta a Internet. El paso 2 hace que ese estado sea una precondición comprobada, no una suposición.
+
+Probada en Azure (2026-11-09, Día 4): `stop` con `changed=3` y luego `0`; E1-3 cumplido; egreso abierto 9 min 27 s; `install,config` con `ok=48 changed=0` (57 s) y E1-3 intacto; cierre verificado en las 4 VMs antes del `start`; 2.º `start` con `changed=0`; 7/7 `healthy`.
 
 Las pasadas sin tags no ejecutan `stop` (lo excluye `never`); tampoco `install`, `config` o `start` lo hacen.
