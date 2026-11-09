@@ -43,7 +43,7 @@
 
 **Hecho cuando:** `c10` pasa con el arreglo y falla sin él.
 
-**Resultado (2026-11-08):** HECHO. `c10` en verde dentro de `honeypot-rehearse`; sin `mode=1777`, tanner `unhealthy` en los 2 reinicios y `Restarting (1)` (mismo síntoma que en Azure). Falta el ciclo real (Día 4, paso 2).
+**Resultado (2026-11-08):** HECHO. `c10` en verde dentro de `honeypot-rehearse`; sin `mode=1777`, tanner `unhealthy` en los 2 reinicios y `Restarting (1)` (mismo síntoma que en Azure). Ciclo real validado el 2026-11-09 (Día 4, paso 2).
 
 ### L2: reglas de detección (riesgo 3; bloquea la Fase 9)
 
@@ -124,6 +124,24 @@ Nota: si de algún honeypot no hay muestra real, no se inventan campos. Se deja 
 | 7 | Pasada sin tags → `changed=0`; `terraform plan -var maintenance_egress=false -detailed-exitcode` → 0 | Regresión |
 | 8 | Cost Management con más de 24 h de datos frente a ≈ USD 35/mes (ADR-006 §6) | Pendiente del Día 3 |
 | 9 | Evidencia + `SHA256SUMS` + higiene (PSK, `authd.pass` → 0); `deallocate` en orden inverso | — |
+
+**Resultado (2026-11-09):** HECHO, salvo costos. Detalle y medidas en [`10-cierre-dia4.md`](../../../evidence/azure/2026-11-09/10-cierre-dia4.md).
+
+| # | Resultado |
+|---|---|
+| 1 | VMs arrancadas en 173 s; IPs sin cambios |
+| 2 | 7/7 `healthy`, `RestartCount` 0 en tanner y snare (riesgo 1 validado) |
+| 3 | SA `ESTABLISHED` sola en ~26 s desde el inicio del arranque de vm-strongswan (riesgo 2) |
+| 4 | CHILD recreado en el mismo segundo, 0 pings perdidos (riesgo 2) |
+| 5 | 6 × 100102 (MTTD 0,7 s); 10 × 100101 y 2 × 100110 con 12 fallos; 0 en la 1002 (riesgo 3) |
+| 6 | Etapa M completa; egreso abierto 9 min 27 s (riesgo 4) |
+| 7 | `changed=0` en las 4, `--check` sin cambios, `terraform plan` rc 0 |
+| 8 | **Parcial:** `az consumption` dio `pretaxCost` nulo, pero la API de Cost Management dio datos: 1,73 USD acumulados (VMs 1,35; discos 0,28; IPs 0,10), con el 11-09 incompleto por retraso de facturación. Sin día completo aún; repetir pasadas 24–48 h |
+| 9 | Higiene 0/0, `SHA256SUMS` correcto, 4 VMs `deallocated` |
+
+**Decisiones tomadas (2026-11-09):**
+- **P8:** se mantiene `activar.sh` sin `enable`. Habilitarlo haría que la Pi reintentara IKE para siempre hacia una IP que `activar.sh` sustituye a mano y que cambia si se recrea la IP pública; con `close_action` el único paso manual restante es tras reiniciar la Pi.
+- **TEST-002:** el señuelo acepta casi cualquier contraseña de `root`, así que "fuerza bruta" se mide por dos vías: `login.failed` (100101 → 100110) con contraseñas vetadas o claves, y ráfaga de logins aceptados (100102 → 100111, 5 en 60 s). La 100111 está en `local_rules.xml` con fixture; su validación en `rules-check` queda registrada en el commit.
 
 ## Fuera de alcance
 - Fase 4 (agentes en Windows/Linux; TEST-005) y Fase 7 (aplicar `terraform/evidence`): siguen en el plan maestro.

@@ -35,3 +35,8 @@ override.tf.json
 evidence/tests/**/03-raw/
 evidence/tests/**/04-alertas.json
 evidence/tests/**/05-metricas/
+
+# Artefactos locales de herramientas (no versionar)
+/graphify-out/
+/scrape_2_5/
+/.firecrawl/

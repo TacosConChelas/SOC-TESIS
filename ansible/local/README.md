@@ -99,8 +99,7 @@ azurerm 5.8.0 marca `custom_data` como `sensitive`. Se verifica sobre `resource_
   que ssh no lea `~/.ssh/known_hosts` del operador.
 - `local/secret-scan.allow` exceptúa **solo** la regla C (64 hex) en rutas que
   guardan hashes sha256 ya registrados (`evidence/`, `scrape_2_5/`, `.firecrawl/`,
-  `graphify-out/`, `config/`, `.env.example`, `docker-compose.test.yml` y el
-  lockfile de Terraform). Las reglas A (PEM) y B (PSK/secret literal) cubren el
+  `graphify-out/`, `config/`, `.env.example` y el lockfile de Terraform). Las reglas A (PEM) y B (PSK/secret literal) cubren el
   árbol completo sin excepciones.
 
 ## Lo que NO se valida localmente (E1-7)

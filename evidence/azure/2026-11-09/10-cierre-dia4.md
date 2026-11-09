@@ -33,7 +33,7 @@ Plan: `docs/superpowers/plans/2026-11-08-riesgos-post-dia3.md` (tabla "Día 4").
 
 **Regresión (paso 7):** `site.yml` sin tags `changed=0 failed=0` en las 4; `--check --diff` sin cambios; `terraform plan -var maintenance_egress=false -detailed-exitcode` → rc 0.
 
-**Costos (paso 8):** `az consumption usage list` devolvió 52 registros con `pretaxCost` y fechas nulos; costo real **no disponible**. Estimación aritmética (no es dato de Azure): cada VM encendida ≈ 0,7–0,8 h en el Día 4, ≈ 1,5–1,6 h el Día 2 y ≈ 0,5–0,6 h el Día 3. Referencia: ≈ USD 35/mes (ADR-006 §6).
+**Costos (paso 8):** `az consumption usage list` devolvió 52 registros con `pretaxCost` nulo, pero la API de Cost Management (`az rest`, tras un 429 con `retry-after: 18 s`) sí devolvió datos: ver `d4-8b-costos-api.json`. Acumulado a la fecha (USD): VMs 1,348; discos 0,278; IPs públicas 0,101; **total 1,728** (11-08: 1,463; 11-09: 0,265). **Los datos del 11-09 son parciales:** el cargo de VMs equivale a 0,52 h del precio combinado de ADR-006 ($0,234/h) y las 4 VMs llevaban unas 1,4 h encendidas desde las 00:00 UTC (esperable ≥ 0,33), así que la facturación se publica con retraso. Aún no hay un día completo con el que comparar con ≈ USD 35/mes (50 h/mes de cómputo ≈ 12 + IPs ≈ 9 + discos ≈ 14); repetir pasadas 24–48 h.
 
 **Cierre (paso 9):** higiene 0/0 (PSK y `authd.pass`); `deallocate` en orden inverso 01:54:19 → 01:56:30; las 4 `VM deallocated`. La Pi queda reintentando IKE hacia 172.202.13.163 (consecuencia aceptada de `close_action`).
 
@@ -46,4 +46,4 @@ Plan: `docs/superpowers/plans/2026-11-08-riesgos-post-dia3.md` (tabla "Día 4").
 ## Higiene y pendientes
 - `grep -rFf` de `psk.hex` y `authd.pass` sobre esta carpeta: 0 coincidencias.
 - Anonimización (2026-11-09): en los logs `d4-4`, `d4-5b`, `d4-9`, en este documento y en `2026-11-08/8-evento-prueba-archives.jsonl`, la IP pública del operador se sustituyó por `203.0.113.10` y las de tres escáneres de Internet por `198.51.100.1`–`.3` (rangos de documentación). Los originales y el mapa están fuera del repo. Las IPs del laboratorio (VPN y honeypot) se conservan. La IP real del operador sigue en `8-cierre-dia2.md` y en el plan del 2026-11-05 (commits ya publicados). Las contraseñas de prueba (`zq1`–`zq6`, `root`, `123456`) no son sensibles.
-- Pendientes: Cost Management con datos reales (repetir pasadas 24–48 h); decisión P8 (`systemctl enable strongswan` en la Pi); regla de frecuencia para el caso "contraseña aceptada"; push de la rama y PR de `merge/ansible-local`.
+- Pendientes: costos con días completos (repetir pasadas 24–48 h) y PR de `merge/ansible-local`. Resueltos después del cierre: P8 (se mantiene sin `enable`) y la regla 100111 para el caso "contraseña aceptada" (ver el plan de riesgos).
