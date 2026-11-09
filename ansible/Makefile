@@ -32,42 +32,9 @@ export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o Ide
         honeypot-apply honeypot-rehearse honeypot-check stage9-rehearse egress-precheck clean
 
 help:
-	@echo "Etapa 0 - pre-vuelo local (sin Azure)"
-	@echo "  make lint               terraform fmt/validate + ansible-lint + syntax-check"
-	@echo "  make tags-contract      contrato de tags E1-8"
-	@echo "  make secret-scan        escaneo de secretos (arbol de git)"
-	@echo "  make secret-scan-selftest  planta secretos falsos y exige que falle"
-	@echo "  make up                 construye y arranca los 4 contenedores (egreso abierto)"
-	@echo "  make known-hosts        simula la Etapa 4a (known_hosts desechable)"
-	@echo "  make ping               ansible all -m ping (4 pong)"
-	@echo "  make toggle-install     abre egreso   (Etapa 3 simulada)"
-	@echo "  make toggle-operate     cierra egreso (Etapa 7 simulada)"
-	@echo "  make rehearse           1a pasada con cambios, 2a changed=0, --check, netcheck"
-	@echo "  make recap-check-selftest  prueba los modos de recap-check.sh"
-	@echo "  make relay-check        verifica el rol logrelay (requiere make rehearse previo)"
-	@echo "  make common-check       verifica el rol common (requiere make rehearse previo)"
-	@echo "  make pin-check          verifica pines apt vigentes (requiere Internet)"
-	@echo "  make wazuh-rehearse     all-in-one real de Wazuh en el contenedor (10-25 min; fuera de preflight)"
-	@echo "  make wazuh-check        verifica el rol wazuh (requiere wazuh-rehearse; WAZUH_CHECKS=\"1 2\" para un subconjunto)"
-	@echo "  make rules-check        reglas locales de Wazuh con wazuh-logtest y fixtures (requiere wazuh-rehearse; fuera de preflight)"
-	@echo "  make wazuh-apply TAGS=install   aplica el rol wazuh con esos tags (iteracion)"
-	@echo "  make honeypot-rehearse  Docker, 7 imagenes y agente reales en honeyserver (requiere wazuh-rehearse; fuera de preflight)"
-	@echo "  make honeypot-check     verifica el rol honeypot (HONEYPOT_CHECKS=\"1 2\" para un subconjunto)"
-	@echo "  make egress-precheck    E1-3: honeyserver dormido (4 unidades inactive/disabled + centinelas) antes de abrir egreso"
-	@echo "  make honeypot-apply TAGS=install   aplica el rol honeypot con esos tags (iteracion)"
-	@echo "  make preflight          lint + tags + secretos + ensayo  <-- Etapa 0"
-	@echo "  make azure-session      az account show == EXPECTED_AZ_SUBSCRIPTION_NAME"
-	@echo "  make time-guard         rechaza arrancar despues de 20:30 (E1-9)"
-	@echo ""
-	@echo "Etapa 1 - plan (sin apply)"
-	@echo "  make plan               terraform plan -out=/tmp/tfplan + plan-check"
-	@echo "  make plan-check         valida un JSON de plan (por defecto /tmp/tfplan.json)"
-	@echo "  make plan-check-selftest  control + casos roto a-f"
-	@echo "  make gate-apply         pide la frase de autorizacion (NO aplica)"
-	@echo "  make stage1             azure-session + time-guard + plan + gate-apply"
-	@echo "  make down / clean       destruye contenedores / todo el entorno local"
+	@grep -E '^[a-zA-Z0-9_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  make %-22s %s\n", $$1, $$2}'
 
-lint: tf-fmt tf-validate ansible-lint syntax-check
+lint: tf-fmt tf-validate ansible-lint syntax-check ## terraform fmt/validate + ansible-lint + syntax-check
 
 # Se valida sobre una copia temporal para no escribir .terraform/ en terraform/lab.
 tf-fmt:
@@ -87,17 +54,17 @@ ansible-lint:
 syntax-check:
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --syntax-check
 
-tags-contract:
+tags-contract: ## contrato de tags E1-8
 	@"$(PY)" "$(LOCAL)/scripts/tags-contract.py" --selftest
 	@"$(PY)" "$(LOCAL)/scripts/tags-contract.py"
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --list-tasks --tags start >/dev/null
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --list-tasks --tags stop >/dev/null
 	@echo "tags-contract: ok (--list-tasks --tags start y stop compilan)"
 
-secret-scan:
+secret-scan: ## escaneo de secretos (arbol de git)
 	@cd "$(REPO)" && "$(PY)" ansible/local/scripts/secret-scan.py
 
-secret-scan-selftest:
+secret-scan-selftest: ## planta secretos falsos y exige que falle
 	@bash "$(LOCAL)/scripts/secret-scan-selftest.sh"
 
 keys:
@@ -108,35 +75,35 @@ keys:
 # perdia la convergencia. BUILDX_NO_DEFAULT_ATTESTATIONS=1 no lo evita; la
 # imagen se sigue construyendo, pero los contenedores existentes no se tocan.
 # Para aplicar cambios de Dockerfile/entrypoint: `make clean` y luego `make up`.
-up: keys
+up: keys ## construye y arranca los 4 contenedores (egreso abierto)
 	@$(COMPOSE) up -d --build --no-recreate
 	@bash "$(LOCAL)/scripts/wait-sshd.sh"
 
-known-hosts: up
+known-hosts: up ## simula la Etapa 4a (known_hosts desechable)
 	@bash "$(LOCAL)/scripts/gen-known-hosts.sh"
 
-ping: known-hosts
+ping: known-hosts ## ansible all -m ping (4 pong)
 	@cd "$(ANSIBLE_DIR)" && ansible all -m ansible.builtin.ping
 
-toggle-install:
+toggle-install: ## abre egreso   (Etapa 3 simulada)
 	@bash "$(LOCAL)/scripts/net-toggle.sh" install
 
-toggle-operate:
+toggle-operate: ## cierra egreso (Etapa 7 simulada)
 	@bash "$(LOCAL)/scripts/net-toggle.sh" operate
 
 netcheck:
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 
-recap-check-selftest:
+recap-check-selftest: ## prueba los modos de recap-check.sh
 	@bash "$(LOCAL)/scripts/recap-check-selftest.sh"
 
-relay-check:
+relay-check: ## verifica el rol logrelay (requiere make rehearse previo)
 	@bash "$(LOCAL)/scripts/relay-check.sh"
 
-common-check:
+common-check: ## verifica el rol common (requiere make rehearse previo)
 	@bash "$(LOCAL)/scripts/common-check.sh"
 
-pin-check:
+pin-check: ## verifica pines apt vigentes (requiere Internet)
 	@bash "$(LOCAL)/scripts/pin-check.sh" $(PIN_DEFAULTS)
 
 wazuh-hostcheck:
@@ -145,19 +112,19 @@ wazuh-hostcheck:
 wazuh-secrets:
 	@bash "$(LOCAL)/scripts/gen-wazuh-secrets.sh"
 
-wazuh-check:
+wazuh-check: ## verifica el rol wazuh (requiere wazuh-rehearse; WAZUH_CHECKS="1 2" para un subconjunto)
 	@bash "$(LOCAL)/scripts/wazuh-check.sh"
 
 # Reglas locales: copia local_rules.xml al manager del ensayo y pasa los fixtures por wazuh-logtest.
-rules-check:
+rules-check: ## reglas locales de Wazuh con wazuh-logtest y fixtures (requiere wazuh-rehearse; fuera de preflight)
 	@bash "$(LOCAL)/rules-check.sh"
 
 # Iteracion: aplica el rol wazuh con los tags indicados (por defecto install,config).
-wazuh-apply: wazuh-secrets known-hosts
+wazuh-apply: wazuh-secrets known-hosts ## TAGS=install   aplica el rol wazuh con esos tags (iteracion)
 	@bash "$(LOCAL)/scripts/net-toggle.sh" install
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit wazuh --tags "$(or $(TAGS),install,config)" -e wazuh_enabled=true
 
-wazuh-rehearse: wazuh-hostcheck wazuh-secrets known-hosts
+wazuh-rehearse: wazuh-hostcheck wazuh-secrets known-hosts ## all-in-one real de Wazuh en el contenedor (10-25 min; fuera de preflight)
 	@mkdir -p "$(LOGS)"
 	@echo "== Wazuh: egreso abierto (instalacion del all-in-one) =="
 	@bash "$(LOCAL)/scripts/net-toggle.sh" install
@@ -181,24 +148,24 @@ wazuh-rehearse: wazuh-hostcheck wazuh-secrets known-hosts
 	@$(MAKE) --no-print-directory wazuh-check
 	@echo "wazuh-rehearse: ok"
 
-honeypot-check:
+honeypot-check: ## verifica el rol honeypot (HONEYPOT_CHECKS="1 2" para un subconjunto)
 	@bash "$(LOCAL)/scripts/honeypot-check.sh"
 
 # Etapa M (mantenimiento): antes de abrir el egreso, el señuelo debe estar dormido
 # (E1-3 / check 3 del plan de Azure): 4 unidades inactive/disabled y los centinelas.
 # Sale con exit != 0 si no se cumple; el shell remoto termina con exit 1 al primer fallo.
-egress-precheck:
+egress-precheck: ## E1-3: honeyserver dormido (4 unidades inactive/disabled + centinelas) antes de abrir egreso
 	@mkdir -p "$(LOGS)"
 	@cd "$(ANSIBLE_DIR)" && ansible honeyserver -b -m ansible.builtin.shell -a 'for u in docker.socket docker.service containerd.service wazuh-agent.service; do [ "$$(systemctl is-active $$u)" = inactive ] && [ "$$(systemctl is-enabled $$u)" = disabled ] || { echo "E1-3 FALLA: $$u"; exit 1; }; done; test ! -e /etc/soc-tesis/honeypot-started && test -s /etc/soc-tesis/honeypot-images && echo centinelas-ok' 2>&1 | tee "$(LOGS)/egress-precheck.log"
 	@grep -q 'centinelas-ok' "$(LOGS)/egress-precheck.log"
 	@echo "egress-precheck: ok (E1-3: 4 unidades inactive/disabled y centinelas)"
 
 # Iteracion: aplica el rol honeypot con los tags indicados (por defecto install,config).
-honeypot-apply: wazuh-secrets known-hosts
+honeypot-apply: wazuh-secrets known-hosts ## TAGS=install   aplica el rol honeypot con esos tags (iteracion)
 	@bash "$(LOCAL)/scripts/net-toggle.sh" install
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --limit honeyserver --tags "$(or $(TAGS),install,config)" -e honeypot_enabled=true
 
-honeypot-rehearse: wazuh-secrets known-hosts
+honeypot-rehearse: wazuh-secrets known-hosts ## Docker, 7 imagenes y agente reales en honeyserver (requiere wazuh-rehearse; fuera de preflight)
 	@mkdir -p "$(LOGS)"
 	@docker exec soc-local-wazuh systemctl is-active --quiet wazuh-manager \
 	  || { echo "FALLA: el Manager de Wazuh no esta activo en el contenedor wazuh (corre make wazuh-rehearse antes)" >&2; exit 1; }
@@ -263,7 +230,7 @@ stage9-rehearse: wazuh-secrets known-hosts
 	@cd "$(REPO)" && "$(PY)" ansible/local/scripts/secret-scan.py
 	@echo "stage9-rehearse: ok"
 
-rehearse: known-hosts
+rehearse: known-hosts ## 1a pasada con cambios, 2a changed=0, --check, netcheck
 	@mkdir -p "$(LOGS)"
 	@echo "== Etapa 6 simulada: egress abierto =="
 	@bash "$(LOCAL)/scripts/net-toggle.sh" install
@@ -290,11 +257,11 @@ rehearse: known-hosts
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 	@echo "rehearse: ok. Para reabrir el egreso: make toggle-install"
 
-preflight: lint tags-contract secret-scan secret-scan-selftest recap-check-selftest rehearse relay-check common-check
+preflight: lint tags-contract secret-scan secret-scan-selftest recap-check-selftest rehearse relay-check common-check ## lint + tags + secretos + ensayo  <-- Etapa 0
 	@echo "preflight: Etapa 0 OK"
 
 # Nombre de la suscripcion esperada: variable de entorno, nunca en el repo.
-azure-session:
+azure-session: ## az account show == EXPECTED_AZ_SUBSCRIPTION_NAME
 	@test -n "$(EXPECTED_AZ_SUBSCRIPTION_NAME)" || \
 		{ echo "azure-session: define EXPECTED_AZ_SUBSCRIPTION_NAME (nombre de la suscripcion esperada)" >&2; exit 1; }; \
 	command -v az >/dev/null || { echo "azure-session: az no instalado" >&2; exit 1; }; \
@@ -307,7 +274,7 @@ azure-session:
 	echo "azure-session: ok (suscripcion esperada, estado Enabled)"
 
 # TIMEGUARD_NOW=HH:MM permite probarlo sin esperar a la hora real.
-time-guard:
+time-guard: ## rechaza arrancar despues de 20:30 (E1-9)
 	@now="$${TIMEGUARD_NOW:-$$(date +%H:%M)}"; \
 	case "$$now" in [0-2][0-9]:[0-5][0-9]) ;; \
 		*) echo "time-guard: TIMEGUARD_NOW invalido (usa HH:MM)" >&2; exit 2;; esac; \
@@ -320,24 +287,24 @@ time-guard:
 	echo "time-guard: ok ($$now)"
 
 # Etapa 1: plan guardado + checks. El JSON temporal lo borra stage1-plan.sh.
-plan:
+plan: ## terraform plan -out=/tmp/tfplan + plan-check
 	@TF_DIR="$(TF_DIR)" PY="$(PY)" bash "$(LOCAL)/scripts/stage1-plan.sh"
 
-plan-check:
+plan-check: ## valida un JSON de plan (por defecto /tmp/tfplan.json)
 	@"$(PY)" "$(LOCAL)/scripts/plan-check.py" "$${PLAN_JSON:-/tmp/tfplan.json}"
 
-plan-check-selftest:
+plan-check-selftest: ## control + casos roto a-f
 	@PY="$(PY)" bash "$(LOCAL)/scripts/plan-check-selftest.sh"
 
-gate-apply:
+gate-apply: ## pide la frase de autorizacion (NO aplica)
 	@bash "$(LOCAL)/scripts/gate-apply.sh"
 
-stage1: azure-session time-guard plan gate-apply
+stage1: azure-session time-guard plan gate-apply ## azure-session + time-guard + plan + gate-apply
 	@echo "Etapa 1 lista; apply NO ejecutado"
 
-down:
+down: ## destruye contenedores
 	@$(COMPOSE) down -v --remove-orphans
 
-clean: down
+clean: down ## todo el entorno local
 	@rm -rf "$(LOGS)" "$(LOCAL)/.known_hosts" "$(LOCAL)/.keys" "$(LOCAL)/.selftest-scan.txt" /tmp/soc-local-secrets
 	@echo "clean: entorno local eliminado"
