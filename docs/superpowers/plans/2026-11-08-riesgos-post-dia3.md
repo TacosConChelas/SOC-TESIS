@@ -90,11 +90,11 @@ Nota: si de algún honeypot no hay muestra real, no se inventan campos. Se deja 
 **Causa:** al apagarse la VM de Azure (o con `swanctl --terminate`), el par manda un IKE DELETE. La Pi borra la SA y no la vuelve a iniciar: `dpd_action` solo actúa cuando el par deja de responder, no cuando avisa que cierra, y `start_action=start` solo actúa al cargar la configuración. Falta `close_action = start` en el CHILD `lab` de la Pi.
 
 **Arreglo propuesto (operador; la config de la Pi vive fuera del repo):**
-- [ ] En `/root/soc-tesis-ipsec/10-azure-lab.conf` (y en la copia cargada en `/etc/swanctl/conf.d/`): `close_action = start` en `children.lab`. `keyingtries = 0` ya está.
-- [ ] `sudo swanctl --load-all` y comprobar con `swanctl --list-conns` que aparece la acción de cierre.
-- [ ] Consecuencia que se acepta: mientras las VMs están `deallocated`, la Pi reintenta IKE hacia la IP pública de Azure (tráfico mínimo). El cierre de día deja de necesitar `--terminate`.
+- [x] En `/root/soc-tesis-ipsec/10-azure-lab.conf` (y en la copia cargada en `/etc/swanctl/conf.d/`): `close_action = start` en `children.lab`. `keyingtries = 0` ya está.
+- [x] `sudo swanctl --load-all` sin errores (2026-11-08). `swanctl --list-conns` (5.9.13) no muestra `close_action`: se comprueba en el Día 4, pasos 3 y 4.
+- [x] Consecuencia que se acepta: mientras las VMs están `deallocated`, la Pi reintenta IKE hacia la IP pública de Azure (tráfico mínimo). El cierre de día deja de necesitar `--terminate`.
 - [ ] Decisión aparte, P8 (ADR-004 §12): `systemctl enable strongswan` en la Pi para sobrevivir a un reinicio. Hoy no se hace.
-- [ ] Registrar la causa y la decisión en ADR-004 §12.
+- [x] Registrar la causa y la decisión en ADR-004 §12.
 
 ---
 
