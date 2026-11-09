@@ -1,0 +1,101 @@
+=== PASO 9 cierre y evidencia 2026-11-09 01:53:58 CST ===
+patron: /home/tacosconchelas/soc-tesis-secrets/ipsec/psk.hex lineas=1 lineas_vacias=0
+patron: /home/tacosconchelas/soc-tesis-secrets/wazuh/authd.pass lineas=1 lineas_vacias=0
+2026-11-09 01:53:58 CST 9.1 higiene psk.hex
+psk_grep_rc=1 (1 = sin coincidencias)
+2026-11-09 01:53:58 CST 9.1 higiene authd.pass
+authd_grep_rc=1 (1 = sin coincidencias)
+2026-11-09 01:54:02 CST 9.2 ficheros con IP publica del operador 203.0.113.10 (solo informativo):
+evidence/azure/2026-11-09/d4-4-terminate-child.log
+evidence/azure/2026-11-09/d4-5b-alertas.log
+evidence/azure/2026-11-09/d4-9-cierre.log
+2026-11-09 01:54:02 CST 9.2b ficheros con passwords de prueba zq1..zq6 o 123456 (solo informativo):
+evidence/azure/2026-11-09/d4-9-cierre.log
+evidence/azure/2026-11-09/d4-5b-alertas.log
+2026-11-09 01:54:02 CST 9.2c ficheros de $EV
+total 248
+drwxr-xr-x 2 tacosconchelas users  4096 Nov  9 01:53 .
+drwxr-xr-x 4 tacosconchelas users  4096 Nov  9 00:32 ..
+-rw-r--r-- 1 tacosconchelas users 11018 Nov  9 01:11 d4-1-preflight-y-start.log
+-rw-r--r-- 1 tacosconchelas users  3547 Nov  9 01:13 d4-2-contenedores.log
+-rw-r--r-- 1 tacosconchelas users  9655 Nov  9 01:12 d4-3-sa.log
+-rw-r--r-- 1 tacosconchelas users 18875 Nov  9 01:18 d4-4-terminate-child.log
+-rw-r--r-- 1 tacosconchelas users 10344 Nov  9 01:19 d4-5a-playbook.out
+-rw-r--r-- 1 tacosconchelas users  2745 Nov  9 01:22 d4-5a-reglas.log
+-rw-r--r-- 1 tacosconchelas users 37094 Nov  9 01:27 d4-5b-alertas.log
+-rw-r--r-- 1 tacosconchelas users  2664 Nov  9 01:29 d4-6a-stop-playbook.out
+-rw-r--r-- 1 tacosconchelas users  6484 Nov  9 01:30 d4-6a-stop-precheck.log
+-rw-r--r-- 1 tacosconchelas users  6650 Nov  9 01:34 d4-6b-egreso-abierto.log
+-rw-r--r-- 1 tacosconchelas users 11667 Nov  9 01:33 d4-6b-install-config.out
+-rw-r--r-- 1 tacosconchelas users  8296 Nov  9 01:45 d4-6c-cierre.log
+-rw-r--r-- 1 tacosconchelas users  3928 Nov  9 01:43 d4-6c-start1.out
+-rw-r--r-- 1 tacosconchelas users  3898 Nov  9 01:44 d4-6c-start2.out
+-rw-r--r-- 1 tacosconchelas users 31440 Nov  9 01:52 d4-7-check.out
+-rw-r--r-- 1 tacosconchelas users 31430 Nov  9 01:49 d4-7-full.out
+-rw-r--r-- 1 tacosconchelas users  2550 Nov  9 01:52 d4-7-regresion.log
+-rw-r--r-- 1 tacosconchelas users  5633 Nov  9 01:53 d4-8-costos.log
+-rw-r--r-- 1 tacosconchelas users   869 Nov  9 01:54 d4-9-cierre.log
+2026-11-09 01:54:07 CST 9.3 SHA256SUMS (primer paso, antes del deallocate)
+rc=0
+d4-1-preflight-y-start.log: OK
+d4-2-contenedores.log: OK
+d4-3-sa.log: OK
+d4-4-terminate-child.log: OK
+d4-5a-playbook.out: OK
+d4-5a-reglas.log: OK
+d4-5b-alertas.log: OK
+d4-6a-stop-playbook.out: OK
+d4-6a-stop-precheck.log: OK
+d4-6b-egreso-abierto.log: OK
+d4-6b-install-config.out: OK
+d4-6c-cierre.log: OK
+d4-6c-start1.out: OK
+d4-6c-start2.out: OK
+d4-7-check.out: OK
+d4-7-full.out: OK
+d4-7-regresion.log: OK
+d4-8-costos.log: OK
+d4-9-cierre.log: FAILED
+sha256sum: WARNING: 1 computed checksum did NOT match
+verify_rc=1
+=== 9.4 deallocate secuencial inverso (inicio 2026-11-09 01:54:19 CST) ===
+2026-11-09 01:54:19 deallocate vm-honeyserver
+2026-11-09 01:54:52 fin vm-honeyserver rc=0
+2026-11-09 01:54:52 deallocate vm-logrelay
+2026-11-09 01:55:24 fin vm-logrelay rc=0
+2026-11-09 01:55:24 deallocate vm-wazuh
+2026-11-09 01:55:56 fin vm-wazuh rc=0
+2026-11-09 01:55:56 deallocate vm-strongswan
+2026-11-09 01:56:30 fin vm-strongswan rc=0
+2026-11-09 01:56:30 listado tras deallocate
+vm-honeyserver	VM deallocated
+vm-logrelay	VM deallocated
+vm-strongswan	VM deallocated
+vm-wazuh	VM deallocated
+list_rc=0
+=== FIN_9_4 ===
+=== 9.5 Pi (solo lectura) 2026-11-09 01:56:38 CST ===
+--- list-sas ---
+lab: #5, CONNECTING, IKEv2, 949c5600ee1e77a0_i* 0000000000000000_r
+  local  '%any' @ 192.168.1.10[500]
+  remote '%any' @ 172.202.13.163[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+list_rc=0
+--- journal -3 min ---
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: received DELETE for IKE_SA lab[4]
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: deleting IKE_SA lab[4] between 192.168.1.10[pi.soc-tesis]...172.202.13.163[azure-vpn.soc-tesis]
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: restarting CHILD_SA lab
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: initiating IKE_SA lab[5] to 172.202.13.163
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: IKE_SA deleted
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 39 [ ]
+Nov 09 01:55:58 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (57 bytes)
+Nov 09 01:56:02 Ubuntu-server charon-systemd[9616]: retransmit 1 of request with message ID 0
+Nov 09 01:56:02 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:56:10 Ubuntu-server charon-systemd[9616]: retransmit 2 of request with message ID 0
+Nov 09 01:56:10 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:56:23 Ubuntu-server charon-systemd[9616]: retransmit 3 of request with message ID 0
+Nov 09 01:56:23 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+journal_rc=0
+2026-11-09 01:56:45 CST 9.6 SHA256SUMS definitivo (tras 9.4 y 9.5)

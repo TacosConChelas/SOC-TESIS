@@ -3,10 +3,12 @@
 
 Reglas:
   1. Toda tarea de los roles declara tags y todas sus tags estan en
-     {install, config, start}.
-  2. Ninguna tarea con tag `start` usa un modulo que descargue algo.
+     {install, config, start, stop} (mas el especial `never`).
+  2. Ninguna tarea con tag `start` o `stop` usa un modulo que descargue algo.
+  3. Toda tarea con tag `stop` lleva `never`: no corre en pasadas sin tags
+     ni en install/config/start.
 
-Se complementa con `ansible-playbook --list-tasks --tags start` en el Makefile
+Se complementa con `ansible-playbook --list-tasks --tags start,stop` en el Makefile
 (que valida que el playbook compila con esa seleccion).
 """
 from __future__ import annotations
@@ -17,7 +19,9 @@ from typing import Any
 
 import yaml
 
-ALLOWED_TAGS = {"install", "config", "start"}
+ALLOWED_TAGS = {"install", "config", "start", "stop"}
+SPECIAL_TAGS = {"never"}
+NO_DOWNLOAD_TAGS = {"start", "stop"}
 DOWNLOAD_MODULES = {
     "apt",
     "apk",
@@ -91,7 +95,7 @@ def walk(tasks: list[Any], path: Path, errors: list[str]) -> None:
                 block_tags = set(tags)
                 if not block_tags:
                     errors.append(f"{path}: bloque sin tags")
-                elif not block_tags <= ALLOWED_TAGS:
+                elif not block_tags - SPECIAL_TAGS <= ALLOWED_TAGS:
                     errors.append(f"{path}: bloque con tags fuera del contrato: {sorted(block_tags)}")
             continue
 
@@ -104,16 +108,18 @@ def walk(tasks: list[Any], path: Path, errors: list[str]) -> None:
         if not tags:
             errors.append(f"{path}: tarea sin tags: {name}")
             continue
-        if not tags <= ALLOWED_TAGS:
+        if not tags - SPECIAL_TAGS <= ALLOWED_TAGS:
             errors.append(f"{path}: tags fuera del contrato {sorted(tags)}: {name}")
+        if "stop" in tags and "never" not in tags:
+            errors.append(f"{path}: el tag 'stop' sin 'never' correría en pasadas sin tags: {name}")
 
         mod = module_of(task)
-        if "start" in tags and mod in DOWNLOAD_MODULES:
-            errors.append(f"{path}: el tag 'start' usa modulo de descarga '{mod}': {name}")
-        if "start" in tags and mod == "docker_compose_v2":
+        if tags & NO_DOWNLOAD_TAGS and mod in DOWNLOAD_MODULES:
+            errors.append(f"{path}: el tag {sorted(tags & NO_DOWNLOAD_TAGS)} usa modulo de descarga '{mod}': {name}")
+        if tags & NO_DOWNLOAD_TAGS and mod == "docker_compose_v2":
             args = next(v for k, v in task.items() if k.split(".")[-1] == "docker_compose_v2")
             if not isinstance(args, dict) or args.get("pull") != "never":
-                errors.append(f"{path}: el tag 'start' usa docker_compose_v2 sin 'pull: never': {name}")
+                errors.append(f"{path}: el tag {sorted(tags & NO_DOWNLOAD_TAGS)} usa docker_compose_v2 sin 'pull: never': {name}")
 
 
 def selftest() -> int:
@@ -125,6 +131,10 @@ def selftest() -> int:
         ([{"name": "up con pull never", "community.docker.docker_compose_v2": {"project_src": "/x", "pull": "never"}, "tags": ["start"]}], 0),
         ([{"name": "pull en install", "community.docker.docker_compose_v2_pull": {"project_src": "/x"}, "tags": ["install"]}], 0),
         ([{"name": "up sin pull never en block", "tags": ["start"], "block": [{"name": "up sin pull never anidado", "community.docker.docker_compose_v2": {"project_src": "/x"}, "tags": ["start"]}]}], 1),
+        ([{"name": "down con pull never y never", "community.docker.docker_compose_v2": {"project_src": "/x", "state": "absent", "pull": "never"}, "tags": ["stop", "never"]}], 0),
+        ([{"name": "down sin pull never", "community.docker.docker_compose_v2": {"project_src": "/x", "state": "absent"}, "tags": ["stop", "never"]}], 1),
+        ([{"name": "stop sin never", "ansible.builtin.file": {"path": "/x", "state": "absent"}, "tags": ["stop"]}], 1),
+        ([{"name": "apt en stop", "ansible.builtin.apt": {"name": "x"}, "tags": ["stop", "never"]}], 1),
     ]
     for tareas, esperados in casos:
         errores: list[str] = []

@@ -1,0 +1,91 @@
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/honeypot/tasks/main.yml:116:3
+
+114
+115 - name: Agregar los repos de Docker y de Wazuh
+116   ansible.builtin.apt_repository:
+      ^ column 3
+
+
+PLAY [Base comun de las VMs del laboratorio] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+ok: [honeyserver]
+
+TASK [common : Exigir la hora sincronizada (solo host real)] *******************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/common/tasks/main.yml:154:9
+
+152   changed_when: false
+153   check_mode: false
+154   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [honeyserver]
+
+PLAY [VM strongSwan (respondedora del tunel)] **********************************
+skipping: no hosts matched
+
+PLAY [VM Wazuh] ****************************************************************
+skipping: no hosts matched
+
+PLAY [VM logrelay] *************************************************************
+skipping: no hosts matched
+
+PLAY [VM honeyserver (senuelo)] ************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [honeyserver]
+
+TASK [honeypot : Omitir el rol si está deshabilitado (el preflight local no instala Docker)] ***
+skipping: [honeyserver]
+
+TASK [honeypot : Comprobar que la administración usa el puerto 22222] **********
+ok: [honeyserver]
+
+TASK [honeypot : Asegurar el directorio de centinelas] *************************
+ok: [honeyserver]
+
+TASK [honeypot : Leer si el señuelo ya arrancó alguna vez] *********************
+ok: [honeyserver]
+
+TASK [honeypot : Sondear el egreso a Internet (debe estar cerrado, E1-3/E1-6)] ***
+ok: [honeyserver] => (item=http://1.1.1.1)
+ok: [honeyserver] => (item=https://example.com)
+
+TASK [honeypot : Exigir el egreso cerrado antes de arrancar el señuelo] ********
+ok: [honeyserver] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [honeypot : Habilitar y arrancar Docker] **********************************
+ok: [honeyserver] => (item=containerd.service)
+ok: [honeyserver] => (item=docker.socket)
+ok: [honeyserver] => (item=docker.service)
+
+TASK [honeypot : Levantar el señuelo sin descargar nada (espera a los healthchecks)] ***
+ok: [honeyserver]
+
+TASK [honeypot : Habilitar y arrancar el Wazuh Agent] **************************
+ok: [honeyserver]
+
+TASK [honeypot : Esperar a que el agente quede conectado por el relay (D4)] ****
+ok: [honeyserver]
+
+TASK [honeypot : Marcar que el señuelo arrancó (desde ahora install no toca servicios)] ***
+ok: [honeyserver]
+
+PLAY RECAP *********************************************************************
+honeyserver                : ok=13   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+EXIT=0

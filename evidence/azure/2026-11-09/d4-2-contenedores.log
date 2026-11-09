@@ -1,0 +1,64 @@
+2026-11-09 01:12:24 CST PASO 2.1 docker ps -a
+honeyserver | CHANGED | rc=0 >>
+CONTAINER ID                                                       IMAGE                                                                                                           COMMAND              
+822c0e806c3b0998ba77ce9823b8fe5a92065f808b7941db2e4d2de9f8597dca   dtagdevsec/tanner:24.04.1@sha256:eb971d4f208e99726cd0f5b00fc3500bc8e1e7a37c2929b84da544ed8ae5ee55               "tanner"             
+a55eef3a44fa00e16906b5699e5842c153bb1732850fe5dd9e7ae19156b63795   dtagdevsec/snare:24.04.1@sha256:826f7a077b2e9cfa8647b21c4f6adc0bc47ecba2799dd88eb698104416268611                "snare --tanner tanne
+3c0c91d33e91f9395442447ec77f8d63e812ddb8b01d8417bd9442a4a1bf951a   cowrie/cowrie:3.1.1@sha256:710f1e4601a663ac8591f58a42b44e4cd3b7ea170c7e6cdb9e54c430a30cd459                     "/cowrie/cowrie-env/b
+531b0e5230801f549483f58db8e4680fa8da6489ea5aab6e2b4de6cbc42c0253   ghcr.io/phin3has/mailoney:sha-b8310a7@sha256:7fe3e29cb000ee0ce3158c653a5c08a51b1a821c6302027661184eb4ec368f4e   "python main.py"     
+100fd0a1ff6a5c354afd1566c01dccad7139e76da6225f304d193cf84bd0af3c   dinotools/dionaea:nightly@sha256:7371e8eeb91fa2d0752f547006b66da962a9ebdb6a3e1ca7ae92e2cff24aad8a               "/usr/local/sbin/entr
+6b77ea015fea0ca8c00f5eb5cfabf52989ab15b629ebea1df84618e18f909164   dtagdevsec/redis:24.04.1@sha256:45ea38a8c893d40922f2a4e969cc618213216e685f059a0c24cba7c983aa6345                "redis-server /etc/re
+cdf4e65944adf0c9ad1975363e91b7a9a18ae356199f2feb3adaa0100def9d42   dtagdevsec/phpox:24.04.1@sha256:ba11d1b05e856602508c0fc8b197aa792f2f865c2f08740c49e843e1516e5894                "python3 sandbox.py" 
+rc=0
+2026-11-09 01:12:30 CST PASO 2.1b conteo healthy
+honeyserver | CHANGED | rc=0 >>
+7
+rc=0
+2026-11-09 01:12:36 CST PASO 2.2 RestartCount tanner y snare
+honeyserver | CHANGED | rc=0 >>
+        "RestartCount": 0,
+        "RestartCount": 0,
+rc=0
+2026-11-09 01:12:42 CST PASO 2.3 Tmpfs tanner
+honeyserver | CHANGED | rc=0 >>
+111:            "Tmpfs": {
+112-                "/opt/tanner/files": "mode=1777",
+113-                "/tmp/tanner": "mode=1777"
+114-            },
+115-            "UTSMode": "",
+116-            "UsernsMode": "",
+117-            "ShmSize": 67108864,
+rc=0
+2026-11-09 01:12:48 CST PASO 2.4 agentes Wazuh
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+
+List of agentless devices:
+rc=0
+2026-11-09 01:12:54 CST PASO 2.5 NTP
+wazuh | CHANGED | rc=0 >>
+yes
+strongswan | CHANGED | rc=0 >>
+yes
+logrelay | CHANGED | rc=0 >>
+yes
+honeyserver | CHANGED | rc=0 >>
+yes
+rc=0
+2026-11-09 01:13:00 CST PASO 2.6 salida a Internet (se espera falla rc=28)
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'curl -m5 -sS -o /dev/null http://1.1.1.1'}, 'timeout': 0, [...]
+
+honeyserver | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+wazuh | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+logrelay | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+strongswan | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+rc=2

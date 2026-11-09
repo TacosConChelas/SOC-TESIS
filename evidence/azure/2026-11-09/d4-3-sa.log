@@ -1,0 +1,131 @@
+=== 2026-11-09 00:59:34 CST PASO 3 — Verificación de precondiciones y entrada T0 ===
+--- Entrada T0 ---
+T0 proporcionado en prompt: [VACIO / '____']
+--- Estado previo en evidence/azure/2026-11-09/d4-1-preflight-y-start.log ---
+make: *** [Makefile:311: time-guard] Error 1
+rc=2
+=== intento 2 ===
+=== 2026-11-09 00:45:17 CST PASO 1.1 a) Hora y versiones: make time-guard pin-check ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+time-guard: son las 00:45; el ciclo se inicia entre las 07:00 y las 20:30 (E1-9)
+make: *** [Makefile:311: time-guard] Error 1
+rc=2
+--- Estado actual de VMs en Azure ---
+[
+  {
+    "name": "vm-honeyserver",
+    "powerState": "VM deallocated"
+  },
+  {
+    "name": "vm-logrelay",
+    "powerState": "VM deallocated"
+  },
+  {
+    "name": "vm-strongswan",
+    "powerState": "VM deallocated"
+  },
+  {
+    "name": "vm-wazuh",
+    "powerState": "VM deallocated"
+  }
+]
+az_vm_list_rc=0
+--- Estado actual de SA en Pi (soc71) ---
+lab: #4, CONNECTING, IKEv2, daf01f1e1263a7dd_i* 0000000000000000_r
+  local  '%any' @ 192.168.1.10[500]
+  remote '%any' @ 172.202.13.163[500]
+  active:  IKE_VENDOR IKE_INIT IKE_NATD IKE_CERT_PRE IKE_AUTH IKE_CERT_POST IKE_CONFIG IKE_AUTH_LIFETIME IKE_MOBIKE IKE_ESTABLISH CHILD_CREATE
+swanctl_rc=0
+--- Ping a 10.50.20.10 ---
+PING 10.50.20.10 (10.50.20.10) 56(84) bytes of data.
+
+--- 10.50.20.10 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+
+ping_rc=1
+=== DETENIDO: Precondición no cumplida. Las VMs están 'VM deallocated' y T0 no está definido (Paso 1 no completó az vm start) ===
+=== intento 2 ===
+2026-11-09 01:11:42 CST PASO 3 inicio observacion (T0=01:11:20 CST; limite 01:26:20 CST)
+2026-11-09 01:11:42 CST t+22s ping=ok
+2026-11-09 01:11:43 CST t+22s list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  local  'pi.soc-tesis' @ 192.168.1.10[4500]
+  remote 'azure-vpn.soc-tesis' @ 172.202.13.163[4500]
+  AES_GCM_16-256/PRF_HMAC_SHA2_384/ECP_384
+  established 170s ago, rekeying in 13862s
+  lab: #8, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256
+    installed 170s ago, rekeying in 3100s, expires in 3790s
+    in  c5be3132,     84 bytes,     1 packets,     1s ago
+    out c9d4f4e5,     84 bytes,     1 packets,     1s ago
+    local  192.168.1.0/24
+    remote 10.50.0.0/16
+2026-11-09 01:11:43 CST t+22s CONDICION CUMPLIDA: ping ok + ESTABLISHED + INSTALLED
+2026-11-09 01:11:59 CST PASO 3.3 journal desde T0 (segun prompt)
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (57 bytes)
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: parsed INFORMATIONAL request 4 [ ]
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 4 [ ]
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (57 bytes)
+rc=0
+2026-11-09 01:12:00 CST PASO 3.3b journal desde 01:07:00 (ventana previa a T0, solo lectura)
+Nov 09 01:07:14 Ubuntu-server charon-systemd[9616]: retransmit 5 of request with message ID 0
+Nov 09 01:07:14 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:08:29 Ubuntu-server charon-systemd[9616]: giving up after 5 retransmits
+Nov 09 01:08:29 Ubuntu-server charon-systemd[9616]: peer not responding, trying again (85/0)
+Nov 09 01:08:29 Ubuntu-server charon-systemd[9616]: initiating IKE_SA lab[4] to 172.202.13.163
+Nov 09 01:08:29 Ubuntu-server charon-systemd[9616]: generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
+Nov 09 01:08:29 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:08:33 Ubuntu-server charon-systemd[9616]: retransmit 1 of request with message ID 0
+Nov 09 01:08:33 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:08:41 Ubuntu-server charon-systemd[9616]: retransmit 2 of request with message ID 0
+Nov 09 01:08:41 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:08:53 Ubuntu-server charon-systemd[9616]: retransmit 3 of request with message ID 0
+Nov 09 01:08:53 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[500] to 172.202.13.163[500] (296 bytes)
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[500] to 192.168.1.10[500] (304 bytes)
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(CHDLESS_SUP) N(MULT_AUTH) ]
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_384/ECP_384
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: local host is behind NAT, sending keep alives
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: remote host is behind NAT
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: authentication of 'pi.soc-tesis' (myself) with pre-shared key
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: establishing CHILD_SA lab{8}
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(ADD_6_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (308 bytes)
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (240 bytes)
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: parsed IKE_AUTH response 1 [ IDr AUTH SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) ]
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: authentication of 'azure-vpn.soc-tesis' with pre-shared key successful
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: peer supports MOBIKE
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: IKE_SA lab[4] established between 192.168.1.10[pi.soc-tesis]...172.202.13.163[azure-vpn.soc-tesis]
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: scheduling rekeying in 14032s
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: maximum IKE_SA lifetime 15472s
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
+Nov 09 01:08:54 Ubuntu-server charon-systemd[9616]: CHILD_SA lab{8} established with SPIs c5be3132_i c9d4f4e5_o and TS 192.168.1.0/24 === 10.50.0.0/16
+Nov 09 01:09:14 Ubuntu-server charon-systemd[9616]: sending keep alive to 172.202.13.163[4500]
+Nov 09 01:09:24 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (57 bytes)
+Nov 09 01:09:24 Ubuntu-server charon-systemd[9616]: parsed INFORMATIONAL request 0 [ ]
+Nov 09 01:09:24 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 0 [ ]
+Nov 09 01:09:24 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (57 bytes)
+Nov 09 01:09:44 Ubuntu-server charon-systemd[9616]: sending keep alive to 172.202.13.163[4500]
+Nov 09 01:09:54 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (57 bytes)
+Nov 09 01:09:54 Ubuntu-server charon-systemd[9616]: parsed INFORMATIONAL request 1 [ ]
+Nov 09 01:09:54 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 1 [ ]
+Nov 09 01:09:54 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (57 bytes)
+Nov 09 01:10:14 Ubuntu-server charon-systemd[9616]: sending keep alive to 172.202.13.163[4500]
+Nov 09 01:10:24 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (57 bytes)
+Nov 09 01:10:24 Ubuntu-server charon-systemd[9616]: parsed INFORMATIONAL request 2 [ ]
+Nov 09 01:10:24 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 2 [ ]
+Nov 09 01:10:24 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (57 bytes)
+Nov 09 01:10:44 Ubuntu-server charon-systemd[9616]: sending keep alive to 172.202.13.163[4500]
+Nov 09 01:10:54 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (57 bytes)
+Nov 09 01:10:54 Ubuntu-server charon-systemd[9616]: parsed INFORMATIONAL request 3 [ ]
+Nov 09 01:10:54 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 3 [ ]
+Nov 09 01:10:54 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (57 bytes)
+Nov 09 01:11:14 Ubuntu-server charon-systemd[9616]: sending keep alive to 172.202.13.163[4500]
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (57 bytes)
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: parsed INFORMATIONAL request 4 [ ]
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 4 [ ]
+Nov 09 01:11:24 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (57 bytes)
+rc=0
+2026-11-09 01:12:08 CST RESUMEN PASO 3 (sin intervencion del operador ni del agente): primer ping observado 01:11:42 (t+22s); IKE_SA ESTABLISHED y CHILD INSTALLED en 01:08:54 segun journal (T0-146s); disparo: retry automatico de charon en la Pi (initiating IKE_SA lab[4] 01:08:29)

@@ -1,0 +1,178 @@
+=== PASO 6a (Etapa M pasos 1-2) 2026-11-09 01:28:35 CST ===
+2026-11-09 01:28:35 CST PRECOND ansible all -m ping
+wazuh | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+logrelay | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+strongswan | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+honeyserver | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+rc=0
+2026-11-09 01:28:42 CST PRECOND egreso cerrado honeyserver (curl falla)
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'curl -m5 -sS -o /dev/null http://1.1.1.1'}, 'timeout': 0, [...]
+
+honeyserver | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+rc=0
+2026-11-09 01:28:53 CST 6a.1 estado ANTES honeyserver
+honeyserver | CHANGED | rc=0 >>
+7
+docker.service active enabled
+docker.socket active enabled
+containerd.service active enabled
+wazuh-agent.service active enabled
+common
+honeypot
+honeypot-images
+honeypot-started
+honeypot-uids.json
+keys
+rc=0
+2026-11-09 01:29:05 CST PASO 6a.2 inicio: ansible-playbook site.yml --limit honeyserver --tags stop (salida en evidence/azure/2026-11-09/d4-6a-stop-playbook.out)
+=== PASO 6a.2 recap (stop 1) ===
+hora de parada: entre 01:29:05 y 01:29:35 CST (fin del playbook; EXIT=0)
+PLAY RECAP *********************************************************************
+honeyserver                : ok=7    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+EXIT=0
+2026-11-09 01:29:41 CST 6a.3 E1-3 unidades y centinelas
+honeyserver | CHANGED | rc=0 >>
+docker.service inactive disabled
+docker.socket inactive disabled
+containerd.service inactive disabled
+wazuh-agent.service inactive disabled
+centinelas-ok
+rc=0
+2026-11-09 01:29:47 CST 6a.4 segunda --tags stop (esperado changed=0)
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/honeypot/tasks/main.yml:116:3
+
+114
+115 - name: Agregar los repos de Docker y de Wazuh
+116   ansible.builtin.apt_repository:
+      ^ column 3
+
+
+PLAY [Base comun de las VMs del laboratorio] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [honeyserver]
+
+PLAY [VM strongSwan (respondedora del tunel)] **********************************
+skipping: no hosts matched
+
+PLAY [VM Wazuh] ****************************************************************
+skipping: no hosts matched
+
+PLAY [VM logrelay] *************************************************************
+skipping: no hosts matched
+
+PLAY [VM honeyserver (senuelo)] ************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [honeyserver]
+
+TASK [honeypot : Leer si Docker está activo (para bajar el proyecto solo si el daemon responde)] ***
+ok: [honeyserver]
+
+TASK [honeypot : Leer si existe el proyecto compose del señuelo] ***************
+ok: [honeyserver]
+
+TASK [honeypot : Bajar el proyecto compose del señuelo (docker compose down, sin descargas)] ***
+skipping: [honeyserver]
+
+TASK [honeypot : Detener y deshabilitar Docker y el Wazuh Agent (E1-3)] ********
+ok: [honeyserver] => (item=docker.socket)
+ok: [honeyserver] => (item=docker.service)
+ok: [honeyserver] => (item=containerd.service)
+ok: [honeyserver] => (item=wazuh-agent.service)
+
+TASK [honeypot : Borrar el centinela de arranque (install vuelve a dormir Docker y el agente)] ***
+ok: [honeyserver]
+
+PLAY RECAP *********************************************************************
+honeyserver                : ok=6    changed=0    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+
+rc=0
+=== 6a.4 recap (stop 2) ===
+hora: 2026-11-09 01:30:05 CST (posterior a stop 1)
+=== PASO 6a.5 comprobaciones ===
+2026-11-09 01:30:05 CST 6a.5a ansible all -m ping (esperado 4 pong)
+honeyserver | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+wazuh | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+logrelay | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+strongswan | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+rc=0
+2026-11-09 01:30:12 CST 6a.5b tunel: ping 10.50.20.10
+PING 10.50.20.10 (10.50.20.10) 56(84) bytes of data.
+64 bytes from 10.50.20.10: icmp_seq=1 ttl=63 time=58.8 ms
+64 bytes from 10.50.20.10: icmp_seq=2 ttl=63 time=60.1 ms
+64 bytes from 10.50.20.10: icmp_seq=3 ttl=63 time=56.4 ms
+
+--- 10.50.20.10 ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 56.369/58.412/60.107/1.545 ms
+ping_rc=0
+2026-11-09 01:30:14 CST 6a.5c egreso cerrado en las 4 (curl falla)
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'curl -m5 -sS -o /dev/null http://1.1.1.1'}, 'timeout': 0, [...]
+
+strongswan | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+wazuh | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+honeyserver | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+logrelay | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+rc=0

@@ -1,0 +1,64 @@
+=== PASO 5a precondicion: ansible all -m ping (2026-11-09 01:18:59 CST) ===
+logrelay | SUCCESS => {
+    "ping": "pong"
+wazuh | SUCCESS => {
+    "ping": "pong"
+strongswan | SUCCESS => {
+    "ping": "pong"
+honeyserver | SUCCESS => {
+    "ping": "pong"
+pings_rc=0
+=== PASO 5a.1 ansible-playbook site.yml --tags config --limit wazuh (en background, salida a evidence/azure/2026-11-09/d4-5a-playbook.out) 2026-11-09 01:19:07 CST ===
+2026-11-09 01:21:22 CST PASO 5a.1 resultado del playbook (salida completa en evidence/azure/2026-11-09/d4-5a-playbook.out, rc del proceso no capturado por ejecucion en background; ver recap):
+PLAY RECAP *********************************************************************
+wazuh                      : ok=37   changed=2    unreachable=0    failed=0    skipped=14   rescued=0    ignored=0   
+fatal_lines=0
+2026-11-09 01:21:22 CST PASO 5a.2 wazuh-control status
+wazuh | CHANGED | rc=0 >>
+wazuh-clusterd not running...
+wazuh-modulesd is running...
+wazuh-monitord is running...
+wazuh-logcollector is running...
+wazuh-remoted is running...
+wazuh-syscheckd is running...
+wazuh-analysisd is running...
+wazuh-maild not running...
+wazuh-execd is running...
+wazuh-db is running...
+wazuh-authd is running...
+wazuh-agentlessd not running...
+wazuh-integratord not running...
+wazuh-csyslogd not running...
+wazuh-apid is running...
+rc=0
+2026-11-09 01:21:29 CST PASO 5a.3a conteo de reglas en local_rules.xml (esperado >=14)
+wazuh | CHANGED | rc=0 >>
+13
+rc=0
+2026-11-09 01:21:35 CST PASO 5a.3b wazuh-analysisd -t
+wazuh | CHANGED | rc=0 >>
+2026/11/09 07:21:41 wazuh-analysisd: INFO: Rule tree threshold 'analysisd.rule_tree_memory_warning' set to 130979776 nodes: 25% of 15988 MiB of physical memory, 32 bytes per node.
+rc=0
+2026-11-09 01:21:41 CST PASO 5a.4a linea base alertas id 1001 ANTES
+wazuh | CHANGED | rc=0 >>
+10
+rc=0
+2026-11-09 01:21:47 CST PASO 5a.4b linea base alertas id 1002 ANTES
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'shell' task>
+
+{'action': 'shell', 'args': {'_raw_params': 'grep -c "\\"id\\":\\"1002\\"" /var/ossec/logs/alerts/alerts.json'}, [...]
+
+wazuh | FAILED | rc=1 >>
+0The command exited with a non-zero return code.
+rc=0
+2026-11-09 01:21:53 CST PASO 5a.5 IP honeyserver
+130.131.218.113
+rc=0
+2026-11-09 01:21:58 CST LISTO PARA SSH: 130.131.218.113
+hora UTC actual: 2026-11-09 07:21:58 UTC
+2026-11-09 01:22:05 CST DIAGNOSTICO 5a.3 (solo lectura): IDs de regla en local_rules.xml
+wazuh | CHANGED | rc=0 >>
+<rule id="100100" <rule id="100101" <rule id="100102" <rule id="100103" <rule id="100104" <rule id="100105" <rule id="100110" <rule id="100200" <rule id="100201" <rule id="100210" <rule id="100300" <rule id="100400" <rule id="100410" 
+13
+rc=0

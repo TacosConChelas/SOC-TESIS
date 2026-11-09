@@ -1,12 +1,121 @@
 <!--
   Reglas locales de SOC-TESIS. Rangos reservados (D5):
   Cowrie 100100-100199, Dionaea 100200-100299, Mailoney 100300-100399, Snare/Tanner 100400-100499.
-  Este archivo es solo el punto de enganche: el contenido llega en la fase de reglas (wazuh-logtest).
-  Wazuh rechaza un <group> vacio (error 1220), por eso queda una regla base sin efecto.
+  Las reglas base de cada honeypot ligan por el label @honeypot (<label> del localfile, rol honeypot)
+  y por decoded_as json. Los campos son los reales de las muestras (ansible/local/fixtures/rules/).
+  Reglas sin muestra real quedan marcadas PENDIENTE y no se validan (ver rules-check.sh).
 -->
 <group name="local,soc-tesis,">
-  <rule id="100000" level="0">
-    <match>soc-tesis-placeholder</match>
-    <description>Punto de enganche de reglas locales de SOC-TESIS (sin efecto).</description>
+
+  <!-- Cowrie (100100-100199) -->
+  <rule id="100100" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="@honeypot">^cowrie$</field>
+    <description>Cowrie: evento del honeypot SSH/Telnet.</description>
+    <group>honeypot,cowrie,</group>
+  </rule>
+
+  <rule id="100101" level="5">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.login\.failed$</field>
+    <description>Cowrie: intento de inicio de sesion fallido.</description>
+    <group>authentication_failed,honeypot,cowrie,</group>
+  </rule>
+
+  <rule id="100102" level="10">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.login\.success$</field>
+    <description>Cowrie: inicio de sesion aceptado por el senuelo (el atacante entro).</description>
+    <group>authentication_success,honeypot,cowrie,</group>
+  </rule>
+
+  <!-- Muestra real: ensayo local 2026-11-09 (ssh + uname/cat/wget en una linea = un solo evento). -->
+  <rule id="100103" level="8">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.command\.input$</field>
+    <description>Cowrie: comando introducido en la shell del senuelo.</description>
+    <group>honeypot,cowrie,</group>
+  </rule>
+
+  <!-- SIN MUESTRA POSIBLE: con el egreso cerrado (E1-6) cowrie no puede descargar (wget falla al resolver,
+       verificado 2026-11-09). Regla preventiva por si se abre el egreso; eventid segun la doc de Cowrie. -->
+  <rule id="100104" level="12">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.session\.file_download$</field>
+    <description>Cowrie: el atacante descargo un fichero al senuelo.</description>
+    <group>honeypot,cowrie,malware,</group>
+  </rule>
+
+  <!-- Healthcheck de Docker (python socket a 127.0.0.1:2222 cada pocos segundos): session.connect/closed
+       sin valor. Nivel 0 para que no sea alerta ni cuente como FP. ponytail: se sigue enviando al Manager;
+       filtrarlo en el agente si el volumen pesa. -->
+  <rule id="100105" level="0">
+    <if_sid>100100</if_sid>
+    <field name="src_ip">^127\.0\.0\.1$</field>
+    <description>Cowrie: healthcheck interno de Docker (sin efecto).</description>
+    <group>honeypot,cowrie,</group>
+  </rule>
+
+  <rule id="100110" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100101</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <description>Cowrie: fuerza bruta SSH (5 intentos fallidos desde la misma IP en 60 s).</description>
+    <group>authentication_failures,honeypot,cowrie,</group>
+    <mitre><id>T1110</id></mitre>
+  </rule>
+
+  <!-- Dionaea (100200-100299) -->
+  <rule id="100200" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="@honeypot">^dionaea$</field>
+    <description>Dionaea: conexion a un servicio del senuelo.</description>
+    <group>honeypot,dionaea,</group>
+  </rule>
+
+  <rule id="100201" level="0">
+    <if_sid>100200</if_sid>
+    <field name="src_ip">^127\.0\.0\.1$</field>
+    <description>Dionaea: healthcheck interno de Docker a 127.0.0.1:21 (sin efecto).</description>
+    <group>honeypot,dionaea,</group>
+  </rule>
+
+  <!-- Dionaea solo registra conexiones que pasan del handshake: un nmap -sT no deja eventos
+       (getpeername falla al aceptar; verificado 2026-11-09). Esto detecta sondeo de servicios
+       (banner grab, -sV), no un SYN/connect scan puro. -->
+  <rule id="100210" level="8" frequency="4" timeframe="60">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <different_field>dst_port</different_field>
+    <description>Dionaea: sondeo de varios servicios desde la misma IP (4 puertos en 60 s).</description>
+    <group>honeypot,dionaea,recon,</group>
+    <mitre><id>T1046</id></mitre>
+  </rule>
+
+  <!-- Mailoney (100300-100399) -->
+  <!-- Llega por journald como syslog: el pre-decoder aisla program_name (SYSLOG_IDENTIFIER del
+       contenedor) y <match> ya no lo ve (verificado con wazuh-logtest 4.14.10). Sin decoder JSON
+       propio todavia: anadir local_decoder con JSON_Decoder si TEST-004 necesita src_ip. -->
+  <rule id="100300" level="5">
+    <program_name>^soc-tesis-mailoney$</program_name>
+    <description>Mailoney: sesion SMTP contra el senuelo.</description>
+    <group>honeypot,mailoney,</group>
+  </rule>
+
+  <!-- Tanner (100400-100499) -->
+  <rule id="100400" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="@honeypot">^tanner$</field>
+    <description>Tanner: peticion HTTP al senuelo web (Snare).</description>
+    <group>honeypot,tanner,</group>
+  </rule>
+
+  <!-- Tanner clasifica cada peticion; "index" es navegacion normal. Muestras reales 2026-11-09:
+       sqli y xss. lfi/rfi/cmd_exec son nombres de Tanner sin muestra (LFI dio 404 en Snare). -->
+  <rule id="100410" level="8">
+    <if_sid>100400</if_sid>
+    <field name="response_msg.response.message.detection.name">^sqli$|^xss$|^lfi$|^rfi$|^cmd_exec$</field>
+    <description>Tanner: peticion HTTP clasificada como ataque ($(response_msg.response.message.detection.name)).</description>
+    <group>honeypot,tanner,web_attack,</group>
+    <mitre><id>T1190</id></mitre>
   </rule>
 </group>

@@ -1,0 +1,368 @@
+2026-11-09 01:13:26 CST PASO 4.1 precondicion y estado ANTES (lectura)
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  local  'pi.soc-tesis' @ 192.168.1.10[4500]
+  remote 'azure-vpn.soc-tesis' @ 172.202.13.163[4500]
+  AES_GCM_16-256/PRF_HMAC_SHA2_384/ECP_384
+  established 274s ago, rekeying in 13758s
+  lab: #8, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256
+    installed 274s ago, rekeying in 2996s, expires in 3686s
+    in  c5be3132,  62056 bytes,   621 packets,    16s ago
+    out c9d4f4e5, 2089096 bytes,  1755 packets,    16s ago
+    local  192.168.1.0/24
+    remote 10.50.0.0/16
+list_rc=0
+ping_rc=0 (0 = ok)
+2026-11-09 01:13:38 CST OBSERVADOR INICIADO (ping cada 2s, list-sas cada 10s, 5 min)
+2026-11-09 01:13:39.036 ping=ok
+2026-11-09 01:13:39.816 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 286s ago, rekeying in 13746s
+  lab: #8, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256
+    installed 286s ago, rekeying in 2984s, expires in 3674s
+    in  c5be3132,  62224 bytes,   623 packets,     0s ago
+    out c9d4f4e5, 2089264 bytes,  1757 packets,     1s ago
+2026-11-09 01:13:41.893 ping=ok
+2026-11-09 01:13:43.969 ping=ok
+2026-11-09 01:13:46.041 ping=ok
+2026-11-09 01:13:48.115 ping=ok
+2026-11-09 01:13:50.190 ping=ok
+2026-11-09 01:13:50.991 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 297s ago, rekeying in 13735s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 10s ago, rekeying in 3311s, expires in 3950s
+    in  c4367b23,    420 bytes,     5 packets,     0s ago
+    out c448083f,    420 bytes,     5 packets,     0s ago
+2026-11-09 01:13:53.064 ping=ok
+2026-11-09 01:13:55.140 ping=ok
+2026-11-09 01:13:57.212 ping=ok
+2026-11-09 01:13:59.288 ping=ok
+2026-11-09 01:14:01.363 ping=ok
+2026-11-09 01:14:02.156 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 308s ago, rekeying in 13724s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 21s ago, rekeying in 3300s, expires in 3939s
+    in  c4367b23,    840 bytes,    10 packets,     1s ago
+    out c448083f,    840 bytes,    10 packets,     1s ago
+2026-11-09 01:14:04.233 ping=ok
+2026-11-09 01:14:06.310 ping=ok
+2026-11-09 01:14:08.379 ping=ok
+2026-11-09 01:14:10.453 ping=ok
+2026-11-09 01:14:12.529 ping=ok
+2026-11-09 01:13:38 CST PASO 4.2 corte desde Azure (run-command, por run-command y no por el tunel)
+{
+  "value": [
+    {
+      "code": "ProvisioningState/succeeded",
+      "displayStatus": "Provisioning succeeded",
+      "level": "Info",
+      "message": "Enable succeeded: \n[stdout]\n07:13:41.103799475\n[IKE] closing CHILD_SA lab{1} with SPIs c9d4f4e5_i (2089264 bytes) c5be3132_o (62224 bytes) and TS 10.50.0.0/16 === 192.168.1.0/24\n[IKE] sending DELETE for ESP CHILD_SA with SPI c9d4f4e5\n[ENC] generating INFORMATIONAL request 6 [ D ]\n[NET] sending packet: from 10.50.20.10[4500] to 203.0.113.10[49226] (69 bytes)\n[NET] received packet: from 203.0.113.10[49226] to 10.50.20.10[4500] (289 bytes)\n[ENC] parsed CREATE_CHILD_SA request 2 [ SA No KE TSi TSr ]\n[CFG] selected proposal: ESP:AES_GCM_16_256/ECP_384/NO_EXT_SEQ\n[IKE] CHILD_SA lab{2} established with SPIs c448083f_i c4367b23_o and TS 10.50.0.0/16 === 192.168.1.0/24\n[ENC] generating CREATE_CHILD_SA response 2 [ SA No KE TSi TSr ]\n[NET] sending packet: from 10.50.20.10[4500] to 203.0.113.10[49226] (289 bytes)\n[NET] received packet: from 203.0.113.10[49226] to 10.50.20.10[4500] (69 bytes)\n[ENC] parsed INFORMATIONAL response 6 [ D ]\n[IKE] received DELETE for ESP CHILD_SA with SPI c5be3132\n[IKE] CHILD_SA closed\nterminate completed successfully\n07:13:41.181833745\n\n[stderr]\n"
+    }
+  ]
+}
+rc=0
+2026-11-09 01:14:12 CST fin run-command
+2026-11-09 01:14:13.345 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 319s ago, rekeying in 13713s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 32s ago, rekeying in 3289s, expires in 3928s
+    in  c4367b23,   1676 bytes,    23 packets,     1s ago
+    out c448083f,   2124 bytes,    27 packets,     1s ago
+2026-11-09 01:14:15.417 ping=ok
+2026-11-09 01:14:17.489 ping=ok
+2026-11-09 01:14:19.561 ping=ok
+2026-11-09 01:14:21.634 ping=ok
+2026-11-09 01:14:23.708 ping=ok
+2026-11-09 01:14:24.495 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 330s ago, rekeying in 13702s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 43s ago, rekeying in 3278s, expires in 3917s
+    in  c4367b23,   2096 bytes,    28 packets,     1s ago
+    out c448083f,   2544 bytes,    32 packets,     1s ago
+2026-11-09 01:14:26.566 ping=ok
+2026-11-09 01:14:28.641 ping=ok
+2026-11-09 01:14:30.717 ping=ok
+2026-11-09 01:14:32.792 ping=ok
+2026-11-09 01:14:34.863 ping=ok
+2026-11-09 01:14:36.128 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 342s ago, rekeying in 13690s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 55s ago, rekeying in 3266s, expires in 3905s
+    in  c4367b23,   2516 bytes,    33 packets,     2s ago
+    out c448083f,   2964 bytes,    37 packets,     2s ago
+2026-11-09 01:14:38.202 ping=ok
+2026-11-09 01:14:40.274 ping=ok
+2026-11-09 01:14:42.348 ping=ok
+2026-11-09 01:14:44.420 ping=ok
+2026-11-09 01:14:46.495 ping=ok
+2026-11-09 01:14:47.320 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 353s ago, rekeying in 13679s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 66s ago, rekeying in 3255s, expires in 3894s
+    in  c4367b23,   2936 bytes,    38 packets,     1s ago
+    out c448083f,   3384 bytes,    42 packets,     1s ago
+2026-11-09 01:14:49.393 ping=ok
+2026-11-09 01:14:51.467 ping=ok
+2026-11-09 01:14:53.547 ping=ok
+2026-11-09 01:14:55.624 ping=ok
+2026-11-09 01:14:57.699 ping=ok
+2026-11-09 01:14:58.497 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 364s ago, rekeying in 13668s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 77s ago, rekeying in 3244s, expires in 3883s
+    in  c4367b23,   3356 bytes,    43 packets,     1s ago
+    out c448083f,   3804 bytes,    47 packets,     1s ago
+2026-11-09 01:15:00.570 ping=ok
+2026-11-09 01:15:02.647 ping=ok
+2026-11-09 01:15:04.721 ping=ok
+2026-11-09 01:15:06.796 ping=ok
+2026-11-09 01:15:08.871 ping=ok
+2026-11-09 01:15:09.666 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 376s ago, rekeying in 13656s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 89s ago, rekeying in 3232s, expires in 3871s
+    in  c4367b23,   3776 bytes,    48 packets,     1s ago
+    out c448083f,   4224 bytes,    52 packets,     1s ago
+2026-11-09 01:15:11.739 ping=ok
+2026-11-09 01:15:13.817 ping=ok
+2026-11-09 01:15:15.892 ping=ok
+2026-11-09 01:15:17.972 ping=ok
+2026-11-09 01:15:20.048 ping=ok
+2026-11-09 01:15:20.839 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 387s ago, rekeying in 13645s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 100s ago, rekeying in 3221s, expires in 3860s
+    in  c4367b23,   4196 bytes,    53 packets,     0s ago
+    out c448083f,   4644 bytes,    57 packets,     2s ago
+2026-11-09 01:15:22.919 ping=ok
+2026-11-09 01:15:24.993 ping=ok
+2026-11-09 01:15:27.070 ping=ok
+2026-11-09 01:15:29.145 ping=ok
+2026-11-09 01:15:31.219 ping=ok
+2026-11-09 01:15:32.007 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 398s ago, rekeying in 13634s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 111s ago, rekeying in 3210s, expires in 3849s
+    in  c4367b23,   4616 bytes,    58 packets,     0s ago
+    out c448083f,   5064 bytes,    62 packets,     0s ago
+2026-11-09 01:15:34.083 ping=ok
+2026-11-09 01:15:36.159 ping=ok
+2026-11-09 01:15:38.236 ping=ok
+2026-11-09 01:15:40.311 ping=ok
+2026-11-09 01:15:42.390 ping=ok
+2026-11-09 01:15:43.659 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 410s ago, rekeying in 13622s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 123s ago, rekeying in 3198s, expires in 3837s
+    in  c4367b23,   5036 bytes,    63 packets,     1s ago
+    out c448083f,   5484 bytes,    67 packets,     1s ago
+2026-11-09 01:15:45.736 ping=ok
+2026-11-09 01:15:47.811 ping=ok
+2026-11-09 01:15:49.886 ping=ok
+2026-11-09 01:15:51.966 ping=ok
+2026-11-09 01:15:54.042 ping=ok
+2026-11-09 01:15:54.830 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 421s ago, rekeying in 13611s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 134s ago, rekeying in 3187s, expires in 3826s
+    in  c4367b23,   5456 bytes,    68 packets,     0s ago
+    out c448083f,   5904 bytes,    72 packets,     1s ago
+2026-11-09 01:15:56.906 ping=ok
+2026-11-09 01:15:58.979 ping=ok
+2026-11-09 01:16:01.056 ping=ok
+2026-11-09 01:16:03.131 ping=ok
+2026-11-09 01:16:05.210 ping=ok
+2026-11-09 01:16:06.001 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 432s ago, rekeying in 13600s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 145s ago, rekeying in 3176s, expires in 3815s
+    in  c4367b23,   5876 bytes,    73 packets,     0s ago
+    out c448083f,   6324 bytes,    77 packets,     0s ago
+2026-11-09 01:16:08.078 ping=ok
+2026-11-09 01:16:10.154 ping=ok
+2026-11-09 01:16:12.231 ping=ok
+2026-11-09 01:16:14.304 ping=ok
+2026-11-09 01:16:16.382 ping=ok
+2026-11-09 01:16:17.184 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 443s ago, rekeying in 13589s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 156s ago, rekeying in 3165s, expires in 3804s
+    in  c4367b23,   6296 bytes,    78 packets,     1s ago
+    out c448083f,   6744 bytes,    82 packets,     1s ago
+2026-11-09 01:16:19.263 ping=ok
+2026-11-09 01:16:21.337 ping=ok
+2026-11-09 01:16:23.412 ping=ok
+2026-11-09 01:16:25.488 ping=ok
+2026-11-09 01:16:27.560 ping=ok
+2026-11-09 01:16:28.360 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 454s ago, rekeying in 13578s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 167s ago, rekeying in 3154s, expires in 3793s
+    in  c4367b23,   6716 bytes,    83 packets,     1s ago
+    out c448083f,   7164 bytes,    87 packets,     1s ago
+2026-11-09 01:16:30.436 ping=ok
+2026-11-09 01:16:32.514 ping=ok
+2026-11-09 01:16:34.589 ping=ok
+2026-11-09 01:16:36.666 ping=ok
+2026-11-09 01:16:38.741 ping=ok
+2026-11-09 01:16:39.522 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 465s ago, rekeying in 13567s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 178s ago, rekeying in 3143s, expires in 3782s
+    in  c4367b23,   7136 bytes,    88 packets,     1s ago
+    out c448083f,   7584 bytes,    92 packets,     1s ago
+2026-11-09 01:16:41.597 ping=ok
+2026-11-09 01:16:43.671 ping=ok
+2026-11-09 01:16:45.751 ping=ok
+2026-11-09 01:16:47.827 ping=ok
+2026-11-09 01:16:49.899 ping=ok
+2026-11-09 01:16:51.174 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 477s ago, rekeying in 13555s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 190s ago, rekeying in 3131s, expires in 3770s
+    in  c4367b23,   7556 bytes,    93 packets,     2s ago
+    out c448083f,   8004 bytes,    97 packets,     2s ago
+2026-11-09 01:16:53.249 ping=ok
+2026-11-09 01:16:55.327 ping=ok
+2026-11-09 01:16:57.405 ping=ok
+2026-11-09 01:16:59.481 ping=ok
+2026-11-09 01:17:01.557 ping=ok
+2026-11-09 01:17:02.360 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 488s ago, rekeying in 13544s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 201s ago, rekeying in 3120s, expires in 3759s
+    in  c4367b23,   7976 bytes,    98 packets,     1s ago
+    out c448083f,   8424 bytes,   102 packets,     1s ago
+2026-11-09 01:17:04.437 ping=ok
+2026-11-09 01:17:06.511 ping=ok
+2026-11-09 01:17:08.587 ping=ok
+2026-11-09 01:17:10.663 ping=ok
+2026-11-09 01:17:12.740 ping=ok
+2026-11-09 01:17:13.531 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 499s ago, rekeying in 13533s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 212s ago, rekeying in 3109s, expires in 3748s
+    in  c4367b23,   8396 bytes,   103 packets,     1s ago
+    out c448083f,   8844 bytes,   107 packets,     1s ago
+2026-11-09 01:17:15.605 ping=ok
+2026-11-09 01:17:17.683 ping=ok
+2026-11-09 01:17:19.758 ping=ok
+2026-11-09 01:17:21.836 ping=ok
+2026-11-09 01:17:23.911 ping=ok
+2026-11-09 01:17:24.702 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 511s ago, rekeying in 13521s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 224s ago, rekeying in 3097s, expires in 3736s
+    in  c4367b23,   8816 bytes,   108 packets,     1s ago
+    out c448083f,   9264 bytes,   112 packets,     1s ago
+2026-11-09 01:17:26.780 ping=ok
+2026-11-09 01:17:28.852 ping=ok
+2026-11-09 01:17:30.927 ping=ok
+2026-11-09 01:17:33.003 ping=ok
+2026-11-09 01:17:35.081 ping=ok
+2026-11-09 01:17:35.878 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 522s ago, rekeying in 13510s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 235s ago, rekeying in 3086s, expires in 3725s
+    in  c4367b23,   9236 bytes,   113 packets,     0s ago
+    out c448083f,   9684 bytes,   117 packets,     0s ago
+2026-11-09 01:17:37.956 ping=ok
+2026-11-09 01:17:40.030 ping=ok
+2026-11-09 01:17:42.105 ping=ok
+2026-11-09 01:17:44.185 ping=ok
+2026-11-09 01:17:46.263 ping=ok
+2026-11-09 01:17:47.087 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 533s ago, rekeying in 13499s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 246s ago, rekeying in 3075s, expires in 3714s
+    in  c4367b23,   9656 bytes,   118 packets,     1s ago
+    out c448083f,  10104 bytes,   122 packets,     1s ago
+2026-11-09 01:17:49.168 ping=ok
+2026-11-09 01:17:51.244 ping=ok
+2026-11-09 01:17:53.322 ping=ok
+2026-11-09 01:17:55.396 ping=ok
+2026-11-09 01:17:57.476 ping=ok
+2026-11-09 01:17:58.715 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 545s ago, rekeying in 13487s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 258s ago, rekeying in 3063s, expires in 3702s
+    in  c4367b23,  10076 bytes,   123 packets,     1s ago
+    out c448083f,  10524 bytes,   127 packets,     1s ago
+2026-11-09 01:18:00.791 ping=ok
+2026-11-09 01:18:02.864 ping=ok
+2026-11-09 01:18:04.940 ping=ok
+2026-11-09 01:18:07.015 ping=ok
+2026-11-09 01:18:09.095 ping=ok
+2026-11-09 01:18:09.888 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 556s ago, rekeying in 13476s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 269s ago, rekeying in 3052s, expires in 3691s
+    in  c4367b23,  10496 bytes,   128 packets,     0s ago
+    out c448083f,  10944 bytes,   132 packets,     0s ago
+2026-11-09 01:18:11.968 ping=ok
+2026-11-09 01:18:14.047 ping=ok
+2026-11-09 01:18:16.125 ping=ok
+2026-11-09 01:18:18.200 ping=ok
+2026-11-09 01:18:20.278 ping=ok
+2026-11-09 01:18:21.070 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 567s ago, rekeying in 13465s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 280s ago, rekeying in 3041s, expires in 3680s
+    in  c4367b23,  10916 bytes,   133 packets,     1s ago
+    out c448083f,  11364 bytes,   137 packets,     1s ago
+2026-11-09 01:18:23.142 ping=ok
+2026-11-09 01:18:25.223 ping=ok
+2026-11-09 01:18:27.294 ping=ok
+2026-11-09 01:18:29.374 ping=ok
+2026-11-09 01:18:31.450 ping=ok
+2026-11-09 01:18:32.240 list-sas:
+lab: #4, ESTABLISHED, IKEv2, 767c6f37cd0fc209_i* b1229f34771b1bc0_r
+  established 578s ago, rekeying in 13454s
+  lab: #9, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256/ECP_384
+    installed 291s ago, rekeying in 3030s, expires in 3669s
+    in  c4367b23,  11336 bytes,   138 packets,     1s ago
+    out c448083f,  11784 bytes,   142 packets,     1s ago
+2026-11-09 01:18:34.316 ping=ok
+2026-11-09 01:18:36.395 ping=ok
+2026-11-09 01:18:38 CST OBSERVADOR FIN (5 min)
+2026-11-09 01:18:51 CST PASO 4.4 journal desde T4=2026-11-09 01:13:41 CST (lectura)
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (69 bytes)
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: parsed INFORMATIONAL request 6 [ D ]
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: received DELETE for ESP CHILD_SA with SPI c9d4f4e5
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: closing CHILD_SA lab{8} with SPIs c5be3132_i (62224 bytes) c9d4f4e5_o (2089264 bytes) and TS 192.168.1.0/24 === 10.50.0.0/16
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: sending DELETE for ESP CHILD_SA with SPI c5be3132
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: CHILD_SA closed
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: establishing CHILD_SA lab{9} reqid 1
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: generating CREATE_CHILD_SA request 2 [ SA No KE TSi TSr ]
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (289 bytes)
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: generating INFORMATIONAL response 6 [ D ]
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: sending packet: from 192.168.1.10[4500] to 172.202.13.163[4500] (69 bytes)
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: received packet: from 172.202.13.163[4500] to 192.168.1.10[4500] (289 bytes)
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: parsed CREATE_CHILD_SA response 2 [ SA No KE TSi TSr ]
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: selected proposal: ESP:AES_GCM_16_256/ECP_384/NO_EXT_SEQ
+Nov 09 01:13:41 Ubuntu-server charon-systemd[9616]: CHILD_SA lab{9} established with SPIs c4367b23_i c448083f_o and TS 192.168.1.0/24 === 10.50.0.0/16
+rc=0

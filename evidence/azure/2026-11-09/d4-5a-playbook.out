@@ -1,0 +1,266 @@
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/honeypot/tasks/main.yml:116:3
+
+114
+115 - name: Agregar los repos de Docker y de Wazuh
+116   ansible.builtin.apt_repository:
+      ^ column 3
+
+
+PLAY [Base comun de las VMs del laboratorio] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+ok: [wazuh]
+
+TASK [common : Desactivar la actualización automática de apt] ******************
+ok: [wazuh]
+
+TASK [common : Detener y enmascarar los timers de apt] *************************
+ok: [wazuh] => (item=apt-daily.timer)
+ok: [wazuh] => (item=apt-daily-upgrade.timer)
+
+TASK [common : Fijar la zona horaria (enlace de /etc/localtime)] ***************
+ok: [wazuh]
+
+TASK [common : Fijar la zona horaria (/etc/timezone)] **************************
+ok: [wazuh]
+
+TASK [common : Asegurar el directorio de drop-ins de sshd] *********************
+ok: [wazuh]
+
+TASK [common : Endurecer sshd con un drop-in (sin Port: no pisa el 22222 de honeyserver)] ***
+ok: [wazuh]
+
+TASK [common : Leer la configuración efectiva de sshd] *************************
+ok: [wazuh]
+
+TASK [common : Comprobar los valores efectivos de sshd] ************************
+ok: [wazuh] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [common : Crear el directorio de marcadores] ******************************
+ok: [wazuh]
+
+TASK [common : Escribir el marcador del rol common] ****************************
+ok: [wazuh]
+
+PLAY [VM strongSwan (respondedora del tunel)] **********************************
+skipping: no hosts matched
+
+PLAY [VM Wazuh] ****************************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [wazuh]
+
+TASK [wazuh : Omitir el rol si está deshabilitado (el preflight local no instala Wazuh)] ***
+skipping: [wazuh]
+
+TASK [wazuh : Asegurar el directorio de centinelas] ****************************
+ok: [wazuh]
+
+TASK [wazuh : Leer si los secretos ya se entregaron] ***************************
+ok: [wazuh]
+
+TASK [wazuh : Comprobar que el directorio de secretos está fuera del repositorio] ***
+ok: [wazuh -> localhost] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [wazuh : Leer authd.pass en el controlador] *******************************
+ok: [wazuh -> localhost]
+
+TASK [wazuh : Exigir que authd.pass exista en el controlador] ******************
+ok: [wazuh] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [wazuh : Entregar authd.pass (contraseña de enrolamiento)] ****************
+ok: [wazuh]
+
+TASK [wazuh : Activar la contraseña de enrolamiento en ossec.conf] *************
+ok: [wazuh]
+
+TASK [wazuh : Apagar logall y logall_json (sin índice archives)] ***************
+ok: [wazuh] => (item=logall)
+ok: [wazuh] => (item=logall_json)
+
+TASK [wazuh : Apagar la detección de vulnerabilidades] *************************
+ok: [wazuh]
+
+TASK [wazuh : Apagar Active Response] ******************************************
+ok: [wazuh]
+
+TASK [wazuh : Activar un bloque de Active Response deshabilitado] **************
+ok: [wazuh]
+
+TASK [wazuh : Leer ossec.conf para verificarlo] ********************************
+ok: [wazuh]
+
+TASK [wazuh : Comprobar que ossec.conf quedó con los valores de D5] ************
+ok: [wazuh] => {
+    "changed": false,
+    "msg": "All assertions passed"
+}
+
+TASK [wazuh : Dejar el gancho de reglas locales] *******************************
+changed: [wazuh]
+
+TASK [wazuh : Dejar la API de Wazuh solo en loopback] **************************
+ok: [wazuh]
+
+TASK [wazuh : Fijar el heap del Indexer] ***************************************
+ok: [wazuh] => (item=-Xms)
+ok: [wazuh] => (item=-Xmx)
+
+TASK [wazuh : Validar la configuración del Manager] ****************************
+ok: [wazuh]
+
+TASK [wazuh : Comprobar que el tar de contraseñas sigue en la VM] **************
+ok: [wazuh]
+
+TASK [wazuh : Detener si faltan las contraseñas y los secretos no se entregaron] ***
+skipping: [wazuh]
+
+TASK [wazuh : Esperar a que el Indexer responda] *******************************
+skipping: [wazuh]
+
+TASK [wazuh : Leer la contraseña de admin del Indexer (solo en memoria)] *******
+skipping: [wazuh]
+
+TASK [wazuh : Escribir la política ISM (no contiene secretos)] *****************
+skipping: [wazuh]
+
+TASK [wazuh : Aplicar la política ISM de retención] ****************************
+skipping: [wazuh]
+
+TASK [wazuh : Crear el directorio de secretos en el controlador] ***************
+skipping: [wazuh]
+
+TASK [wazuh : Traer wazuh-install-files.tar al controlador] ********************
+skipping: [wazuh]
+
+TASK [wazuh : Dejar el tar traído solo para el operador] ***********************
+skipping: [wazuh]
+
+TASK [wazuh : Calcular el sha256 del tar en la VM] *****************************
+skipping: [wazuh]
+
+TASK [wazuh : Calcular el sha256 del tar en el controlador] ********************
+skipping: [wazuh]
+
+TASK [wazuh : Exigir que las dos copias coincidan antes de destruir la de la VM] ***
+skipping: [wazuh]
+
+TASK [wazuh : Destruir el tar de contraseñas en la VM] *************************
+skipping: [wazuh]
+
+TASK [wazuh : Borrar el log del asistente (contiene el resumen con contraseñas)] ***
+skipping: [wazuh]
+
+TASK [wazuh : Marcar los secretos como entregados] *****************************
+skipping: [wazuh]
+
+TASK [wazuh : Permitir SSH desde la LAN del laboratorio (solo host real)] ******
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/wazuh/tasks/main.yml:466:9
+
+464     proto: tcp
+465     src: "{{ wazuh_admin_cidr }}"
+466   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [wazuh]
+
+TASK [wazuh : Permitir 1514 y 1515 desde el relay y la LAN (solo host real)] ***
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/wazuh/tasks/main.yml:476:9
+
+474     src: "{{ item.1 }}"
+475   loop: "{{ ['1514', '1515'] | product([wazuh_relay_ip, wazuh_admin_cidr]) | list }}"
+476   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [wazuh] => (item=['1514', '10.50.30.10'])
+ok: [wazuh] => (item=['1514', '192.168.1.0/24'])
+ok: [wazuh] => (item=['1515', '10.50.30.10'])
+ok: [wazuh] => (item=['1515', '192.168.1.0/24'])
+
+TASK [wazuh : Permitir el Dashboard desde la LAN (solo host real)] *************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/wazuh/tasks/main.yml:485:9
+
+483     proto: tcp
+484     src: "{{ wazuh_admin_cidr }}"
+485   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [wazuh]
+
+TASK [wazuh : Política de entrada denegada (solo host real)] *******************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/wazuh/tasks/main.yml:492:9
+
+490     default: deny
+491     direction: incoming
+492   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [wazuh]
+
+TASK [wazuh : Política de salida permitida (solo host real)] *******************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/wazuh/tasks/main.yml:499:9
+
+497     default: allow
+498     direction: outgoing
+499   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [wazuh]
+
+TASK [wazuh : Activar UFW (solo host real)] ************************************
+[DEPRECATION WARNING]: INJECT_FACTS_AS_VARS default to `True` is deprecated, top-level facts will not be auto injected after the change. This feature will be removed from ansible-core version 2.24.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/wazuh/tasks/main.yml:505:9
+
+503   community.general.ufw:
+504     state: enabled
+505   when: ansible_virtualization_type != 'docker'
+            ^ column 9
+
+Use `ansible_facts["fact_name"]` (no `ansible_` prefix) instead.
+
+ok: [wazuh]
+
+RUNNING HANDLER [wazuh : Reiniciar wazuh-manager] ******************************
+changed: [wazuh]
+
+PLAY [VM logrelay] *************************************************************
+skipping: no hosts matched
+
+PLAY [VM honeyserver (senuelo)] ************************************************
+skipping: no hosts matched
+
+PLAY RECAP *********************************************************************
+wazuh                      : ok=37   changed=2    unreachable=0    failed=0    skipped=14   rescued=0    ignored=0   
+

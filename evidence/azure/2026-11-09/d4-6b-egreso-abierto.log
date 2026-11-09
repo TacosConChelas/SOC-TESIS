@@ -1,0 +1,146 @@
+=== PASO 6b (Etapa M pasos 3-4) 2026-11-09 01:31:58 CST ===
+2026-11-09 01:31:58 CST PRECOND re-verificacion E1-3 honeyserver
+honeyserver | CHANGED | rc=0 >>
+docker.service inactive disabled
+docker.socket inactive disabled
+containerd.service inactive disabled
+wazuh-agent.service inactive disabled
+centinelas-ok
+rc=0
+2026-11-09 01:32:10 CST 6b.1 terraform plan (maintenance_egress=true, plan a /tmp/d4-open.tfplan por instruccion del operador)
+plan_rc=0
+          + "443",
+          + "80",
+        ]
+      + direction                   = "Outbound"
+      + id                          = (known after apply)
+      + name                        = "Allow-Out-Maintenance-Egress"
+      + network_security_group_name = "nsg-logrelay"
+      + priority                    = 300
+      + protocol                    = "Tcp"
+      + resource_group_name         = "rg-soc-tesis-lab"
+      + source_address_prefix       = "*"
+      + source_port_range           = "*"
+    }
+
+  # azurerm_network_security_rule.vpn_out_maintenance[0] will be created
+  + resource "azurerm_network_security_rule" "vpn_out_maintenance" {
+      + access                      = "Allow"
+      + destination_address_prefix  = "Internet"
+      + destination_port_ranges     = [
+          + "443",
+          + "80",
+        ]
+      + direction                   = "Outbound"
+      + id                          = (known after apply)
+      + name                        = "Allow-Out-Maintenance-Egress"
+      + network_security_group_name = "nsg-vpn"
+      + priority                    = 300
+      + protocol                    = "Tcp"
+      + resource_group_name         = "rg-soc-tesis-lab"
+      + source_address_prefix       = "*"
+      + source_port_range           = "*"
+    }
+
+  # azurerm_network_security_rule.wazuh_out_maintenance[0] will be created
+  + resource "azurerm_network_security_rule" "wazuh_out_maintenance" {
+      + access                      = "Allow"
+      + destination_address_prefix  = "Internet"
+      + destination_port_ranges     = [
+          + "443",
+          + "80",
+        ]
+      + direction                   = "Outbound"
+      + id                          = (known after apply)
+      + name                        = "Allow-Out-Maintenance-Egress"
+      + network_security_group_name = "nsg-wazuh"
+      + priority                    = 300
+      + protocol                    = "Tcp"
+      + resource_group_name         = "rg-soc-tesis-lab"
+      + source_address_prefix       = "*"
+      + source_port_range           = "*"
+    }
+
+Plan: 4 to add, 0 to change, 0 to destroy.
+
+─────────────────────────────────────────────────────────────────────────────
+
+Saved the plan to: /tmp/d4-open.tfplan
+
+To perform exactly these actions, run the following command to apply:
+    terraform apply "/tmp/d4-open.tfplan"
+2026-11-09 01:32:23 CST 6b.1b verificacion del plan (recursos y atributos)
+recursos marcados:
+  # azurerm_network_security_rule.honeypot_out_maintenance[0] will be created
+  # azurerm_network_security_rule.logrelay_out_maintenance[0] will be created
+  # azurerm_network_security_rule.vpn_out_maintenance[0] will be created
+  # azurerm_network_security_rule.wazuh_out_maintenance[0] will be created
+recursos marcados total: 4
+lineas '~' o '-' de cambio (update/destroy) en plan: 0
+nombres de regla: 
+prioridades: 
+destination: 
+protocol/access/direction:       4 access                      = "Allow"
+      4 direction                   = "Outbound"
+      4 protocol                    = "Tcp"
+resumen: Plan: 4 to add, 0 to change, 0 to destroy.
+2026-11-09 01:32:27 CST 6b.1c atributos por regla
+      4 + name = "Allow-Out-Maintenance-Egress"
+      4 + priority = 300
+      4 + destination_address_prefix = "Internet"
+      1 + network_security_group_name = "nsg-honeypot"
+      1 + network_security_group_name = "nsg-logrelay"
+      1 + network_security_group_name = "nsg-vpn"
+      1 + network_security_group_name = "nsg-wazuh"
+puertos:
+      4 "443"
+      4 "80"
+2026-11-09 01:32:36 CST 6b.2 terraform apply del plan guardado (T_open = hora de inicio de este comando)
+apply_rc=0
+2026-11-09 01:32:42 CST fin apply
+honeyserver_public_ip = "130.131.218.113"
+private_ips = {
+  "honeyserver" = "10.50.10.10"
+  "logrelay" = "10.50.30.10"
+  "strongswan" = "10.50.20.10"
+  "wazuh" = "10.50.40.10"
+}
+resource_group_name = "rg-soc-tesis-lab"
+strongswan_public_ip = "172.202.13.163"
+vm_ids = {
+  "honeyserver" = "/subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/rg-soc-tesis-lab/providers/Microsoft.Compute/virtualMachines/vm-honeyserver"
+  "logrelay" = "/subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/rg-soc-tesis-lab/providers/Microsoft.Compute/virtualMachines/vm-logrelay"
+  "strongswan" = "/subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/rg-soc-tesis-lab/providers/Microsoft.Compute/virtualMachines/vm-strongswan"
+  "wazuh" = "/subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/rg-soc-tesis-lab/providers/Microsoft.Compute/virtualMachines/vm-wazuh"
+}
+2026-11-09 01:32:42 CST rm /tmp/d4-open.tfplan rc=0 (plan borrado tras apply)
+Apply complete! Resources: 4 added, 0 changed, 0 destroyed.
+2026-11-09 01:32:46 CST 6b.3 verificacion egreso desde honeyserver (https example.com)
+honeyserver | CHANGED | rc=0 >>
+200
+rc=0
+2026-11-09 01:32:56 CST 6b.4 inicio ansible-playbook site.yml --limit honeyserver --tags install,config (salida evidence/azure/2026-11-09/d4-6b-install-config.out)
+=== 6b.4 recap install,config (inicio 01:32:56, fin aprox por mtime del .out: 2026-11-09 01:33:53) ===
+PLAY RECAP *********************************************************************
+honeyserver                : ok=48   changed=0    unreachable=0    failed=0    skipped=10   rescued=0    ignored=0   
+EXIT=0
+duracion aprox (s): 57
+2026-11-09 01:34:02 CST 6b.5 E1-3 posterior al install
+honeyserver | CHANGED | rc=0 >>
+docker.service inactive disabled
+docker.socket inactive disabled
+containerd.service inactive disabled
+wazuh-agent.service inactive disabled
+centinelas-ok
+rc=0
+2026-11-09 01:34:08 CST 6b.6 informativo: docker images y /etc/soc-tesis
+honeyserver | CHANGED | rc=0 >>
+0
+common
+honeypot
+honeypot-images
+honeypot-uids.json
+keysCannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+rc=0
+2026-11-09 01:34:20 CST minutos con egreso abierto hasta esta linea: 1.73 min (desde T_open 01:32:36)
+EGRESO ABIERTO desde 2026-11-09 01:32:36 CST; falta 6c. Hora actual: 2026-11-09 01:34:20 CST
