@@ -96,14 +96,14 @@ resource "azurerm_network_security_rule" "honeypot_out_to_logrelay" {
 }
 
 resource "azurerm_network_security_rule" "honeypot_out_dns" {
-  name                        = "Allow-Out-DNS"
-  priority                    = 100
-  direction                   = "Outbound"
-  access                      = "Allow"
-  protocol                    = "*"
-  source_port_range           = "*"
-  destination_port_range      = "53"
-  source_address_prefix       = "*"
+  name                   = "Allow-Out-DNS"
+  priority               = 100
+  direction              = "Outbound"
+  access                 = "Allow"
+  protocol               = "*"
+  source_port_range      = "*"
+  destination_port_range = "53"
+  source_address_prefix  = "*"
   # D7 §5.2 fila "todas 100". Esta regla documenta la intencion: el DNS hacia 168.63.129.16 no pasa por
   # los NSG salvo que se apunte con el tag AzurePlatformDNS, asi que Azure ya lo permite sin esta regla.
   # NO volver a "AzurePlatformDNS": ese tag solo admite Deny (Allow da SecurityRuleInvalidAccessType, 400).
