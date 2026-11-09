@@ -1,0 +1,57 @@
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Deprecation warnings can be disabled by setting `deprecation_warnings=False` in ansible.cfg.
+[DEPRECATION WARNING]: ansible.builtin.apt_repository has been deprecated. Use deb822_repository instead. This feature will be removed from ansible-core version 2.25.
+Origin: /home/tacosconchelas/Projects/SOC-TESIS/ansible/roles/honeypot/tasks/main.yml:116:3
+
+114
+115 - name: Agregar los repos de Docker y de Wazuh
+116   ansible.builtin.apt_repository:
+      ^ column 3
+
+
+PLAY [Base comun de las VMs del laboratorio] ***********************************
+
+TASK [Gathering Facts] *********************************************************
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+ok: [honeyserver]
+
+PLAY [VM strongSwan (respondedora del tunel)] **********************************
+skipping: no hosts matched
+
+PLAY [VM Wazuh] ****************************************************************
+skipping: no hosts matched
+
+PLAY [VM logrelay] *************************************************************
+skipping: no hosts matched
+
+PLAY [VM honeyserver (senuelo)] ************************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [honeyserver]
+
+TASK [honeypot : Leer si Docker está activo (para bajar el proyecto solo si el daemon responde)] ***
+ok: [honeyserver]
+
+TASK [honeypot : Leer si existe el proyecto compose del señuelo] ***************
+ok: [honeyserver]
+
+TASK [honeypot : Bajar el proyecto compose del señuelo (docker compose down, sin descargas)] ***
+changed: [honeyserver]
+
+TASK [honeypot : Detener y deshabilitar Docker y el Wazuh Agent (E1-3)] ********
+changed: [honeyserver] => (item=docker.socket)
+changed: [honeyserver] => (item=docker.service)
+changed: [honeyserver] => (item=containerd.service)
+changed: [honeyserver] => (item=wazuh-agent.service)
+
+TASK [honeypot : Borrar el centinela de arranque (install vuelve a dormir Docker y el agente)] ***
+changed: [honeyserver]
+
+PLAY RECAP *********************************************************************
+honeyserver                : ok=7    changed=3    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
+EXIT=0

@@ -1,0 +1,54 @@
+=== PASO 8 costos 2026-11-09 01:52:45 CST ===
+2026-11-09 01:52:45 CST 8.1 az consumption usage list 2026-11-06..2026-11-09
+WARNING: This command is in preview and under development. Reference and support levels: https://aka.ms/CLI_refstatus
+az_rc=0
+-rw-r--r-- 1 tacosconchelas users 52693 Nov  9 01:52 /tmp/d4-cost.json
+registros: 52
+Traceback (most recent call last):
+  File "/home/tacosconchelas/.cache/d4_cost_sum.py", line 22, in <module>
+    v = float(p)
+        ^^^^^^^^
+ValueError: could not convert string to float: 'None'
+registros: 52
+campos: ['billableQuantity', 'consumedService', 'costCenter', 'id', 'instanceName', 'invoiceId', 'meterDetails', 'meterId', 'name', 'pretaxCost', 'product', 'subscriptionGuid', 'subscriptionName', 'tags', 'type', 'usageEnd', 'usageQuantity', 'usageStart']
+nulls pretaxCost: 52
+total pretaxCost (no-null): 0.0
+por instanceName:
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/disks/vm-honeyserver_OsDisk_1_fc2120f1b67e4ee397fdc8ae5cf07247 suma= 0.0 nulls= 4
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/disks/vm-logrelay_OsDisk_1_fd721ff528c048e3b052f6f06e850211 suma= 0.0 nulls= 4
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/disks/vm-strongswan_OsDisk_1_03715b39f0de4eafad2c560daec8ed07 suma= 0.0 nulls= 4
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/disks/vm-wazuh_OsDisk_1_e922c7edc0d546a29a1914de0a7378a7 suma= 0.0 nulls= 4
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/virtualMachines/vm-honeyserver suma= 0.0 nulls= 2
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/virtualMachines/vm-logrelay suma= 0.0 nulls= 2
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/virtualMachines/vm-strongswan suma= 0.0 nulls= 2
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourceGroups/RG-SOC-TESIS-LAB/providers/Microsoft.Compute/virtualMachines/vm-wazuh suma= 0.0 nulls= 2
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourcegroups/rg-soc-tesis-lab/providers/microsoft.compute/virtualmachines/vm-honeyserver suma= 0.0 nulls= 8
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourcegroups/rg-soc-tesis-lab/providers/microsoft.compute/virtualmachines/vm-logrelay suma= 0.0 nulls= 2
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourcegroups/rg-soc-tesis-lab/providers/microsoft.compute/virtualmachines/vm-strongswan suma= 0.0 nulls= 8
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourcegroups/rg-soc-tesis-lab/providers/microsoft.compute/virtualmachines/vm-wazuh suma= 0.0 nulls= 6
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourcegroups/rg-soc-tesis-lab/providers/microsoft.network/publicipaddresses/pip-honeyserver suma= 0.0 nulls= 2
+   /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/resourcegroups/rg-soc-tesis-lab/providers/microsoft.network/publicipaddresses/pip-strongswan suma= 0.0 nulls= 2
+registros por fecha: {}
+usageStart por dia: {'None': 52}
+consumedService: {'microsoft.compute': 24, 'Microsoft.Compute': 24, 'microsoft.network': 4}
+product (top): {'Bandwidth Inter-Region - Intra Continent - North America': 12, 'Rtn Preference: MGN': 12, 'Standard SSD Managed Disks - E4 LRS': 8, 'Standard SSD Managed Disks - E6 LRS - US Central': 4, 'Standard SSD Managed Disks - E4 LRS - US Central': 4, 'Virtual Machines Basv2 Series - B2ats v2': 4, 'IP Addresses - Standard IPv4': 4, 'Virtual Machines Basv2 Series - B4as v2 - US Central': 2}
+rango usageStart: None None
+usageEnd por dia: {'None': 52}
+name ejemplo: f99962a3-76ee-95d0-2219-ba872e1fb8b3 | id ejemplo: /subscriptions/6fa9c84d-1591-443a-9b43-5aa4609f803d/providers/Microsoft.Consumption/usageDetails/f99962a3-76ee-95d0-2219
+usageQuantity no-null: 0 de 52
+ESTIMACION ARITMETICA (no es dato de Azure)
+Dia2 min (start fin ~16:08:00 -> dealloc honeyserver 17:40:02): 1.53 h
+Dia2 max (start 16:05:11 -> fin bloque dealloc 17:42:15): 1.62 h
+Dia3 min (start fin 18:02:04 -> dealloc honeyserver 18:33:46): 0.53 h
+Dia3 max (start 17:59:11 -> fin 18:35:56): 0.61 h
+Dia4 vm-strongswan desde start 2026-11-09 01:08:27 hasta ahora 2026-11-09 01:53:47: 0.76 h (sin deallocate aun)
+Dia4 vm-wazuh desde start 2026-11-09 01:09:10 hasta ahora 2026-11-09 01:53:47: 0.74 h (sin deallocate aun)
+Dia4 vm-logrelay desde start 2026-11-09 01:09:53 hasta ahora 2026-11-09 01:53:47: 0.73 h (sin deallocate aun)
+Dia4 vm-honeyserver desde start 2026-11-09 01:10:37 hasta ahora 2026-11-09 01:53:47: 0.72 h (sin deallocate aun)
+nota: ADR-006 §6 (docs/superpowers/plans/2026-11-05-despliegue-azure.md:365) ~ USD 35/mes; .knowledge/18_DECISIONES_IMPLEMENTACION.md:242 total ~ $33.849/mes (escenario Central US). Sin conversion a dolares aqui.
+=== RESUMEN 8 (2026-11-09 01:53:53 CST) ===
+costo real: NO DISPONIBLE. 52 registros; pretaxCost = null en 52/52 (suma 0.0 sobre no-null, que no existen); usageStart, usageEnd y usageQuantity tambien null
+recursos vistos (instanceName): disks OsDisk de las 4 VM, virtualMachines de las 4 VM, publicipaddresses pip-honeyserver y pip-strongswan
+fechas de registros: no disponibles (usageStart/usageEnd null)
+consultas: az consumption usage list --start-date 2026-11-06 --end-date 2026-11-09 (rc=0, con aviso de preview)
+2026-11-09 01:53:53 CST rm /tmp/d4-cost.json rc=0

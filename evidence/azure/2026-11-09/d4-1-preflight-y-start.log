@@ -1,0 +1,158 @@
+=== 2026-11-09 00:32:44 CST PASO 1.0 — Inicialización de log ===
+EV=evidence/azure/2026-11-09
+LOG=evidence/azure/2026-11-09/d4-1-preflight-y-start.log
+=== 2026-11-09 00:32:48 CST PASO 1.1 a) Hora: make time-guard pin-check ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+time-guard: ok (00:32)
+ok: nginx 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-core 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-common 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: libnginx-mod-stream 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: el asistente de Wazuh instalaria 4.14.10 (ultimo wazuh-manager 4.14.x: 4.14.10-1)
+ok: docker-ce 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: docker-ce-cli 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: containerd.io 2.3.6-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_containerd_version)
+ok: docker-compose-plugin 5.6.0-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_compose_version)
+ok: wazuh-agent 4.14.10-1 disponible (indice de Wazuh)
+pin-check: ok
+rc=0
+=== 2026-11-09 00:33:16 CST PASO 1.1 b) Sin ensayo local en curso ===
+--- docker ps ---
+agitated_davinci
+modest_meninsky
+nice_taussig
+nervous_jemison
+admiring_hoover
+xenodochial_spence
+docker_rc=0
+--- pgrep rehearse ---
+196516 bash -c EV="evidence/azure/$(date +%F)" LOG="$EV/d4-1-preflight-y-start.log" {   echo "=== $(date '+%F %T %Z') PASO 1.1 b) Sin ensayo local en curso ==="   echo "--- docker ps ---"   docker ps --format '{{.Names}}'   echo "docker_rc=$?"   echo "--- pgrep rehearse ---"   pgrep -af "make .*rehearse"   echo "pgrep_rc=$?" } 2>&1 | tee -a "$LOG"
+196518 bash -c EV="evidence/azure/$(date +%F)" LOG="$EV/d4-1-preflight-y-start.log" {   echo "=== $(date '+%F %T %Z') PASO 1.1 b) Sin ensayo local en curso ==="   echo "--- docker ps ---"   docker ps --format '{{.Names}}'   echo "docker_rc=$?"   echo "--- pgrep rehearse ---"   pgrep -af "make .*rehearse"   echo "pgrep_rc=$?" } 2>&1 | tee -a "$LOG"
+pgrep_rc=0
+=== 2026-11-09 00:34:27 CST PASO 1.1 c) Ruta R1 vigente ===
+rc=0
+=== 2026-11-09 00:34:27 CST PASO 1.1 d) Azure suscripción Enabled ===
+Azure subscription 1	Enabled
+rc=0
+=== 2026-11-09 00:34:28 CST PASO 1.1 e) Estado de las 4 VMs ===
+vm-honeyserver	VM deallocated
+vm-logrelay	VM deallocated
+vm-strongswan	VM deallocated
+vm-wazuh	VM deallocated
+rc=0
+=== 2026-11-09 00:34:49 CST Estado actual de VMs e IPs públicas ===
+vm-honeyserver	VM deallocated	130.131.218.113
+vm-logrelay	VM deallocated	
+vm-strongswan	VM deallocated	172.202.13.163
+vm-wazuh	VM deallocated	
+rc=0
+=== 2026-11-09 00:34:53 CST Terraform outputs IPs públicas ===
+strongswan_public_ip: 172.202.13.163
+honeyserver_public_ip: 130.131.218.113
+rc=0
+=== intento 2 ===
+=== 2026-11-09 00:45:09 CST PASO 1.1 a) Hora y versiones: make time-guard pin-check ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+time-guard: son las 00:45; el ciclo se inicia entre las 07:00 y las 20:30 (E1-9)
+make: *** [Makefile:311: time-guard] Error 1
+rc=2
+=== intento 2 ===
+=== 2026-11-09 00:45:17 CST PASO 1.1 a) Hora y versiones: make time-guard pin-check ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+time-guard: son las 00:45; el ciclo se inicia entre las 07:00 y las 20:30 (E1-9)
+make: *** [Makefile:311: time-guard] Error 1
+rc=2
+=== intento 2 ===
+2026-11-09 01:05:06 CST PASO 1.0 EV=evidence/azure/2026-11-09
+2026-11-09 01:05:06 CST PASO 1.1a time-guard + pin-check
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+time-guard: ok (01:05)
+ok: nginx 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-core 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-common 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: libnginx-mod-stream 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: el asistente de Wazuh instalaria 4.14.10 (ultimo wazuh-manager 4.14.x: 4.14.10-1)
+ok: docker-ce 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: docker-ce-cli 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: containerd.io 2.3.6-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_containerd_version)
+ok: docker-compose-plugin 5.6.0-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_compose_version)
+ok: wazuh-agent 4.14.10-1 disponible (indice de Wazuh)
+pin-check: ok
+rc=0
+2026-11-09 01:05:33 CST DETENIDO en 1.1a: time-guard dio ok a las 01:05 pero el prompt espera rechazo fuera de 07:00-20:29; Makefile actual (commit e0de81d) solo bloquea >= 20:30. No se ejecutaron 1.1b-e ni 1.2 ni 1.3.
+=== intento 3 ===
+2026-11-09 01:07:52 CST PASO 1.1 a) make time-guard pin-check (regla vigente e0de81d: bloquea solo >= 20:30)
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+time-guard: ok (01:07)
+ok: nginx 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-core 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-common 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: libnginx-mod-stream 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: el asistente de Wazuh instalaria 4.14.10 (ultimo wazuh-manager 4.14.x: 4.14.10-1)
+ok: docker-ce 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: docker-ce-cli 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: containerd.io 2.3.6-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_containerd_version)
+ok: docker-compose-plugin 5.6.0-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_compose_version)
+ok: wazuh-agent 4.14.10-1 disponible (indice de Wazuh)
+pin-check: ok
+rc=0
+2026-11-09 01:08:14 CST PASO 1.1 b) sin ensayo local
+soc-local containers=0 grep_rc=1
+soc-local networks=0 grep_rc=1
+230730 /run/current-system/sw/bin/zsh -c source /home/tacosconchelas/.claude/shell-snapshots/snapshot-zsh-1794194104708-ymf83i.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>/dev/null || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /home/tacosconchelas/Projects/SOC-TESIS && LOG=evidence/azure/2026-11-09/d4-1-preflight-y-start.log && { echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 b) sin ensayo local" n=$(docker ps -a --format '"'"'{{.Names}}'"'"' | grep -c '"'"'^soc-local'"'"'); rc=$?; echo "soc-local containers=$n grep_rc=$rc" n=$(docker network ls --format '"'"'{{.Name}}'"'"' | grep -c soc-local); rc=$?; echo "soc-local networks=$n grep_rc=$rc" pgrep -af "make .*rehearse"; echo "pgrep_rehearse_rc=$? (1 = sin procesos)" echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 c) ruta R1" ip route show 10.50.0.0/16; echo "ip_route_rc=$?" echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 d) suscripcion" az account show --query "{n:name,s:state}" -o tsv; echo "rc=$?" echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 e) estado VMs" az vm list -g rg-soc-tesis-lab -d --query "[].{n:name,s:powerState}" -o tsv; echo "rc=$?" } 2>&1 | tee -a "$LOG"' < /dev/null && pwd -P >| /tmp/claude-62dc-cwd
+230731 /run/current-system/sw/bin/zsh -c source /home/tacosconchelas/.claude/shell-snapshots/snapshot-zsh-1794194104708-ymf83i.sh 2>/dev/null || true && setopt NO_EXTENDED_GLOB NO_BARE_GLOB_QUAL 2>/dev/null || true && { \builtin unalias -- 'unsetenv'; \builtin unset -f -- 'unsetenv'; } >/dev/null 2>&1 || true && eval 'cd /home/tacosconchelas/Projects/SOC-TESIS && LOG=evidence/azure/2026-11-09/d4-1-preflight-y-start.log && { echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 b) sin ensayo local" n=$(docker ps -a --format '"'"'{{.Names}}'"'"' | grep -c '"'"'^soc-local'"'"'); rc=$?; echo "soc-local containers=$n grep_rc=$rc" n=$(docker network ls --format '"'"'{{.Name}}'"'"' | grep -c soc-local); rc=$?; echo "soc-local networks=$n grep_rc=$rc" pgrep -af "make .*rehearse"; echo "pgrep_rehearse_rc=$? (1 = sin procesos)" echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 c) ruta R1" ip route show 10.50.0.0/16; echo "ip_route_rc=$?" echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 d) suscripcion" az account show --query "{n:name,s:state}" -o tsv; echo "rc=$?" echo "$(date '"'"'+%F %T %Z'"'"') PASO 1.1 e) estado VMs" az vm list -g rg-soc-tesis-lab -d --query "[].{n:name,s:powerState}" -o tsv; echo "rc=$?" } 2>&1 | tee -a "$LOG"' < /dev/null && pwd -P >| /tmp/claude-62dc-cwd
+pgrep_rehearse_rc=0 (1 = sin procesos)
+2026-11-09 01:08:14 CST PASO 1.1 c) ruta R1
+10.50.0.0/16 via 192.168.1.10 dev br0 mtu 1360 
+ip_route_rc=0
+2026-11-09 01:08:14 CST PASO 1.1 d) suscripcion
+Azure subscription 1	Enabled
+rc=0
+2026-11-09 01:08:14 CST PASO 1.1 e) estado VMs
+vm-honeyserver	VM deallocated
+vm-logrelay	VM deallocated
+vm-strongswan	VM deallocated
+vm-wazuh	VM deallocated
+rc=0
+2026-11-09 01:08:22 CST PASO 1.1 b') verificacion pgrep: solo procesos cuyo ejecutable es make
+make_rehearse_procs=0
+=== salida de 1.2 (ejecutada en background; copiada desde /tmp/claude-1000-start-d4.out, comando original redirigido fuera del log por error mio) ===
+=== PASO 1.2 arranque secuencial (ejecucion en background) ===
+2026-11-09 01:08:27 CST start vm-strongswan
+2026-11-09 01:09:10 CST fin vm-strongswan rc=0
+2026-11-09 01:09:10 CST start vm-wazuh
+2026-11-09 01:09:53 CST fin vm-wazuh rc=0
+2026-11-09 01:09:53 CST start vm-logrelay
+2026-11-09 01:10:37 CST fin vm-logrelay rc=0
+2026-11-09 01:10:37 CST start vm-honeyserver
+2026-11-09 01:11:20 CST fin vm-honeyserver rc=0
+2026-11-09 01:11:20 CST T0 = fin de vm-honeyserver (ultimo az vm start)
+2026-11-09 01:11:26 CST PASO 1.3 estado y IPs
+vm-honeyserver	VM running	130.131.218.113
+vm-logrelay	VM running	
+vm-strongswan	VM running	172.202.13.163
+vm-wazuh	VM running	
+vm_list_rc=0
+strongswan_ip=172.202.13.163
+honeyserver_ip=130.131.218.113
+tf_rc=0

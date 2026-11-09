@@ -1,0 +1,182 @@
+=== PASO 6c (Etapa M pasos 5-7) 2026-11-09 01:41:28 CST ===
+2026-11-09 01:41:28 CST 6c.1 descargas en curso (vacio esperado; el propio shell de ansible puede aparecer)
+wazuh | CHANGED | rc=0 >>
+
+logrelay | CHANGED | rc=0 >>
+
+honeyserver | CHANGED | rc=0 >>
+
+strongswan | CHANGED | rc=0 >>
+
+rc=0
+2026-11-09 01:41:39 CST 6c.2 terraform plan (maintenance_egress=false, plan a /tmp/d4-close.tfplan)
+plan_rc=0
+recursos marcados:
+  # azurerm_network_security_rule.honeypot_out_maintenance[0] will be destroyed
+  # azurerm_network_security_rule.logrelay_out_maintenance[0] will be destroyed
+  # azurerm_network_security_rule.vpn_out_maintenance[0] will be destroyed
+  # azurerm_network_security_rule.wazuh_out_maintenance[0] will be destroyed
+nombres:
+      4 - name                                       = "Allow-Out-Maintenance-Egress" -> null
+Plan: 0 to add, 0 to change, 4 to destroy.
+2026-11-09 01:41:57 CST 6c.2b apply del plan de cierre (T_close = hora de fin)
+apply_rc=0
+2026-11-09 01:42:03 CST fin apply (T_close)
+Apply complete! Resources: 0 added, 0 changed, 4 destroyed.
+2026-11-09 01:42:03 CST plan de cierre borrado rc=0
+=== resumen cierre: T_open 01:32:36 CST, T_close 01:42:03 CST, duracion con egreso abierto = 9 min 27 s ===
+2026-11-09 01:42:09 CST 6c.3a curl 1.1.1.1 en las 4 (debe fallar rc=28)
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'curl -m5 -sS -o /dev/null http://1.1.1.1'}, 'timeout': 0, [...]
+
+wazuh | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+logrelay | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+strongswan | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+honeyserver | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+rc=0
+2026-11-09 01:42:19 CST 6c.3b curl https://example.com en las 4 (debe fallar rc=28)
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'curl -m5 -sS -o /dev/null https://example.com'}, 'timeout': 0, [...]
+
+honeyserver | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3852 ms: Connection timed outThe command exited with a non-zero return code.
+wazuh | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3852 ms: Connection timed outThe command exited with a non-zero return code.
+logrelay | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3851 ms: Connection timed outThe command exited with a non-zero return code.
+strongswan | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3851 ms: Connection timed outThe command exited with a non-zero return code.
+rc=0
+2026-11-09 01:42:29 CST 6c.3c getent hosts example.com en las 4 (debe resolver)
+strongswan | CHANGED | rc=0 >>
+2606:4700:10::ac42:93f3 example.com
+2606:4700:10::6814:179a example.com
+logrelay | CHANGED | rc=0 >>
+2606:4700:10::ac42:93f3 example.com
+2606:4700:10::6814:179a example.com
+honeyserver | CHANGED | rc=0 >>
+2606:4700:10::6814:179a example.com
+2606:4700:10::ac42:93f3 example.com
+wazuh | CHANGED | rc=0 >>
+2606:4700:10::6814:179a example.com
+2606:4700:10::ac42:93f3 example.com
+rc=0
+2026-11-09 01:42:35 CST 6c.3d ansible all -m ping (esperado 4 pong)
+honeyserver | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+strongswan | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+logrelay | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+wazuh | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+rc=0
+2026-11-09 01:42:45 CST 6c.4 inicio ansible-playbook site.yml --limit honeyserver --tags start (salida evidence/azure/2026-11-09/d4-6c-start1.out)
+=== 6c.4 recap start1 ===
+PLAY RECAP *********************************************************************
+honeyserver                : ok=13   changed=4    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+EXIT=0
+2026-11-09 01:43:53 CST 6c.5 inicio 2a --tags start (salida evidence/azure/2026-11-09/d4-6c-start2.out)
+PLAY RECAP *********************************************************************
+honeyserver                : ok=13   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+EXIT=0
+=== 6c.6 verificacion honeypot 2026-11-09 01:44:34 CST ===
+2026-11-09 01:44:34 CST 6c.6a contenedores healthy (esperado 7)
+honeyserver | CHANGED | rc=0 >>
+7
+rc=0
+2026-11-09 01:44:40 CST 6c.6b RestartCount tanner y snare
+honeyserver | CHANGED | rc=0 >>
+        "RestartCount": 0,
+        "RestartCount": 0,
+rc=0
+2026-11-09 01:44:46 CST 6c.6c agente Wazuh en el manager
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+
+List of agentless devices:
+rc=0
+2026-11-09 01:44:53 CST 6c.6d /etc/soc-tesis/ (honeypot-started presente)
+honeyserver | CHANGED | rc=0 >>
+common
+honeypot
+honeypot-images
+honeypot-started
+honeypot-uids.json
+keys
+rc=0
+2026-11-09 01:44:58 CST 6c.6e banner publico 22 (desde esta maquina)
+SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u3^M
+
+nc_rc=
+2026-11-09 01:45:11 CST 6c.6f informativo: sockets 22/2222 y SO del host honeyserver
+honeyserver | CHANGED | rc=0 >>
+LISTEN 0      4096         0.0.0.0:22         0.0.0.0:*    users:(("docker-proxy",pid=18661,fd=8))  
+LISTEN 0      4096            [::]:22            [::]:*    users:(("docker-proxy",pid=18667,fd=8))  
+PRETTY_NAME="Ubuntu 22.04.5 LTS"
+rc=0
+=== 6c.7 egreso tras start ===
+2026-11-09 01:45:17 CST 6c.7a curl 1.1.1.1 en las 4 (debe fallar rc=28)
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'curl -m5 -sS -o /dev/null http://1.1.1.1'}, 'timeout': 0, [...]
+
+wazuh | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+honeyserver | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+logrelay | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5001 millisecondsThe command exited with a non-zero return code.
+strongswan | FAILED | rc=28 >>
+curl: (28) Connection timed out after 5000 millisecondsThe command exited with a non-zero return code.
+rc=0
+2026-11-09 01:45:29 CST 6c.7b curl https://example.com en las 4 (debe fallar rc=28)
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'curl -m5 -sS -o /dev/null https://example.com'}, 'timeout': 0, [...]
+
+strongswan | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3851 ms: Connection timed outThe command exited with a non-zero return code.
+logrelay | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3852 ms: Connection timed outThe command exited with a non-zero return code.
+wazuh | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3851 ms: Connection timed outThe command exited with a non-zero return code.
+honeyserver | FAILED | rc=28 >>
+curl: (28) Failed to connect to example.com port 443 after 3853 ms: Connection timed outThe command exited with a non-zero return code.
+rc=0
+=== RESUMEN 6c (2026-11-09 01:45:44 CST) ===
+T_open 01:32:36 CST; T_close 01:42:03 CST; minutos con egreso abierto: 9 min 27 s
+plan cierre: 0 add, 0 change, 4 destroy (Allow-Out-Maintenance-Egress, nsg-honeypot/logrelay/vpn/wazuh); apply rc=0
