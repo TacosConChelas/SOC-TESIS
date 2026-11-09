@@ -267,7 +267,7 @@ Expected: sin errores; `secret-scan` sin hallazgos.
 | Aviso de Ansible | `apt_repository` queda obsoleto en 2.25 (`roles/honeypot/tasks/main.yml:116`); no bloquea |
 | Cuota `standardBasv2Family` en `centralus` | `limit` 10, en uso 0 (sin margen: las 4 VMs usan las 10 vCPU); `rg-soc-tesis-lab` aún no existe |
 | Pi (`soc71`, solo lectura) | `strongswan` inactivo, `/etc/swanctl/conf.d` vacío, `psk.hex` 0600 root, `ip_forward=1`, nftables con `rt ipsec` |
-| IP pública del lab | `201.108.8.253`, dentro de `lab_source_cidrs` (`201.96.0.0/12`). Es dinámica: **repetirlo el Día 1** |
+| IP pública del lab | `203.0.113.10`, dentro de `lab_source_cidrs` (`201.96.0.0/12`). Es dinámica: **repetirlo el Día 1** |
 | Red Docker tras los ensayos | `make clean` aplicado; sin redes ni contenedores `soc-local` |
 
 Notas para el Día 1:
