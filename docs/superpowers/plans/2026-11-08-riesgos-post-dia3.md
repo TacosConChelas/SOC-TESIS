@@ -22,24 +22,28 @@
 # Bloque L — Local, sin costo
 
 ### L0: limpieza (riesgos 5 y 6)
-- [ ] `git push` de la rama.
-- [ ] `docs/superpowers/plans/2026-11-05-despliegue-azure.md`: marcar `[x]` lo que la evidencia de `evidence/azure/2026-11-08/` (`7-`, `8-`, `9-cierre-*.md`) da por hecho. Dejar `[ ]` en Cost Management y en "tanner tras un ciclo real". Añadir al final una sección "Resultado" que enlace los tres cierres.
-- [ ] `ansible/PIPELINE.md`: registrar lo aprendido en Azure:
+- [x] `git push` de la rama.
+- [x] `docs/superpowers/plans/2026-11-05-despliegue-azure.md`: marcar `[x]` lo que la evidencia de `evidence/azure/2026-11-08/` (`7-`, `8-`, `9-cierre-*.md`) da por hecho. Dejar `[ ]` en Cost Management y en "tanner tras un ciclo real". Añadir al final una sección "Resultado" que enlace los tres cierres.
+- [x] `ansible/PIPELINE.md`: registrar lo aprendido en Azure:
   - 4a usa la clave pública (no solo la huella), obtenida por `run-command`.
   - 4b entrega el PSK por `az rest` con un body JSON 0600 y `protectedParameters`.
   - Comprobación del origen sin NAT (`$SSH_CLIENT` empieza por `192.168.1.`).
   - La Etapa 6 va por grupos (`--limit`) con `ansible all -m ping` entre cada uno.
   - tmpfs con `mode` explícito (hallazgo de tanner, `0689283`).
-- [ ] ADR-006: P-A2 pasa a **VERIFICADO (2026-11-08, Día 1)**: el PSK no aparece en la instance view (`leak=0`) y el run command se borra al terminar. Queda abierto solo cuánto tiempo retiene Azure el historial de run-command.
+- [x] ADR-006: P-A2 pasa a **VERIFICADO (2026-11-08, Día 1)**: el PSK no aparece en la instance view (`leak=0`) y el run command se borra al terminar. Queda abierto solo cuánto tiempo retiene Azure el historial de run-command.
 
 **Hecho cuando:** `git status -sb` sin `ahead` y ningún "POR VERIFICAR" que ya esté resuelto.
 
+**Resultado (2026-11-08):** HECHO. `1e7b307` (casillas y resultado), `9d99aac` (PIPELINE); ADR-004/006 actualizados en `.knowledge/` (fuera de git). Las casillas del Día 1 sin salida registrada se dejaron en `[ ]` con nota.
+
 ### L1: tanner en el ensayo local (riesgo 1, parte local) — orquestador
-- [ ] Operador: `ssh -t soc71 sudo swanctl --terminate --ike lab` y `sudo ip route del 10.50.0.0/16`.
-- [ ] `cd ansible && nix-shell --run 'make clean preflight honeypot-rehearse'`: `c10` en verde.
-- [ ] Prueba en rojo: sin `mode=1777` en `docker-compose.yml` (cambio temporal, sin commit), `c10` debe fallar. Restaurar y `make clean`.
+- [x] Operador: `ssh -t soc71 sudo swanctl --terminate --ike lab` y `sudo ip route del 10.50.0.0/16`.
+- [x] `cd ansible && nix-shell --run 'make clean preflight honeypot-rehearse'`: `c10` en verde.
+- [x] Prueba en rojo: sin `mode=1777` en `docker-compose.yml` (cambio temporal, sin commit), `c10` debe fallar. Restaurar y `make clean`.
 
 **Hecho cuando:** `c10` pasa con el arreglo y falla sin él.
+
+**Resultado (2026-11-08):** HECHO. `c10` en verde dentro de `honeypot-rehearse`; sin `mode=1777`, tanner `unhealthy` en los 2 reinicios y `Restarting (1)` (mismo síntoma que en Azure). Falta el ciclo real (Día 4, paso 2).
 
 ### L2: reglas de detección (riesgo 3; bloquea la Fase 9)
 
@@ -66,6 +70,13 @@ Nota: si de algún honeypot no hay muestra real, no se inventan campos. Se deja 
 
 **Hecho cuando:** cada fixture da el id esperado, ningún evento de Cowrie cae en la 1002, el caso negativo pasa y `preflight` sale en verde.
 
+**Resultado (2026-11-08/09):** HECHO, `1d71477` + ampliación con muestras del ensayo local. `rules-check: ok (32 eventos)` contra el Manager 4.14.10; `wazuh-check` ok. `rules-check` queda fuera de `preflight` (preflight no levanta el Manager).
+- Supuestos corregidos al validar: `frequency=N` dispara en el evento N (no N+1); Mailoney se reconoce por `<program_name>` (el pre-decoder lo saca del mensaje y `<match>` no lo ve).
+- Muestras reales capturadas con tráfico controlado contra el honeyserver local: `cowrie.command.input` (100103), `sqli`/`xss` de Tanner (100410), sondeo de 4 servicios de Dionaea (100210, con `<different_field>dst_port</different_field>`).
+- **Hallazgo — healthchecks:** los healthchecks de Docker de Cowrie (127.0.0.1:2222) y Dionaea (127.0.0.1:21) generan eventos cada pocos segundos (25 y 15 en ~15 min). Sin filtro serían alertas nivel 3 permanentes (ruido y FP). Reglas 100105 y 100201 de nivel 0. Siguen viajando al Manager: filtrarlos en el agente si el volumen pesa.
+- **Hallazgo — escaneos y Dionaea:** un `nmap -sT` no deja eventos en Dionaea (falla `getpeername` al aceptar una conexión ya cerrada). 100210 detecta sondeo de servicios (banner grab, `-sV`), no un connect scan puro. Afecta el diseño de TEST-001: o se usa `-sV`, o el escaneo se mide por otra fuente.
+- Sigue sin muestra posible: 100104 (`file_download`), porque con el egreso cerrado Cowrie no descarga (el `wget` falla al resolver). Queda como regla preventiva.
+
 ### L3: procedimiento de mantenimiento (riesgo 4)
 
 **Archivos:**
@@ -75,6 +86,8 @@ Nota: si de algún honeypot no hay muestra real, no se inventan campos. Se deja 
 - Modificar: `ansible/PIPELINE.md` con una "Etapa M (mantenimiento)" en este orden: `--tags stop` → `egress-precheck` → abrir egreso (gate) → `install,config` → cerrar egreso (gate) → `--tags start` → 2ª `start` con `changed=0`.
 
 **Validación (orquestador, con contenedores):** en local, `start` → `stop` → `toggle-install` → `install,config` → `toggle-operate` → `start`, con los 7 contenedores healthy y `changed=0` en la 2ª pasada de `start`.
+
+**Resultado (2026-11-08):** HECHO, `9d99aac`. `stop` changed=3 y luego 0; `egress-precheck` ok tras `stop` y en rojo con el honeypot arrancado (`E1-3 FALLA: docker.socket`); `install,config` + `start` ×2 (2ª con changed=0); `honeypot-check` con `c10` ok. Nota: ejecutar Ansible siempre por `make` (o con sus 5 variables `ANSIBLE_*`): sin ellas se usan el inventario de Azure y `~/.ssh/known_hosts`, y `StrictHostKeyChecking` corta la conexión (comprobado).
 
 ### L4: túnel (riesgo 2) — diagnóstico HECHO, la decisión es del operador
 
