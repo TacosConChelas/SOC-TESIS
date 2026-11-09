@@ -29,7 +29,7 @@
     <group>authentication_success,honeypot,cowrie,</group>
   </rule>
 
-  <!-- PENDIENTE: muestra real (no hay command.input en evidencia; el eventid es el nombre de Cowrie, sin validar). -->
+  <!-- Muestra real: ensayo local 2026-11-09 (ssh + uname/cat/wget en una linea = un solo evento). -->
   <rule id="100103" level="8">
     <if_sid>100100</if_sid>
     <field name="eventid">^cowrie\.command\.input$</field>
@@ -37,12 +37,23 @@
     <group>honeypot,cowrie,</group>
   </rule>
 
-  <!-- PENDIENTE: muestra real (no hay file_download en evidencia; el eventid es el nombre de Cowrie, sin validar). -->
+  <!-- SIN MUESTRA POSIBLE: con el egreso cerrado (E1-6) cowrie no puede descargar (wget falla al resolver,
+       verificado 2026-11-09). Regla preventiva por si se abre el egreso; eventid segun la doc de Cowrie. -->
   <rule id="100104" level="12">
     <if_sid>100100</if_sid>
     <field name="eventid">^cowrie\.session\.file_download$</field>
     <description>Cowrie: el atacante descargo un fichero al senuelo.</description>
     <group>honeypot,cowrie,malware,</group>
+  </rule>
+
+  <!-- Healthcheck de Docker (python socket a 127.0.0.1:2222 cada pocos segundos): session.connect/closed
+       sin valor. Nivel 0 para que no sea alerta ni cuente como FP. ponytail: se sigue enviando al Manager;
+       filtrarlo en el agente si el volumen pesa. -->
+  <rule id="100105" level="0">
+    <if_sid>100100</if_sid>
+    <field name="src_ip">^127\.0\.0\.1$</field>
+    <description>Cowrie: healthcheck interno de Docker (sin efecto).</description>
+    <group>honeypot,cowrie,</group>
   </rule>
 
   <rule id="100110" level="10" frequency="5" timeframe="60">
@@ -61,7 +72,24 @@
     <group>honeypot,dionaea,</group>
   </rule>
 
-  <!-- PENDIENTE: muestra real de escaneo (100210: escaneo por frecuencia en varios puertos). Los umbrales se fijan con datos reales. -->
+  <rule id="100201" level="0">
+    <if_sid>100200</if_sid>
+    <field name="src_ip">^127\.0\.0\.1$</field>
+    <description>Dionaea: healthcheck interno de Docker a 127.0.0.1:21 (sin efecto).</description>
+    <group>honeypot,dionaea,</group>
+  </rule>
+
+  <!-- Dionaea solo registra conexiones que pasan del handshake: un nmap -sT no deja eventos
+       (getpeername falla al aceptar; verificado 2026-11-09). Esto detecta sondeo de servicios
+       (banner grab, -sV), no un SYN/connect scan puro. -->
+  <rule id="100210" level="8" frequency="4" timeframe="60">
+    <if_matched_sid>100200</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <different_field>dst_port</different_field>
+    <description>Dionaea: sondeo de varios servicios desde la misma IP (4 puertos en 60 s).</description>
+    <group>honeypot,dionaea,recon,</group>
+    <mitre><id>T1046</id></mitre>
+  </rule>
 
   <!-- Mailoney (100300-100399) -->
   <!-- Llega por journald como syslog: el pre-decoder aisla program_name (SYSLOG_IDENTIFIER del
@@ -81,5 +109,13 @@
     <group>honeypot,tanner,</group>
   </rule>
 
-  <!-- PENDIENTE: muestra real de peticion clasificada como ataque (100410). La unica muestra tiene detection.type 1 (index), sin significado de ataque confirmado. -->
+  <!-- Tanner clasifica cada peticion; "index" es navegacion normal. Muestras reales 2026-11-09:
+       sqli y xss. lfi/rfi/cmd_exec son nombres de Tanner sin muestra (LFI dio 404 en Snare). -->
+  <rule id="100410" level="8">
+    <if_sid>100400</if_sid>
+    <field name="response_msg.response.message.detection.name">^sqli$|^xss$|^lfi$|^rfi$|^cmd_exec$</field>
+    <description>Tanner: peticion HTTP clasificada como ataque ($(response_msg.response.message.detection.name)).</description>
+    <group>honeypot,tanner,web_attack,</group>
+    <mitre><id>T1190</id></mitre>
+  </rule>
 </group>
