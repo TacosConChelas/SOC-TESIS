@@ -1,0 +1,7 @@
+reinicio 1: healthy a los 10s | modo /tmp/tanner=1777
+reinicio 2: healthy a los 10s | modo /tmp/tanner=1777
+reinicio 3: healthy a los 10s | modo /tmp/tanner=1777
+snare: healthy
+total healthy: 7 de 7
+RestartCount tanner: 0
+

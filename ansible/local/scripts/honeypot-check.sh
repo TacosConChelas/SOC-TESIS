@@ -175,7 +175,23 @@ c9() {
   if grep -q 'el egreso sigue abierto' <<<"$out"; then good "start se niega a arrancar con el egreso abierto"; else bad "start no fallo en la sonda de egreso con el egreso abierto"; fi
 }
 
-for n in ${HONEYPOT_CHECKS:-1 2 4 5 6 7 8 9}; do "c$n"; done
+# 10. Reinicio: un contenedor ya creado debe volver healthy al arrancar de nuevo (tmpfs de tanner;
+# restart: unless-stopped tras deallocate/start). Sin mode=1777 el 2o arranque fallaba.
+c10() {
+  local n h
+  for n in 1 2; do
+    hs docker restart soc-tesis-tanner >/dev/null
+    h=""
+    for _ in $(seq 1 18); do
+      h="$(hs docker inspect --format '{{.State.Health.Status}}' soc-tesis-tanner 2>/dev/null || true)"
+      [ "$h" = healthy ] && break
+      sleep 10
+    done
+    if [ "$h" = healthy ]; then good "tanner healthy tras el reinicio $n"; else bad "tanner '$h' tras el reinicio $n"; fi
+  done
+}
+
+for n in ${HONEYPOT_CHECKS:-1 2 4 5 6 7 8 9 10}; do "c$n"; done
 
 if [ "$fail" -ne 0 ]; then
   echo "honeypot-check: FALLA" >&2

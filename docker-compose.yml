@@ -232,9 +232,11 @@ services:
       tanner_phpox:
         condition: service_started
 
+    # mode=1777 explícito: sin él, el 2º arranque del contenedor hereda 0755 del punto
+    # de montaje y tanner (uid tanner) pierde la escritura (hallazgo del Día 3, Azure).
     tmpfs:
-      - /tmp/tanner
-      - /opt/tanner/files
+      - /tmp/tanner:mode=1777
+      - /opt/tanner/files:mode=1777
 
     volumes:
       # Bind al host: tanner_report.json; el Wazuh Agent lo lee desde aquí (D4).
