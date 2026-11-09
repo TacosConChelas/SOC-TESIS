@@ -1,12 +1,85 @@
 <!--
   Reglas locales de SOC-TESIS. Rangos reservados (D5):
   Cowrie 100100-100199, Dionaea 100200-100299, Mailoney 100300-100399, Snare/Tanner 100400-100499.
-  Este archivo es solo el punto de enganche: el contenido llega en la fase de reglas (wazuh-logtest).
-  Wazuh rechaza un <group> vacio (error 1220), por eso queda una regla base sin efecto.
+  Las reglas base de cada honeypot ligan por el label @honeypot (<label> del localfile, rol honeypot)
+  y por decoded_as json. Los campos son los reales de las muestras (ansible/local/fixtures/rules/).
+  Reglas sin muestra real quedan marcadas PENDIENTE y no se validan (ver rules-check.sh).
 -->
 <group name="local,soc-tesis,">
-  <rule id="100000" level="0">
-    <match>soc-tesis-placeholder</match>
-    <description>Punto de enganche de reglas locales de SOC-TESIS (sin efecto).</description>
+
+  <!-- Cowrie (100100-100199) -->
+  <rule id="100100" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="@honeypot">^cowrie$</field>
+    <description>Cowrie: evento del honeypot SSH/Telnet.</description>
+    <group>honeypot,cowrie,</group>
   </rule>
+
+  <rule id="100101" level="5">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.login\.failed$</field>
+    <description>Cowrie: intento de inicio de sesion fallido.</description>
+    <group>authentication_failed,honeypot,cowrie,</group>
+  </rule>
+
+  <rule id="100102" level="10">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.login\.success$</field>
+    <description>Cowrie: inicio de sesion aceptado por el senuelo (el atacante entro).</description>
+    <group>authentication_success,honeypot,cowrie,</group>
+  </rule>
+
+  <!-- PENDIENTE: muestra real (no hay command.input en evidencia; el eventid es el nombre de Cowrie, sin validar). -->
+  <rule id="100103" level="8">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.command\.input$</field>
+    <description>Cowrie: comando introducido en la shell del senuelo.</description>
+    <group>honeypot,cowrie,</group>
+  </rule>
+
+  <!-- PENDIENTE: muestra real (no hay file_download en evidencia; el eventid es el nombre de Cowrie, sin validar). -->
+  <rule id="100104" level="12">
+    <if_sid>100100</if_sid>
+    <field name="eventid">^cowrie\.session\.file_download$</field>
+    <description>Cowrie: el atacante descargo un fichero al senuelo.</description>
+    <group>honeypot,cowrie,malware,</group>
+  </rule>
+
+  <rule id="100110" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100101</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <description>Cowrie: fuerza bruta SSH (5 intentos fallidos desde la misma IP en 60 s).</description>
+    <group>authentication_failures,honeypot,cowrie,</group>
+    <mitre><id>T1110</id></mitre>
+  </rule>
+
+  <!-- Dionaea (100200-100299) -->
+  <rule id="100200" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="@honeypot">^dionaea$</field>
+    <description>Dionaea: conexion a un servicio del senuelo.</description>
+    <group>honeypot,dionaea,</group>
+  </rule>
+
+  <!-- PENDIENTE: muestra real de escaneo (100210: escaneo por frecuencia en varios puertos). Los umbrales se fijan con datos reales. -->
+
+  <!-- Mailoney (100300-100399) -->
+  <!-- Llega por journald como syslog: el pre-decoder aisla program_name (SYSLOG_IDENTIFIER del
+       contenedor) y <match> ya no lo ve (verificado con wazuh-logtest 4.14.10). Sin decoder JSON
+       propio todavia: anadir local_decoder con JSON_Decoder si TEST-004 necesita src_ip. -->
+  <rule id="100300" level="5">
+    <program_name>^soc-tesis-mailoney$</program_name>
+    <description>Mailoney: sesion SMTP contra el senuelo.</description>
+    <group>honeypot,mailoney,</group>
+  </rule>
+
+  <!-- Tanner (100400-100499) -->
+  <rule id="100400" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="@honeypot">^tanner$</field>
+    <description>Tanner: peticion HTTP al senuelo web (Snare).</description>
+    <group>honeypot,tanner,</group>
+  </rule>
+
+  <!-- PENDIENTE: muestra real de peticion clasificada como ataque (100410). La unica muestra tiene detection.type 1 (index), sin significado de ataque confirmado. -->
 </group>

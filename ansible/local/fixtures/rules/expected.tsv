@@ -1,0 +1,28 @@
+# archivo	linea	rule.id esperado
+# rule.id numerico: debe aparecer en la fase 3 de wazuh-logtest para esa linea.
+# !LO-HI: ningun rule.id de ese rango puede aparecer (caso negativo).
+# frequency=5 dispara en el 5o evento (wazuh-logtest 4.14.10); el 6o vuelve a 100101.
+# cowrie.jsonl ademas exige que la 1002 (generica) no aparezca en ninguna linea.
+cowrie.jsonl	1	100101
+cowrie.jsonl	2	100101
+cowrie.jsonl	3	100101
+cowrie.jsonl	4	100101
+cowrie.jsonl	5	100110
+cowrie.jsonl	6	100101
+cowrie.jsonl	7	100100
+cowrie.jsonl	8	100100
+cowrie.jsonl	9	100100
+cowrie.jsonl	10	100100
+cowrie.jsonl	11	100100
+cowrie.jsonl	12	100100
+cowrie.jsonl	13	100100
+cowrie.jsonl	14	100100
+cowrie.jsonl	15	100102
+cowrie.jsonl	16	100100
+cowrie.jsonl	17	100100
+cowrie.jsonl	18	!100100-100499
+dionaea.jsonl	1	100200
+dionaea.jsonl	2	100200
+mailoney.jsonl	1	100300
+mailoney.jsonl	2	100300
+tanner.jsonl	1	100400

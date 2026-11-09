@@ -1,0 +1,2 @@
+{"connection": {"protocol": "ftpd", "transport": "tcp", "type": "accept"}, "dst_ip": "127.0.0.1", "dst_port": 21, "src_hostname": "", "src_ip": "127.0.0.1", "src_port": 60606, "timestamp": "2026-10-14T03:55:34.658207","@honeypot":"dionaea"}
+{"connection": {"protocol": "ftpd", "transport": "tcp", "type": "accept"}, "dst_ip": "127.0.0.1", "dst_port": 21, "src_hostname": "", "src_ip": "127.0.0.1", "src_port": 35208, "timestamp": "2026-10-14T03:55:49.482219","@honeypot":"dionaea"}
