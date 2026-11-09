@@ -2,7 +2,7 @@
 
 ## Pre-vuelo (16:04 CST)
 - `make time-guard`: ok (16:04). `make pin-check`: ok (Wazuh 4.14.10; Docker 29.8.2 / containerd 2.3.6 / Compose 5.6.0).
-- IP pública del lab `201.108.8.253` (dentro de `lab_source_cidrs`). Sin red Docker `soc-local-operate`. Las 4 VMs partían `deallocated`.
+- IP pública del lab `203.0.113.10` (dentro de `lab_source_cidrs`). Sin red Docker `soc-local-operate`. Las 4 VMs partían `deallocated`.
 
 ## Primera observación del ciclo `start`
 - `az vm start` en orden strongswan → wazuh → logrelay → honeyserver: 16:05:11 a ~16:08 (169 s en total), sin errores.
