@@ -313,6 +313,10 @@ time-guard:
 		*) echo "time-guard: TIMEGUARD_NOW invalido (usa HH:MM)" >&2; exit 2;; esac; \
 	h=$$((10#$${now%%:*})); m=$$((10#$${now##*:})); \
 	{ [ $$h -le 23 ] && [ $$m -le 59 ]; } || { echo "time-guard: TIMEGUARD_NOW fuera de rango" >&2; exit 2; }; \
+	if [ $$h -lt 7 ]; then \
+		echo "time-guard: son las $$now; el ciclo se inicia entre las 07:00 y las 20:30 (E1-9)" >&2; \
+		exit 1; \
+	fi; \
 	if [ $$h -gt 20 ] || { [ $$h -eq 20 ] && [ $$m -ge 30 ]; }; then \
 		echo "time-guard: son las $$now; no iniciar el ciclo despues de 20:30 (E1-9)" >&2; \
 		exit 1; \

@@ -73,7 +73,7 @@ make netcheck         # falla si algún contenedor alcanza 1.1.1.1 o example.com
 | Target | Qué hace |
 |---|---|
 | `azure-session` | exige `EXPECTED_AZ_SUBSCRIPTION_NAME` (variable de entorno, nunca en el repo), `az` con sesión vigente y esa suscripción en estado `Enabled`. No imprime IDs. |
-| `time-guard` | falla a partir de 20:30 (E1-9). Se prueba sin esperar: `TIMEGUARD_NOW=20:30 make time-guard`. |
+| `time-guard` | falla antes de las 07:00 y a partir de 20:30 (E1-9). Se prueba sin esperar: `TIMEGUARD_NOW=20:30 make time-guard`. |
 | `plan` | `umask 077; terraform plan -input=false -lock=false -var maintenance_egress=false -out=/tmp/tfplan`; deriva el JSON a un temporal 0600, corre `plan-check` y lo borra con `trap`. La salida del plan no se imprime y las rutas del home se redactan. Un plan nuevo borra `/tmp/tfplan.authorized`. |
 | `plan-check` | valida un JSON de plan (`PLAN_JSON=... make plan-check`, por defecto `/tmp/tfplan.json`) por tipo y nombre: (a) sin secretos, (b) sin `Allow-Out-Maintenance-Egress`, (c) 4 VMs, (d) SSH 22 solo desde `lab_cidr` a 10.50.20.10/30.10/40.10, (e) 22222 solo desde `lab_cidr` a 10.50.10.10, (f) `custom_data` de honeyserver fija `Port 22222`. |
 | `plan-check-selftest` | plan sintético control (debe pasar) + un caso roto por check a–f (cada uno falla nombrando su check). Sin datos reales (`203.0.113.0/24`). |
