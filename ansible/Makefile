@@ -28,8 +28,8 @@ export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o Ide
         toggle-install toggle-operate netcheck rehearse preflight \
         azure-session time-guard plan plan-check plan-check-selftest \
         gate-apply stage1 recap-check-selftest relay-check common-check \
-        pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check \
-        honeypot-apply honeypot-rehearse honeypot-check stage9-rehearse clean
+        pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check rules-check \
+        honeypot-apply honeypot-rehearse honeypot-check stage9-rehearse egress-precheck clean
 
 help:
 	@echo "Etapa 0 - pre-vuelo local (sin Azure)"
@@ -49,9 +49,11 @@ help:
 	@echo "  make pin-check          verifica pines apt vigentes (requiere Internet)"
 	@echo "  make wazuh-rehearse     all-in-one real de Wazuh en el contenedor (10-25 min; fuera de preflight)"
 	@echo "  make wazuh-check        verifica el rol wazuh (requiere wazuh-rehearse; WAZUH_CHECKS=\"1 2\" para un subconjunto)"
+	@echo "  make rules-check        reglas locales de Wazuh con wazuh-logtest y fixtures (requiere wazuh-rehearse; fuera de preflight)"
 	@echo "  make wazuh-apply TAGS=install   aplica el rol wazuh con esos tags (iteracion)"
 	@echo "  make honeypot-rehearse  Docker, 7 imagenes y agente reales en honeyserver (requiere wazuh-rehearse; fuera de preflight)"
 	@echo "  make honeypot-check     verifica el rol honeypot (HONEYPOT_CHECKS=\"1 2\" para un subconjunto)"
+	@echo "  make egress-precheck    E1-3: honeyserver dormido (4 unidades inactive/disabled + centinelas) antes de abrir egreso"
 	@echo "  make honeypot-apply TAGS=install   aplica el rol honeypot con esos tags (iteracion)"
 	@echo "  make preflight          lint + tags + secretos + ensayo  <-- Etapa 0"
 	@echo "  make azure-session      az account show == EXPECTED_AZ_SUBSCRIPTION_NAME"
@@ -89,7 +91,8 @@ tags-contract:
 	@"$(PY)" "$(LOCAL)/scripts/tags-contract.py" --selftest
 	@"$(PY)" "$(LOCAL)/scripts/tags-contract.py"
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --list-tasks --tags start >/dev/null
-	@echo "tags-contract: ok (--list-tasks --tags start compila)"
+	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --list-tasks --tags stop >/dev/null
+	@echo "tags-contract: ok (--list-tasks --tags start y stop compilan)"
 
 secret-scan:
 	@cd "$(REPO)" && "$(PY)" ansible/local/scripts/secret-scan.py
@@ -145,6 +148,10 @@ wazuh-secrets:
 wazuh-check:
 	@bash "$(LOCAL)/scripts/wazuh-check.sh"
 
+# Reglas locales: copia local_rules.xml al manager del ensayo y pasa los fixtures por wazuh-logtest.
+rules-check:
+	@bash "$(LOCAL)/rules-check.sh"
+
 # Iteracion: aplica el rol wazuh con los tags indicados (por defecto install,config).
 wazuh-apply: wazuh-secrets known-hosts
 	@bash "$(LOCAL)/scripts/net-toggle.sh" install
@@ -176,6 +183,15 @@ wazuh-rehearse: wazuh-hostcheck wazuh-secrets known-hosts
 
 honeypot-check:
 	@bash "$(LOCAL)/scripts/honeypot-check.sh"
+
+# Etapa M (mantenimiento): antes de abrir el egreso, el señuelo debe estar dormido
+# (E1-3 / check 3 del plan de Azure): 4 unidades inactive/disabled y los centinelas.
+# Sale con exit != 0 si no se cumple; el shell remoto termina con exit 1 al primer fallo.
+egress-precheck:
+	@mkdir -p "$(LOGS)"
+	@cd "$(ANSIBLE_DIR)" && ansible honeyserver -b -m ansible.builtin.shell -a 'for u in docker.socket docker.service containerd.service wazuh-agent.service; do [ "$$(systemctl is-active $$u)" = inactive ] && [ "$$(systemctl is-enabled $$u)" = disabled ] || { echo "E1-3 FALLA: $$u"; exit 1; }; done; test ! -e /etc/soc-tesis/honeypot-started && test -s /etc/soc-tesis/honeypot-images && echo centinelas-ok' 2>&1 | tee "$(LOGS)/egress-precheck.log"
+	@grep -q 'centinelas-ok' "$(LOGS)/egress-precheck.log"
+	@echo "egress-precheck: ok (E1-3: 4 unidades inactive/disabled y centinelas)"
 
 # Iteracion: aplica el rol honeypot con los tags indicados (por defecto install,config).
 honeypot-apply: wazuh-secrets known-hosts

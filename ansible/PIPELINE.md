@@ -59,6 +59,8 @@ Es el único tramo con secretos. Se hace con managed run command (`az vm run-com
 
 **4a · Huellas de host (las 4 VMs).** El script remoto ejecuta `ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub`. Las huellas se guardan en un `known_hosts` **fuera del repo** (honeyserver como `[10.50.10.10]:22222`). `host_key_checking` sigue en `True` (E1-4).
 
+> **Aprendido en Azure (2026-11-08):** `known_hosts` necesita la clave pública, no solo la huella. `ansible/azure/host-keys.sh` la obtiene por `run-command` (`invoke`, porque la clave es pública), filtra la línea `ssh-ed25519` de `[stdout]` y exige una sola clave por VM. La huella sirve para comprobarla a ojo.
+
 **4b · VM strongSwan como respondedora.**
 1. Se instalan `strongswan-swanctl` y `charon-systemd` (el daemon IKE, que trae `strongswan.service`) y se activa `net.ipv4.ip_forward=1`.
 2. Se escribe un `swanctl.conf` mínimo de respondedor (sin `start_action`).
@@ -68,6 +70,8 @@ Reglas para el PSK (E1-5):
 - va por `--protected-parameters`, y el valor se lee del archivo `0600` dentro de un script local; **nunca** se escribe literal en la línea de comandos,
 - el script remoto no usa `set -x`, no imprime el valor y escribe con `install -m 0600`,
 - al terminar: `az vm run-command delete`.
+
+> **Aprendido en Azure (2026-11-08):** `ansible/azure/psk-deliver.sh` entrega el PSK con `az rest` (PUT del run command). El body es un JSON temporal `0600` que se borra con `trap`, el valor va en `protectedParameters` y nunca en `argv`. Después comprueba que el PSK no aparece en el instance view (`leak=0`) y borra el run command. Resultado: `psk-deliver: ok` y hashes iguales.
 
 | Verificación | Criterio |
 |---|---|
@@ -80,6 +84,8 @@ Reglas para el PSK (E1-5):
 1. Se configura la Pi: strongSwan iniciador, xfrm0, ruta y MSS clamp. Esto queda fuera de Ansible (A2).
 2. Verificación: `swanctl --list-sas` con la SA establecida, y `ping 10.50.20.10` desde la Pi y desde 192.168.1.73.
 3. Con las huellas de 4a: `ssh -o StrictHostKeyChecking=yes` a las 4 VMs.
+
+> **Aprendido en Azure (2026-11-08):** antes de Ansible, y sobre todo antes de activar UFW en la Etapa 6, comprobar que el origen llega sin NAT: `ansible logrelay,wazuh -m shell -a 'echo $SSH_CLIENT'` debe empezar por `192.168.1.`. Si no, parar: UFW corta el SSH de administración.
 
 **Gate:** sin túnel no se continúa.
 
@@ -96,6 +102,8 @@ Desde 192.168.1.73, con `ANSIBLE_PRIVATE_KEY_FILE` y el `known_hosts` de la Etap
 
 Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En la VM strongSwan, el rol converge sobre lo que dejó el bootstrap. **No toca** el archivo de secretos de swanctl.
 
+> **Aprendido en Azure (2026-11-08):** la Etapa 6 va por grupos con `--limit` (primero `strongswan,logrelay`; después `wazuh`; después `honeyserver`), con `ansible all -m ping` entre cada uno. Las tareas que solo existen en host real (UFW, sysctl, `vm.max_map_count`, NTP) corren por primera vez ahí, así que el ping detecta un bloqueo antes del siguiente grupo.
+
 **Rescate si UFW corta el SSH de logrelay.** Si el `ansible all -m ping` posterior a `--tags install,config` falla solo en `logrelay`, ejecutar desde el operador `az vm run-command invoke` sobre la VM logrelay con `--scripts "ufw disable"` (sin pegar IDs ni secretos), confirmar que vuelve el SSH, corregir la regla de UFW del rol y reintentar. `run-command` usa el agente de la VM y no depende del túnel ni de sshd.
 
 ### Notas del rol `wazuh` (Etapa 6)
@@ -103,6 +111,9 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 - La instalación con el asistente descarga más de 1 GB y tarda de 10 a 25 minutos: planear la ventana de egreso. Antes, `make pin-check` (la versión que instala el asistente puede diferir del baseline).
 - Si el gate de versión falla, es una desviación del baseline D1: se decide si sube `wazuh_expected_version`; el rol no instala nada más.
 - Al terminar, `wazuh-install-files.tar` (contraseñas de admin/API) queda en el controlador (`0600`) y se destruye en la VM. Cambiar la contraseña de admin es un paso manual posterior.
+
+### Notas del rol `honeypot` (Etapa 6)
+- Aprendido en Azure (2026-11-08, Día 3): el `tmpfs` de Compose necesita `mode` explícito (`/tmp/tanner:mode=1777` y `/opt/tanner/files:mode=1777`, commit `0689283`). Sin él, tanner arrancaba bien la primera vez, pero tras un reinicio del contenedor el directorio quedaba `0755` root y fallaba con `PermissionError`.
 
 ## Etapa 7 · Cierre de egreso [GATE + verificación AUTO]
 1. Esperar a que no haya descargas en curso: la NSG es stateful y no corta los flujos ya establecidos.
@@ -151,3 +162,18 @@ Comprobaciones finales:
 - Orquestación propuesta: `Makefile` + Docker Compose. Molecule solo si hace falta.
 - `custom_data` de honeyserver (E1-2) implementado en `terraform/lab/vms.tf` (sshd en 22222); verificado contra el plan real de Azure (Etapa 1); sin desplegar. La Etapa 2 lo confirma con el banner del 22 público.
 - Etapas 0 y 1 implementadas en `ansible/` (`make preflight`, `make stage1`). Etapa 1 probada con plan real (checks a–f en verde); el gate `time-guard` + `gate-apply` en cadena se prueba en la primera corrida completa de `make stage1`.
+
+## Etapa M — Mantenimiento con el honeypot ya arrancado [GATE]
+Orden para reabrir el egreso (o cambiar el rol) cuando el señuelo ya quedó en marcha:
+
+1. `ansible-playbook site.yml --limit honeyserver --tags stop` (`make` local: no existe target propio; es el tag `stop` del rol honeypot). Hace `docker compose down` del proyecto (solo si Docker responde), deshabilita y detiene `docker.socket`, `docker.service`, `containerd.service` y `wazuh-agent`, y borra `/etc/soc-tesis/honeypot-started`. Nunca descarga.
+2. `make egress-precheck` (local) o el mismo check por Ansible contra honeyserver: exige las 4 unidades `inactive` y `disabled`, y los centinelas (`honeypot-started` ausente, `honeypot-images` presente). Si falla, no se abre el egreso.
+3. Abrir el egreso (`terraform apply -var maintenance_egress=true`, o `make toggle-install` en local).
+4. `--tags install,config`: descarga y configura; `install` vuelve a dormir Docker y el agente porque el centinela ya no existe.
+5. Cerrar el egreso (`terraform apply -var maintenance_egress=false`, o `make toggle-operate`) y verificar con `netcheck`. Gate duro.
+6. `--tags start`: levanta el señuelo y vuelve a escribir `honeypot-started`.
+7. 2ª `--tags start`: debe dar `changed=0`.
+
+**Por qué:** tras un `start`, Docker, containerd y el agente quedan habilitados (E1-3 solo impone que estén dormidos mientras el egreso esté abierto). Si se abre el egreso sin el paso 1, systemd los levanta solos en el siguiente arranque de la VM y el señuelo se conecta a Internet. El paso 2 hace que ese estado sea una precondición comprobada, no una suposición.
+
+Las pasadas sin tags no ejecutan `stop` (lo excluye `never`); tampoco `install`, `config` o `start` lo hacen.

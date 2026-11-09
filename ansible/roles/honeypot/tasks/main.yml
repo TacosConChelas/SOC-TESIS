@@ -517,3 +517,48 @@
     content: "started\n"
     mode: "0644"
   tags: [start]
+
+# --- stop: mantenimiento, inverso de start. Nunca descarga y no corre sin --tags stop ----
+# `never` la excluye de cualquier pasada que no la pida explicitamente (sin tags,
+# install, config o start). Tras stop, install vuelve a dormir Docker y el agente (E1-3).
+- name: Leer si Docker está activo (para bajar el proyecto solo si el daemon responde)
+  ansible.builtin.systemd_service:
+    name: docker.service
+  register: honeypot_docker_state
+  check_mode: false
+  tags: [stop, never]
+
+- name: Leer si existe el proyecto compose del señuelo
+  ansible.builtin.stat:
+    path: "{{ honeypot_dir }}/docker-compose.yml"
+  register: honeypot_compose_file
+  check_mode: false
+  tags: [stop, never]
+
+- name: Bajar el proyecto compose del señuelo (docker compose down, sin descargas)
+  community.docker.docker_compose_v2:
+    project_src: "{{ honeypot_dir }}"
+    state: absent
+    pull: never
+  when:
+    - (honeypot_docker_state.status.ActiveState | default('unknown')) == 'active'
+    - honeypot_compose_file.stat.exists
+  tags: [stop, never]
+
+- name: Detener y deshabilitar Docker y el Wazuh Agent (E1-3)
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  loop:
+    - docker.socket
+    - docker.service
+    - containerd.service
+    - wazuh-agent.service
+  tags: [stop, never]
+
+- name: Borrar el centinela de arranque (install vuelve a dormir Docker y el agente)
+  ansible.builtin.file:
+    path: /etc/soc-tesis/honeypot-started
+    state: absent
+  tags: [stop, never]
