@@ -56,9 +56,12 @@ La versión del agente debe ser la del Manager: **4.14.10** (un agente más nuev
 
 **Secreto:** la contraseña de enrolamiento se pone en el archivo `authd.pass` del agente. **No** se usa `WAZUH_REGISTRATION_PASSWORD=…` en la línea de comandos, porque terminaría en el historial o en `argv` (misma regla que A3/E1-5).
 
-- [ ] **Ubuntu (`192.168.1.74`):** repositorio `packages.wazuh.com/4.x/apt` con su llave GPG; `sudo WAZUH_MANAGER=10.50.40.10 WAZUH_AGENT_NAME=ubuntu-lab apt-get install wazuh-agent=4.14.10-1`; `sudo apt-mark hold wazuh-agent`. Copiar `~/soc-tesis-secrets/wazuh/authd.pass` a `/var/ossec/etc/authd.pass` (`0640 root:wazuh`) por `scp` + `install`. No hacer `enable` ni `start` todavía.
-- [ ] **Windows 11 (`192.168.1.75`):** descargar `wazuh-agent-4.14.10-1.msi` y comparar su SHA-256 con el publicado. Instalar con `msiexec /i wazuh-agent-4.14.10-1.msi /q WAZUH_MANAGER=10.50.40.10 WAZUH_AGENT_NAME=win11-lab`. Copiar `authd.pass` a `C:\Program Files (x86)\ossec-agent\authd.pass` con permisos solo para Administradores/SYSTEM. No arrancar todavía.
-- [ ] Higiene: `grep` del contenido de `authd.pass` en `~/.bash_history` del cliente Ubuntu (`192.168.1.74`) → 0; revisar que no quede copia en Descargas en Windows (`192.168.1.75`).
+- [x] **Ubuntu (`192.168.1.74`):** repositorio `packages.wazuh.com/4.x/apt` con su llave GPG; `sudo WAZUH_MANAGER=10.50.40.10 WAZUH_AGENT_NAME=ubuntu-lab apt-get install wazuh-agent=4.14.10-1`; `sudo apt-mark hold wazuh-agent`. Copiar `~/soc-tesis-secrets/wazuh/authd.pass` a `/var/ossec/etc/authd.pass` (`0640 root:wazuh`) por `scp` + `install`. No hacer `enable` ni `start` todavía.
+  - *Hecho 2026-11-10:* wazuh-agent 4.14.10-1 instalado y en hold; sin enrolar; servicio `inactive` y `disabled`; `authd.pass` `-rw-r----- root:wazuh` (45 bytes). Evidencia: `evidence/azure/2026-11-10/e3-ubuntu.log`.
+- [x] **Windows 11 (`192.168.1.75`):** descargar `wazuh-agent-4.14.10-1.msi` y comparar su SHA-512 con el publicado (Wazuh solo publica SHA-512: `packages.wazuh.com/4.x/checksums/wazuh/4.14.10/wazuh-agent-4.14.10-1.msi.sha512`). Instalar con `msiexec /i wazuh-agent-4.14.10-1.msi /q WAZUH_MANAGER=10.50.40.10 WAZUH_AGENT_NAME=win11-lab`. Copiar `authd.pass` a `C:\Program Files (x86)\ossec-agent\authd.pass` con permisos solo para Administradores/SYSTEM. No arrancar todavía.
+  - *Hecho 2026-11-10:* wazuh-agent 4.14.10 instalado (msiexec exit 0); SHA-512 del MSI verificado contra el publicado; sin enrolar; `WazuhSvc` `Stopped` con StartType `Automatic` (sin cambiar); `authd.pass` con ACL solo `SYSTEM:(F)` y `Administrators:(F)`. Evidencia: `evidence/azure/2026-11-10/e3-windows.log`.
+- [x] Higiene: `grep` del contenido de `authd.pass` en `~/.bash_history` del cliente Ubuntu (`192.168.1.74`) → 0; revisar que no quede copia en Descargas en Windows (`192.168.1.75`).
+  - *Resultado 2026-11-10:* 0/0 (Ubuntu: 0 coincidencias en `.bash_history`, sin copia en `/tmp`; Windows: 0 `authd.pass*` en `C:\Users`, MSI y temporales eliminados).
 
 ## E4 · Día 5 en Azure: enrolamiento y eventos (~1.5 h, con los gates habituales)
 
