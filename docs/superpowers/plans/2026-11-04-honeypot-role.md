@@ -20,7 +20,7 @@
 - Repos: `deb [arch=amd64 signed-by=/usr/share/keyrings/docker.asc] https://download.docker.com/linux/ubuntu jammy stable` y `deb [signed-by=/usr/share/keyrings/wazuh.asc] https://packages.wazuh.com/4.x/apt/ stable main`.
 - Las 7 imágenes salen **solo** de las líneas `*_IMAGE=` de `.env.example` en la raíz del repo. No se copian digests a ningún otro archivo.
 - D4: relay `10.50.30.10`; `client_buffer` con `queue_size` 100000 y `events_per_second` 500; `localfile` de Cowrie, Dionaea y Tanner con `log_format json`, `only-future-events no` y `<label key="@honeypot">`; Mailoney por `journald` con `<filter field="CONTAINER_NAME">^soc-tesis-mailoney$</filter>`, **sin** etiqueta (decisión del operador, 2026-11-04).
-- Secretos: `authd.pass` sale de `wazuh_secrets_dir` en el controlador, que debe estar **fuera** del repo (el rol falla si no). Toda tarea que lo toque lleva `no_log: true`. En el ensayo local vive en `/tmp/soc-local-secrets/`.
+- Secretos: `authd.pass` sale de `wazuh_secrets_dir` en el controlador (`192.168.1.73`), que debe estar **fuera** del repo (el rol falla si no). Toda tarea que lo toque lleva `no_log: true`. En el ensayo local vive en `/tmp/soc-local-secrets/`.
 - Variables con prefijo `honeypot_` (regla `var-naming[no-role-prefix]` de `ansible-lint`), incluidas las de `register`. Se usan sin prefijo propio solo `wazuh_expected_version` y `wazuh_secrets_dir`, que viven en `ansible/group_vars/all.yml`.
 - Los cambios se limitan a `ansible/`, `docs/` y a versionar `docker-compose.yml`, `.env.example` y `config/` (Tarea 1). No tocar `terraform/` ni `.knowledge/`. La única dependencia nueva es la colección `community.docker` en `requirements.yml` (ya viene en el nix-shell).
 - Gates por código de salida, nunca por texto en stdout. Mensajes en español.
@@ -42,7 +42,7 @@
 | `ansible/local/scripts/honeypot-conf-check.py` (nuevo) | Valida el `ossec.conf` del agente (check 5) |
 | `ansible/local/scripts/honeypot-check.sh` (nuevo) | Los 9 checks de la spec §6 (subconjunto con `HONEYPOT_CHECKS`) |
 | `ansible/Makefile` (mod) | Targets `honeypot-apply`, `honeypot-rehearse` y `honeypot-check`; `tags-contract` corre el selftest |
-| `ansible/requirements.yml` (mod) | `community.docker` 5.2.0 para el controlador real |
+| `ansible/requirements.yml` (mod) | `community.docker` 5.2.0 para el controlador real (`192.168.1.73`) |
 | `ansible/roles/honeypot/defaults/main.yml` (nuevo) | Variables `honeypot_*` |
 | `ansible/roles/honeypot/handlers/main.yml` (nuevo) | Reinicio del agente, solo si el señuelo ya arrancó |
 | `ansible/roles/honeypot/tasks/main.yml` (reemplaza) | Tareas `install`, `config` y `start` |

@@ -4,7 +4,7 @@
 
 **Goal:** Reemplazar el rol marcador `wazuh` por la instalación y configuración reales del all-in-one (Manager + Indexer + Dashboard), con gate de versión, secretos fuera del repo y ensayo local con el all-in-one real (`make wazuh-rehearse`).
 
-**Architecture:** El rol instala con el asistente oficial `wazuh-install.sh -a` (único tag que descarga), verifica la versión contra `wazuh_expected_version`, y en `config` entrega `authd.pass` desde el controlador, edita `ossec.conf`, API, heap y política ISM, y trae el tar de contraseñas al controlador antes de destruirlo. El ensayo local usa el all-in-one real en el contenedor `wazuh`, con un target aparte para no alargar el `preflight`.
+**Architecture:** El rol instala con el asistente oficial `wazuh-install.sh -a` (único tag que descarga), verifica la versión contra `wazuh_expected_version`, y en `config` entrega `authd.pass` desde el controlador (`192.168.1.73`), edita `ossec.conf`, API, heap y política ISM, y trae el tar de contraseñas al controlador antes de destruirlo. El ensayo local usa el all-in-one real en el contenedor `wazuh`, con un target aparte para no alargar el `preflight`.
 
 **Tech Stack:** Ansible (ansible-core 2.21, `community.general`), Wazuh 4.14 (asistente all-in-one), Ubuntu 22.04 (contenedor systemd), bash, Python 3 (stdlib), GNU make, Docker Compose.
 
@@ -17,7 +17,7 @@
 - E1-7: las tareas no aplicables en contenedor llevan `when: ansible_virtualization_type != 'docker'` (UFW, `sysctl -p`).
 - Versión esperada de Wazuh: `wazuh_expected_version: "4.14.9"` (decisión del operador 2026-10-30: 4.14.8 ya no la instala el asistente; 4.14.9 es parche sin cambios incompatibles) en `roles/wazuh/defaults/main.yml` con ese formato exacto (lo leen `wazuh-check.sh`, `wazuh-agent-fixture.sh` y `pin-check.sh`). Instalador: `https://packages.wazuh.com/4.14/wazuh-install.sh`; el asistente no admite fijar versión.
 - Datos de D5: heap del Indexer `8g` (en el inventario local `2g`); retención de `wazuh-alerts-*` a 30 días; `logall` y `logall_json` en `no`; Active Response y `vulnerability-detection` apagados; `use_password yes`; `use_source_ip no`; API (55000) y Indexer (9200) solo en loopback; 1514/1515 desde el relay `10.50.30.10` y `lab_cidr` `192.168.1.0/24`; 443 y SSH desde `lab_cidr`.
-- Secretos: nunca en el repo. `wazuh_secrets_dir` (controlador, por defecto `~/soc-tesis-secrets/wazuh`) debe estar **fuera** del repo: el rol falla si no. Toda tarea que toque contraseñas lleva `no_log: true`. El `shred` del tar solo ocurre tras comparar `sha256` con la copia traída al controlador. En el ensayo local los secretos viven en `/tmp/soc-local-secrets/` (700, desechables).
+- Secretos: nunca en el repo. `wazuh_secrets_dir` (controlador = host de administración `192.168.1.73`, por defecto `~/soc-tesis-secrets/wazuh`) debe estar **fuera** del repo: el rol falla si no. Toda tarea que toque contraseñas lleva `no_log: true`. El `shred` del tar solo ocurre tras comparar `sha256` con la copia traída al controlador. En el ensayo local los secretos viven en `/tmp/soc-local-secrets/` (700, desechables).
 - UFW: entrada denegada, salida permitida; reglas `allow` antes de activar; solo con `when: ansible_virtualization_type != 'docker'`.
 - Variables con prefijo `wazuh_` (regla `var-naming[no-role-prefix]` de `ansible-lint`), incluidas las de `register`.
 - Los cambios se limitan a `ansible/` y `docs/`. No tocar `terraform/` ni `.knowledge/`. No agregar dependencias nuevas.
@@ -1456,7 +1456,7 @@ Expected: `secret-scan: ok (...)` y el commit creado.
 - §5 errores: otro parche (gate + `pin-check`, Tareas 2 y 5), instalación a medias (reanudación, refinada en Tarea 6), RAM/disco/`vm.max_map_count` (Tarea 2), fallo de `fetch` o `sha256` (Tarea 3, `assert` antes de `shred`), API del Indexer (reintentos, Tarea 3), reejecución (centinela), arranque en frío (`wait_for`, Tarea 4), log del asistente (borrado + check 8). ✔
 - §6 pruebas: los 10 checks y el flujo `wazuh-rehearse` → Tareas 1 y 4. ✔
 - §7 criterio de listo → Tarea 4 pasos 3 y 4; documentación → Tarea 6. ✔
-- §8 fuera de alcance: no se escribe contenido de reglas, no se cambia la contraseña de admin, no hay agentes Windows/Ubuntu. ✔
+- §8 fuera de alcance: no se escribe contenido de reglas, no se cambia la contraseña de admin, no hay agentes Windows 11 (`192.168.1.75`)/Ubuntu (`192.168.1.74`; IPs actualizadas 2026-11-09). ✔
 
 **Escaneo de placeholders:** sin TBD/TODO. Los puntos que dependen del formato real de los archivos instalados (`ossec.conf`, `api.yaml`, `jvm.options`, respuesta de la API ISM) se resuelven con un `assert` en el rol y un paso de descubrimiento con el criterio explícito de qué hacer en cada caso, no con texto vago.
 

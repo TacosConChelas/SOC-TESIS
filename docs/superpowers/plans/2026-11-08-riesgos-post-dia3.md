@@ -144,4 +144,4 @@ Nota: si de algún honeypot no hay muestra real, no se inventan campos. Se deja 
 - **TEST-002:** el señuelo acepta casi cualquier contraseña de `root`, así que "fuerza bruta" se mide por dos vías: `login.failed` (100101 → 100110) con contraseñas vetadas o claves, y ráfaga de logins aceptados (100102 → 100111, 5 en 60 s). La 100111 está en `local_rules.xml` con fixture; su validación en `rules-check` queda registrada en el commit.
 
 ## Fuera de alcance
-- Fase 4 (agentes en Windows/Linux; TEST-005) y Fase 7 (aplicar `terraform/evidence`): siguen en el plan maestro.
+- Fase 4 (agentes en Windows 11 `192.168.1.75`/Linux `192.168.1.74`; IPs actualizadas 2026-11-09; TEST-005) y Fase 7 (aplicar `terraform/evidence`): siguen en el plan maestro.

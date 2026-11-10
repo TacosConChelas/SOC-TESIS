@@ -38,7 +38,7 @@
 | `ansible/roles/logrelay/templates/soc-relay.logrotate.j2` (nuevo) | Rotación a 7 días |
 | `ansible/roles/logrelay/handlers/main.yml` (nuevo) | Recarga de NGINX solo si está activo |
 | `ansible/roles/logrelay/tasks/main.yml` (reemplaza el marcador) | Tareas `install`/`config`/`start` |
-| `ansible/requirements.yml` (nuevo) | `community.general` para el controlador real |
+| `ansible/requirements.yml` (nuevo) | `community.general` para el controlador real (`192.168.1.73`) |
 | `ansible/local/README.md` (mod) | Sección de `relay-check` |
 | `docs/superpowers/specs/2026-10-29-logrelay-role-design.md` (mod) | Refinamientos descubiertos al planear |
 
@@ -650,7 +650,7 @@ Reemplazar todo el contenido de `ansible/roles/logrelay/tasks/main.yml` por:
   tags: [start]
 ```
 
-- [ ] **Step 6: Colección para el controlador real**
+- [ ] **Step 6: Colección para el controlador real (`192.168.1.73`)**
 
 Crear `ansible/requirements.yml`:
 

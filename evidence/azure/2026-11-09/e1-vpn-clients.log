@@ -1,0 +1,18 @@
+=== E1 verificacion set vpn_clients y reglas rt ipsec en Pi (soc71) 2026-11-09 22:01:48 CST ===
+$ ssh soc71 'sudo nft list set inet filter vpn_clients'
+table inet filter {
+	set vpn_clients {
+		type ipv4_addr
+		elements = { 192.168.1.73, 192.168.1.74,
+			     192.168.1.75 }
+	}
+}
+exit_code=0
+
+$ ssh soc71 'sudo nft list ruleset | grep -n -E "vpn_clients|rt ipsec"'
+7:	set vpn_clients {
+36:		iifname "eth0" oifname "eth0" ip saddr @vpn_clients ip daddr @azure_net rt ipsec exists accept
+45:		oifname "eth0" ip daddr @azure_net rt ipsec missing counter packets 0 bytes 0 drop
+exit_code=0
+
+Resultado: .73, .74 y .75 presentes en set vpn_clients (inet filter); reglas rt ipsec exists/missing intactas. Sin cambios en la Pi.
