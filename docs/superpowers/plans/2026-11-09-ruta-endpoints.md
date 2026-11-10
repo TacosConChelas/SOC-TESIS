@@ -39,11 +39,15 @@ Lo que falta está en los clientes y en la Pi.
 
 ## E2 · R1 persistente en cada cliente (sin costo)
 
-- [ ] **Ubuntu (`192.168.1.74`)** (NetworkManager): `nmcli con mod "<conexión>" +ipv4.routes "10.50.0.0/16 192.168.1.10" && nmcli con up "<conexión>"`. Con Netplan: `routes: [{to: 10.50.0.0/16, via: 192.168.1.10}]` y `netplan apply`.
-- [ ] **Windows 11 (`192.168.1.75`)** (PowerShell como admin): `route -p add 10.50.0.0 mask 255.255.0.0 192.168.1.10`.
-- [ ] Rechazar redirects ICMP (ADR-005, pendiente en los clientes). Ubuntu (`192.168.1.74`): `net.ipv4.conf.all.accept_redirects=0` en `/etc/sysctl.d/99-soc.conf`. Windows (`192.168.1.75`): `Set-NetIPv4Protocol -IcmpRedirects Disabled`.
-- [ ] Verificar: Ubuntu (`192.168.1.74`) `ip route get 10.50.40.10` → `via 192.168.1.10`. Windows (`192.168.1.75`) `Find-NetRoute -RemoteIPAddress 10.50.40.10` → NextHop `192.168.1.10`. La ruta por defecto sigue en `192.168.1.254`.
+**Estado 2026-11-09:** aplicado previamente (operador); verificado en solo lectura al inicio de la documentación. Sin cambios en esta sesión. Reinicio post-cambio **pendiente**.
+
+- [x] **Ubuntu (`192.168.1.74`)**: ya aplicado en Netplan + NetworkManager (conexión `netplan-enp1s0`): `10.50.0.0/16 via 192.168.1.10`, presente en `/etc/netplan/00-installer-config.yaml` y en la conexión NM. Ruta por defecto `192.168.1.254` intacta.
+- [x] **Windows 11 (`192.168.1.75`)**: ruta persistente (`route print -4` → "Persistent Routes", métrica 1) hacia `192.168.1.10`. Ruta por defecto `192.168.1.254` intacta.
+- [x] Rechazar redirects ICMP (ADR-005, pendiente en los clientes). Ubuntu (`192.168.1.74`): `net.ipv4.conf.all.accept_redirects=0` (y `default`, `enp1s0`) en `/etc/sysctl.d/99-soc.conf`. Windows (`192.168.1.75`): `IcmpRedirects` = Disabled.
+- [x] Verificar (pre-reinicio): Ubuntu `ip route get 10.50.40.10` → `via 192.168.1.10`. Windows `Find-NetRoute -RemoteIPAddress 10.50.40.10` → NextHop `192.168.1.10`. IP observada coincide con la reservada (.74 y .75).
 - [ ] Reiniciar cada cliente y repetir la verificación (para confirmar que la ruta persiste).
+  - Ubuntu (`.74`): **hecho** (boot 2026-11-09 23:04; verificación 23:07, `evidence/azure/2026-11-09/e2-ubuntu-after-reboot.log`): IP .74, `10.50.0.0/16 via 192.168.1.10`, `ip route get` → `via 192.168.1.10`, default `192.168.1.254`, `accept_redirects=0` en all/default/enp1s0.
+  - Windows 11 (`.75`): **hecho** (reinicio autorizado y ejecutado 2026-11-10 00:09; verificación 00:15, `evidence/azure/2026-11-09/e2-windows-after-reboot.log`): IP .75, `10.50.0.0/16 via 192.168.1.10` en Persistent Routes, `Find-NetRoute` → `192.168.1.10`, default `192.168.1.254`, `IcmpRedirects` = Disabled. Incidencia: SSH no respondió unos 5 min tras el arranque.
 
 ## E3 · Instalar el agente sin enrolar (sin costo; los clientes tienen Internet)
 

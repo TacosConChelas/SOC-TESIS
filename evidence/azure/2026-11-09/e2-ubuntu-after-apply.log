@@ -1,0 +1,54 @@
+== E2 Ubuntu 192.168.1.74 — tras aplicar (pre-reinicio) — 2026-11-09T23:00:55-06:00
+== Metodo: Netplan YAML (renderer NetworkManager); perfil NM en /run (regenerado en cada boot) por eso la ruta va en el YAML, no en nmcli
+== netplan try: Configuration accepted (exit 0)
+
+== netplan get ethernets.enp1s0 (MAC redactada)
+match:
+  macaddress: <REDACTED>
+dhcp4: true
+dhcp6: true
+set-name: "enp1s0"
+routes:
+- to: "10.50.0.0/16"
+  via: "192.168.1.10"
+
+== /etc/sysctl.d/99-soc.conf
+net.ipv4.conf.all.accept_redirects=0
+net.ipv4.conf.default.accept_redirects=0
+net.ipv4.conf.enp1s0.accept_redirects=0
+
+== sysctl valores
+net.ipv4.conf.all.accept_redirects = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.enp1s0.accept_redirects = 0
+
+== ip route
+default via 192.168.1.254 dev enp1s0 proto dhcp src 192.168.1.74 metric 100 
+10.50.0.0/16 via 192.168.1.10 dev enp1s0 proto static metric 100 
+192.168.1.0/24 dev enp1s0 proto kernel scope link src 192.168.1.74 metric 100 
+
+== ip route get 10.50.40.10
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache 
+
+== ip route show default
+default via 192.168.1.254 dev enp1s0 proto dhcp src 192.168.1.74 metric 100 
+
+== ip -4 a (sin altname/MAC)
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+2: enp1s0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    inet 192.168.1.74/24 brd 192.168.1.255 scope global dynamic noprefixroute enp1s0
+       valid_lft 86228sec preferred_lft 86228sec
+
+== servicios
+systemd-networkd: active (is-enabled: disabled)
+NetworkManager: active
+== networkctl enp1s0
+● 2: enp1s0
+                   Link File: /run/systemd/network/10-netplan-enp1s0.link
+                Network File: n/a
+                       State: routable (unmanaged)
+                Online state: unknown
+                        Type: ether
