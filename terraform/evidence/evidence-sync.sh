@@ -32,8 +32,12 @@ TF=$(cd "$(dirname "$0")" && pwd)
 m=$(manifest "$DIR") || { echo "evidence-sync: $DIR no tiene MANIFEST.sha256 ni SHA256SUMS" >&2; exit 1; }
 (cd "$DIR" && sha256sum -c --quiet "$m") || { echo "evidence-sync: el manifiesto local de $DIR no cuadra" >&2; exit 1; }
 
-# ponytail: grep literal; no ve secretos comprimidos o recodificados (p. ej. dentro de un .tar).
-# wazuh-install-files.tar no se lista por eso: no debe aparecer nunca en una carpeta de evidencia.
+# Enlaces y comprimidos esconderían contenido a la higiene: se rechazan antes de subir.
+if [ -n "$(find "$DIR" \( -type l -o -iname '*.tar' -o -iname '*.tar.*' -o -iname '*.tgz' -o -iname '*.gz' -o -iname '*.zip' -o -iname '*.7z' \) -print -quit)" ]; then
+  echo "evidence-sync: $DIR contiene enlaces simbólicos o archivos comprimidos; no se sube" >&2; exit 1
+fi
+# ponytail: grep literal; no ve un secreto recodificado (base64, hex). Añadir esas
+# variantes si alguna vez se sube algo que no sea texto plano de logs.
 for s in "$SECRETS/ipsec/psk.hex" "$SECRETS/wazuh/authd.pass" "$SECRETS/ssh/id_ed25519"; do
   [ -s "$s" ] || { echo "evidence-sync: falta $s para la comprobación de higiene" >&2; exit 1; }
   if grep -rqFf "$s" "$DIR"; then
@@ -58,4 +62,6 @@ cmp -s "$DIR/$m" "$out/$PREFIX/$m" ||
 diff <(cd "$out/$PREFIX" && find . -type f | sort) <(cd "$DIR" && find . -type f | sort) >/dev/null ||
   { echo "evidence-sync: $PREFIX en el Blob no tiene los mismos archivos que $DIR" >&2; exit 1; }
 
+# "ok" = el Blob contiene exactamente esta carpeta (recién subida o ya presente:
+# --overwrite false e inmutabilidad hacen que una 2.ª subida no escriba nada).
 echo "evidence-sync: ok $PREFIX ($(sha256sum "$DIR/$m" | cut -c1-12) $m)"
