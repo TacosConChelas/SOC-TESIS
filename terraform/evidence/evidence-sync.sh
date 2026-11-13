@@ -25,13 +25,15 @@ fi
 
 DIR=${1:?uso: evidence-sync.sh <carpeta> <prefijo en el Blob> | --selftest}
 PREFIX=${2:?falta el prefijo, p. ej. azure/2026-11-09}
-SECRETS=${SECRETS:-$HOME/soc-tesis-secrets}
+SECRETS=$HOME/soc-tesis-secrets   # fijo: la lista de secretos no la elige el entorno
 TF=$(cd "$(dirname "$0")" && pwd)
 
 m=$(manifest "$DIR") || { echo "evidence-sync: $DIR no tiene MANIFEST.sha256 ni SHA256SUMS" >&2; exit 1; }
 (cd "$DIR" && sha256sum -c --quiet "$m") || { echo "evidence-sync: el manifiesto local de $DIR no cuadra" >&2; exit 1; }
 
-for s in "$SECRETS/ipsec/psk.hex" "$SECRETS/wazuh/authd.pass"; do
+# ponytail: grep literal; no ve secretos comprimidos o recodificados (p. ej. dentro de un .tar).
+# wazuh-install-files.tar no se lista por eso: no debe aparecer nunca en una carpeta de evidencia.
+for s in "$SECRETS/ipsec/psk.hex" "$SECRETS/wazuh/authd.pass" "$SECRETS/ssh/id_ed25519"; do
   [ -s "$s" ] || { echo "evidence-sync: falta $s para la comprobación de higiene" >&2; exit 1; }
   if grep -rqFf "$s" "$DIR"; then
     echo "evidence-sync: $DIR contiene un secreto del proyecto; no se sube" >&2; exit 1
@@ -47,7 +49,12 @@ az storage blob upload-batch --auth-mode login --account-name "$ACCOUNT" \
 out=$(mktemp -d); trap 'rm -rf "$out"' EXIT
 az storage blob download-batch --auth-mode login --account-name "$ACCOUNT" \
   -s "$CONTAINER" --pattern "$PREFIX/*" -d "$out" -o none
-(cd "$out/$PREFIX" && sha256sum -c --quiet "$m") ||
+# Contra el manifiesto LOCAL (no el descargado) y con el mismo conjunto de archivos.
+cmp -s "$DIR/$m" "$out/$PREFIX/$m" ||
+  { echo "evidence-sync: el manifiesto restaurado de $PREFIX difiere del local" >&2; exit 1; }
+(cd "$out/$PREFIX" && sha256sum -c --quiet "$(realpath "$DIR/$m")") ||
   { echo "evidence-sync: la copia restaurada de $PREFIX no cuadra con $m" >&2; exit 1; }
+diff <(cd "$out/$PREFIX" && find . -type f | sort) <(cd "$DIR" && find . -type f | sort) >/dev/null ||
+  { echo "evidence-sync: $PREFIX en el Blob no tiene los mismos archivos que $DIR" >&2; exit 1; }
 
 echo "evidence-sync: ok $PREFIX ($(sha256sum "$DIR/$m" | cut -c1-12) $m)"
