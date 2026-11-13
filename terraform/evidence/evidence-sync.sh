@@ -25,6 +25,7 @@ fi
 
 DIR=${1:?uso: evidence-sync.sh <carpeta> <prefijo en el Blob> | --selftest}
 PREFIX=${2:?falta el prefijo, p. ej. azure/2026-11-09}
+DIR=$(realpath "$DIR")   # absoluta: más abajo se compara desde otra carpeta
 SECRETS=$HOME/soc-tesis-secrets   # fijo: la lista de secretos no la elige el entorno
 TF=$(cd "$(dirname "$0")" && pwd)
 
@@ -52,7 +53,7 @@ az storage blob download-batch --auth-mode login --account-name "$ACCOUNT" \
 # Contra el manifiesto LOCAL (no el descargado) y con el mismo conjunto de archivos.
 cmp -s "$DIR/$m" "$out/$PREFIX/$m" ||
   { echo "evidence-sync: el manifiesto restaurado de $PREFIX difiere del local" >&2; exit 1; }
-(cd "$out/$PREFIX" && sha256sum -c --quiet "$(realpath "$DIR/$m")") ||
+(cd "$out/$PREFIX" && sha256sum -c --quiet "$DIR/$m") ||
   { echo "evidence-sync: la copia restaurada de $PREFIX no cuadra con $m" >&2; exit 1; }
 diff <(cd "$out/$PREFIX" && find . -type f | sort) <(cd "$DIR" && find . -type f | sort) >/dev/null ||
   { echo "evidence-sync: $PREFIX en el Blob no tiene los mismos archivos que $DIR" >&2; exit 1; }
