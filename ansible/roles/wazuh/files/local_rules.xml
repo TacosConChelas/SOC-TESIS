@@ -112,7 +112,7 @@
   <!-- Healthcheck de Docker: python3 abre 127.0.0.1:25 cada 15 s (muestra real del Dia 4). -->
   <rule id="100301" level="0">
     <if_sid>100300</if_sid>
-    <match>Connection from 127.0.0.1:|"src_ip": "127.0.0.1"</match>
+    <match>Connection from 127.0.0.1:|Connection closed for 127.0.0.1:|"src_ip": "127.0.0.1"</match>
     <description>Mailoney: healthcheck interno de Docker a 127.0.0.1:25 (sin efecto).</description>
     <group>honeypot,mailoney,</group>
   </rule>
