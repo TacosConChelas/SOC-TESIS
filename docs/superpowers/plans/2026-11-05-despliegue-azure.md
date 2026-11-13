@@ -364,7 +364,7 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - [x] `ansible-playbook site.yml --check --diff` → sin cambios.
 - [x] `terraform -chdir=../terraform/lab plan -var maintenance_egress=false -detailed-exitcode` → 0.
 - [x] Evidencia en `evidence/azure/<fecha>/`: logs, huellas, versiones, tabla del ciclo, `SHA256SUMS`. Higiene: `grep -rFf ~/soc-tesis-secrets/ipsec/psk.hex ../$EV` y lo mismo con `authd.pass` → 0.
-- [ ] Cost Management: comparar el gasto real con el ≈ USD 35/mes de ADR-006 §6.
+- [x] Cost Management: comparar el gasto real con el ≈ USD 35/mes de ADR-006 §6. (2026-11-13: proyección ≈ 33,6 USD/mes, ver `10-cierre-dia4.md`.)
 - [x] `deallocate` en orden inverso.
 
 ## Si algo falla
@@ -390,7 +390,7 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - **Día 1** (infraestructura, bootstrap, túnel, roles base y cierre de egreso): [`7-cierre-egreso-y-dia1.md`](../../../evidence/azure/2026-11-08/7-cierre-egreso-y-dia1.md) y [`6a-resumen.md`](../../../evidence/azure/2026-11-08/6a-resumen.md). Hallazgos: DNS con la IP del resolver y `--name` en `psk-deliver` (commit `7dd495e`).
 - **Día 2** (Wazuh, honeypot, arranque y evento de prueba): [`8-cierre-dia2.md`](../../../evidence/azure/2026-11-08/8-cierre-dia2.md). Sin reglas de Cowrie, el evento llega a Wazuh pero no genera alerta.
 - **Día 3** (ciclo `deallocate`/`start` y aceptación): [`9-cierre-dia3.md`](../../../evidence/azure/2026-11-08/9-cierre-dia3.md). Hallazgos: tanner no sobrevivió al ciclo (corregido con `mode=1777`, commit `0689283`; confirmado en el Día 4 tras un `deallocate`/`start` real: 7/7 `healthy`); el túnel no se levantaba solo tras un `start` (causa y arreglo `close_action = start`; **resuelto en el Día 4**), diagnosticado en [`2026-11-08-riesgos-post-dia3.md`](2026-11-08-riesgos-post-dia3.md) (L4).
-- **Día 4** (validación de los fixes y de las reglas): [`10-cierre-dia4.md`](../../../evidence/azure/2026-11-09/10-cierre-dia4.md). Tanner, túnel (SA sola en ~26 s), detección (MTTD 0,7 s) y Etapa M validados. Costos: 1,73 USD acumulados, aún sin día completo.
+- **Día 4** (validación de los fixes y de las reglas): [`10-cierre-dia4.md`](../../../evidence/azure/2026-11-09/10-cierre-dia4.md). Tanner, túnel (SA sola en ~26 s), detección (MTTD 0,7 s) y Etapa M validados. Costos: 4,67 USD acumulados al 11-12; fijo 0,72 USD/día, proyección ≈ 33,6 USD/mes.
 - **Sin registro por paso:** las casillas del Día 1 que siguen en `[ ]` (Etapas 1–5) se ejecutaron (las etapas posteriores dependen de ellas), pero su salida no quedó en la evidencia; no se marcan para no afirmar lo que no está registrado.
 - **Higiene del Día 3** (verificada 2026-11-08 19:00): 0 coincidencias de `psk.hex` y `authd.pass` en la carpeta; `SHA256SUMS` correcto.
-- **Pendiente:** Cost Management frente a ≈ USD 35/mes: la API devolvió 1,73 USD acumulados el 2026-11-09 (datos del 11-09 parciales); comparar con días completos pasadas 24–48 h (`az rest` a `Microsoft.CostManagement/query`; `az consumption` devuelve nulos).
+- **Costos (cerrado 2026-11-13):** con días completos, fijo 0,72 USD/día (discos + IPs) y cómputo ≈ 0,234 USD/h → ≈ 33,6 USD/mes a 50 h, frente a ≈ 35 de ADR-006 §6. Se consulta con `az rest` a `Microsoft.CostManagement/query` (`az consumption` devuelve nulos).

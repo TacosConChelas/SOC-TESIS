@@ -125,7 +125,7 @@ Nota: si de algún honeypot no hay muestra real, no se inventan campos. Se deja 
 | 8 | Cost Management con más de 24 h de datos frente a ≈ USD 35/mes (ADR-006 §6) | Pendiente del Día 3 |
 | 9 | Evidencia + `SHA256SUMS` + higiene (PSK, `authd.pass` → 0); `deallocate` en orden inverso | — |
 
-**Resultado (2026-11-09):** HECHO, salvo costos. Detalle y medidas en [`10-cierre-dia4.md`](../../../evidence/azure/2026-11-09/10-cierre-dia4.md).
+**Resultado (2026-11-09):** HECHO; costos cerrados el 2026-11-13. Detalle y medidas en [`10-cierre-dia4.md`](../../../evidence/azure/2026-11-09/10-cierre-dia4.md).
 
 | # | Resultado |
 |---|---|
@@ -136,7 +136,7 @@ Nota: si de algún honeypot no hay muestra real, no se inventan campos. Se deja 
 | 5 | 6 × 100102 (MTTD 0,7 s); 10 × 100101 y 2 × 100110 con 12 fallos; 0 en la 1002 (riesgo 3) |
 | 6 | Etapa M completa; egreso abierto 9 min 27 s (riesgo 4) |
 | 7 | `changed=0` en las 4, `--check` sin cambios, `terraform plan` rc 0 |
-| 8 | **Parcial:** `az consumption` dio `pretaxCost` nulo, pero la API de Cost Management dio datos: 1,73 USD acumulados (VMs 1,35; discos 0,28; IPs 0,10), con el 11-09 incompleto por retraso de facturación. Sin día completo aún; repetir pasadas 24–48 h |
+| 8 | **Parcial:** `az consumption` dio `pretaxCost` nulo, pero la API de Cost Management dio datos: 1,73 USD acumulados (VMs 1,35; discos 0,28; IPs 0,10), con el 11-09 incompleto por retraso de facturación. Cerrado el 2026-11-13 con días completos: fijo 0,72 USD/día, proyección ≈ 33,6 USD/mes (`d4-8c-costos-dias-completos.json`) |
 | 9 | Higiene 0/0, `SHA256SUMS` correcto, 4 VMs `deallocated` |
 
 **Decisiones tomadas (2026-11-09):**

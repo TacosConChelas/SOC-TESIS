@@ -1,0 +1,78 @@
+{
+ "consulta": "Microsoft.CostManagement/query ActualCost 2026-11-05..2026-11-12, diario, agrupado por ResourceType (rg-soc-tesis-lab)",
+ "hecha": "2026-11-13 CST",
+ "filas": [
+  {
+   "Cost": 0.1751404,
+   "UsageDate": 20261108,
+   "ResourceType": "microsoft.compute/disks",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 1.2261324163476,
+   "UsageDate": 20261108,
+   "ResourceType": "microsoft.compute/virtualmachines",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.0613194444444444,
+   "UsageDate": 20261108,
+   "ResourceType": "microsoft.network/publicipaddresses",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.52022,
+   "UsageDate": 20261109,
+   "ResourceType": "microsoft.compute/disks",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.283338624285591,
+   "UsageDate": 20261109,
+   "ResourceType": "microsoft.compute/virtualmachines",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.24,
+   "UsageDate": 20261109,
+   "ResourceType": "microsoft.network/publicipaddresses",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.4800384,
+   "UsageDate": 20261110,
+   "ResourceType": "microsoft.compute/disks",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.24,
+   "UsageDate": 20261110,
+   "ResourceType": "microsoft.network/publicipaddresses",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.4800384,
+   "UsageDate": 20261111,
+   "ResourceType": "microsoft.compute/disks",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.24,
+   "UsageDate": 20261111,
+   "ResourceType": "microsoft.network/publicipaddresses",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.4800384,
+   "UsageDate": 20261112,
+   "ResourceType": "microsoft.compute/disks",
+   "Currency": "USD"
+  },
+  {
+   "Cost": 0.24,
+   "UsageDate": 20261112,
+   "ResourceType": "microsoft.network/publicipaddresses",
+   "Currency": "USD"
+  }
+ ]
+}
