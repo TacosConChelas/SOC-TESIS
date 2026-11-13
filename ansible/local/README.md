@@ -210,5 +210,5 @@ Pasada completa de `site.yml` sin `--tags` ni `--limit` sobre las 4 VMs, con el 
 
 - **Va después de `make wazuh-rehearse` y `make honeypot-rehearse`.** Exige el Manager de Wazuh activo y `/etc/soc-tesis/honeypot-started` en `honeyserver`; si falta alguno, falla diciendo qué correr antes.
 - **No está en `preflight`:** depende del Manager y de los dos rehearse previos. El objetivo en sí dura unos minutos.
-- **Qué hace:** cierra el egreso, envejece la caché en las 4 VMs (`stage9-rehearse-apt-age.sh` verifica el mtime), hace dos pasadas completas que deben dar `changed=0 failed=0`, un `--check --diff` igual y los checks finales.
+- **Qué hace:** cierra el egreso, envejece la caché en las 4 VMs (`touch -d '-2 hours'` sobre `/var/lib/apt/lists`), hace dos pasadas completas que deben dar `changed=0 failed=0`, un `--check --diff` igual y los checks finales.
 - **Qué NO valida:** el ciclo `deallocate`/`start` de Azure, el NSG real, el pull a través de `Allow-Out-Maintenance-Egress` ni el estado de Terraform.

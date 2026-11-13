@@ -1,5 +1,7 @@
 # OpenCode
 .opencode/
+opencode.json
+Agent-Model.md
 
 # CodeBuff
 .codebuff/
@@ -13,6 +15,7 @@ skills-lock.json
 
 # knowledge base
 .knowledge/
+docs/
 
 # Terraform
 *.tfstate
@@ -35,8 +38,19 @@ override.tf.json
 evidence/tests/**/03-raw/
 evidence/tests/**/04-alertas.json
 evidence/tests/**/05-metricas/
+evidence/compose-rebuild/
+evidence/d1-ubuntu-image/
+evidence/local-tests/
+evidence/terraform-prep/
+evidence/wazuh-architecture-deep-dive.md
 
 # Artefactos locales de herramientas (no versionar)
+.cursor/
+.vscode/
+.mcp.json
+.graphifyignore
+knowledge.md
+/wazuh_evidencia/
 /graphify-out/
 /scrape_2_5/
 /.firecrawl/

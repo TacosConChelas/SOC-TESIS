@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-11-04
 **Rama:** `practica/ansible-local`
-**Estado:** implementado en la rama `practica/ansible-local` (plan `docs/superpowers/plans/2026-11-04-honeypot-role.md`); refinamientos en §9 (decisión E1-3 del agente durante `install`: §9.10).
+**Estado:** implementado en la rama `practica/ansible-local`; refinamientos en §9 (decisión E1-3 del agente durante `install`: §9.10).
 **Fuentes:** `.knowledge/18_DECISIONES_IMPLEMENTACION.md` (D2, D4, D8), `.knowledge/17_SOFTWARE_BASELINE.md` (D1 §1–§2), `.knowledge/20_COMPOSE_REPRODUCIBLE.md`, ADR-006 (A6, E1-2, E1-3, E1-7, E1-8), `ansible/PIPELINE.md`, `docker-compose.yml`, `.env.example`, documentación de Wazuh (`localfile`).
 **Contexto:** cuarto subproyecto de P-A1. `common`, `logrelay` y `wazuh` ya están hechos.
 
