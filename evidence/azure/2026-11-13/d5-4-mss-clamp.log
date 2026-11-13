@@ -1,0 +1,324 @@
+=== E4 paso 4 · MSS clamp en la Pi · 2026-11-13 01:48:23 CST (-0600) ===
+
+--- PASO 1a Pi: cadena forward y set azure_net (solo lectura) 01:48:23 ---
+table inet filter {
+	chain forward {
+		type filter hook forward priority filter; policy drop;
+		ct state invalid drop
+		ct state established,related accept
+		iifname "eth0" oifname "eth0" ip saddr @vpn_clients ip daddr @azure_net rt ipsec exists accept
+		iifname "eth0" ip daddr @azure_net limit rate 5/second burst 10 packets log prefix "nft-fwd-leak: "
+		iifname "eth0" ip daddr @azure_net counter packets 965 bytes 51204 drop
+		limit rate 5/second burst 10 packets log prefix "nft-fwd-drop: "
+		counter packets 0 bytes 0 drop
+	}
+}
+=== set azure_net ===
+table inet filter {
+	set azure_net {
+		type ipv4_addr
+		flags interval
+		elements = { 10.50.0.0/16 }
+	}
+}
+rc=0
+
+--- PASO 1b ubuntu74: la ruta NO debe llevar mtu 01:48:36 ---
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache 
+===
+10.50.0.0/16 via 192.168.1.10 dev enp1s0 
+10.50.0.0/16 via 192.168.1.10 dev enp1s0 proto static metric 100 
+rc=0
+
+PASO 1 VEREDICTO: cadena "forward" (hook forward, priority filter, policy drop) OK; existe @azure_net
+= 10.50.0.0/16 (flags interval) y @vpn_clients. .74: dos rutas para 10.50.0.0/16, NINGUNA con mtu
+-> nada que revertir. Listo para el clamp.
+PENDIENTE: paso 2 (lo ejecuta el operador).
+
+=== PASO 2 T_clamp = 2026-11-13 02:04:19 CST (operador, salida textual) ===
+ip saddr @azure_net ... maxseg 1320  (x2, duplicada)
+ip daddr @azure_net ... maxseg 1320
+ct state invalid drop
+... (resto igual)
+NOTA: el comando del operador inserto 2x saddr; la regla daddr ya estaba arriba (no la cree yo).
+
+--- PASO 3 (02:05:47) openssl s_client desde .74 ---
+openssl: /usr/bin/openssl OpenSSL 3.5.5 27 Jan 2026 (Library: OpenSSL 3.5.5 27 Jan 2026)
+--- ruta/mtu hacia el manager ---
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+enp1s0 mtu=1500
+### puerto 443 intento 1 -> rc=0 dur=222ms
+CONNECTED(00000003)
+subject=C=US, L=California, O=Wazuh, OU=Wazuh, CN=wazuh-dashboard
+issuer=OU=Wazuh, O=Wazuh, L=California
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Protocol: TLSv1.3
+### puerto 1515 intento 1 -> rc=0 dur=205ms
+CONNECTED(00000003)
+subject=C=US, ST=California, CN=Wazuh
+issuer=C=US, ST=California, CN=Wazuh
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Protocol: TLSv1.3
+### puerto 1515 intento 2 -> rc=0 dur=202ms
+CONNECTED(00000003)
+subject=C=US, ST=California, CN=Wazuh
+issuer=C=US, ST=California, CN=Wazuh
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Protocol: TLSv1.3
+### puerto 1515 intento 3 -> rc=0 dur=209ms
+CONNECTED(00000003)
+subject=C=US, ST=California, CN=Wazuh
+issuer=C=US, ST=California, CN=Wazuh
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Protocol: TLSv1.3
+
+--- PASO 4 pre-chequeo win11 (02:06:10) ---
+** The server may need to be upgraded. See https://openssh.com/pq.html
+
+2026/11/13 02:04:11 wazuh-agent: INFO: (4102): Connected to the server ([10.50.40.10]:1514/tcp).
+FK=84
+SVC=Running
+
+
+
+--- PASO 4a linea temporal win11 (02:06:20) ---
+2026/11/13 01:56:25 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:57:25 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+2026/11/13 01:58:26 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:59:26 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+2026/11/13 02:00:26 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 02:01:26 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+2026/11/13 02:02:26 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 02:03:26 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+2026/11/13 02:03:26 wazuh-agent: INFO: Valid key received
+2026/11/13 02:03:46 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+2026/11/13 02:03:46 wazuh-agent: INFO: (4102): Connected to the server ([10.50.40.10]:1514/tcp).
+2026/11/13 02:04:02 wazuh-agent: INFO: FIM sync module started.
+2026/11/13 02:04:05 wazuh-agent: INFO: (6012): Real-time file integrity monitoring started.
+2026/11/13 02:04:11 wazuh-agent: INFO: Started (pid: 2432).
+2026/11/13 02:04:11 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+2026/11/13 02:04:11 rootcheck: INFO: Started (pid: 2432).
+2026/11/13 02:04:11 wazuh-agent: INFO: Started (pid: 2432).
+2026/11/13 02:04:11 wazuh-agent: INFO: (4102): Connected to the server ([10.50.40.10]:1514/tcp).
+2026/11/13 02:04:11 wazuh-modulesd:agent-upgrade: INFO: (8153): Module Agent Upgrade started.
+2026/11/13 02:04:11 sca: INFO: Module started.
+2026/11/13 02:04:11 wazuh-modulesd:syscollector: INFO: Module started.
+2026/11/13 02:04:11 wazuh-agent: INFO: Started (pid: 2432).
+2026/11/13 02:04:13 wazuh-agent: INFO: (6008): File integrity monitoring scan started.
+2026/11/13 02:04:25 wazuh-agent: INFO: FIM sync module started.
+2026/11/13 02:04:26 wazuh-agent: INFO: (6012): Real-time file integrity monitoring started.
+
+--- PASO 4b manager: agent_control -l (02:06:21) ---
+bash: line 9: ansible: command not found
+
+--- PASO 4c como se invoca ansible en este shell ---
+PATH=/run/wrappers/bin:/usr/bin:/usr/sbin:/home/tacosconchelas/.local/bin:/home/tacosconchelas/.npm-global/bin:/home/tacosconchelas/.npm-global/bin:/home/tacosconchelas/.config/orca/linux-orca-cli-shim:/home/tacosconchelas/.local/bin:/home/tacosconchelas/.npm-global/bin:/nix/store/pwxj9ycwqd117yra6czifh3xfx5p88lh-bash-interactive-5.3p9/bin:/nix/store/g2i5zxslx9msaqjy14hdp2af064i9pbv-binutils-2.46/bin:/nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/bin:/nix/store/xbqis14s3fvckwlayc6vxvglws1v2mcw-gawk-5.4.1/bin:/nix/store/aig2gm3l94ha8hllw2m4fx7si33pvrr3-libarchive-3.8.9/bin:/nix/store/c9bhgk1cpqx05hql68g8vg1v8a1r2cji-pv-1.10.5/bin:/nix/store/8kny73n5n4cgpy0510kn8wh76lzd2vd3-squashfs-4.7.5/bin:/run/wrappers/bin:/usr/bin:/usr/sbin:/home/tacosconchelas/.local/share/flatpak/exports/bin:/var/lib/flatpak/exports/bin:/home/tacosconchelas/.nix-profile/bin:/nix/profile/bin:/home/tacosconchelas/.local/state/nix/profile/bin:/etc/profiles/per-user/tacosconchelas/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin:/home/tacosconchelas/usr/bin:/home/tacosconchelas/.local/share/uv/tools/headroom-ai/bin:/home/tacosconchelas/.volta/bin:/home/tacosconchelas/.asdf/shims:/home/tacosconchelas/.fnm/aliases/default/bin:/home/tacosconchelas/.local/share/mise/shims:/home/tacosconchelas/.local/share/pnpm:/home/tacosconchelas/.yarn/bin:/home/tacosconchelas/.bun/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/usr/local/sbin:/snap/bin:/home/linuxbrew/.linuxbrew/bin:/home/tacosconchelas/bin:/home/tacosconchelas/.opencode/bin:/home/tacosconchelas/.vite-plus/bin:/home/tacosconchelas/.local/share/uv/tools/headroom-ai/bin
+[ERROR]: Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:31
+Host key for 10.50.40.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+Task failed.
+Origin: <adhoc 'shell' task>
+
+{'action': 'shell', 'args': {'_raw_params': 'ss -tin dst 192.168.1.75 2>/dev/null | head -14; echo === AGENTES [...]
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:31
+Host key for 10.50.40.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+wazuh | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ED25519 key sent by the remote host is\nSHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.\r\nOffending RSA key in /home/tacosconchelas/.ssh/known_hosts:31\r\nHost key for 10.50.40.10 has changed and you have requested strict checking.\r\nHost key verification failed.",
+    "unreachable": true
+}
+
+--- PASO 4d known_hosts desechable + consulta al manager (02:07:10) ---
+ok: 10.50.10.10:22222
+known_hosts: /home/tacosconchelas/Projects/SOC-TESIS/ansible/local/.known_hosts (4 hosts, 12 claves)
+make: Leaving directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+[ERROR]: Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:31
+Host key for 10.50.40.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+Task failed.
+Origin: <adhoc 'shell' task>
+
+{'action': 'shell', 'args': {'_raw_params': 'ss -tin dst 192.168.1.75 2>/dev/null | head -14; echo === AGENTES [...]
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:31
+Host key for 10.50.40.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+wazuh | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ED25519 key sent by the remote host is\nSHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.\r\nOffending RSA key in /home/tacosconchelas/.ssh/known_hosts:31\r\nHost key for 10.50.40.10 has changed and you have requested strict checking.\r\nHost key verification failed.",
+    "unreachable": true
+}
+
+--- PASO 4e huella y uptime del manager (known_hosts desechable) ---
+256 SHA256:7kruuNoiYYyumXL5rA/VIc8B8UHqk9UgeCJrz5LOuLs 10.50.40.10 (ECDSA)
+3072 SHA256:XjY/UuUUkGXYXoIiencePDImoSEhCqqxwl6t3n+/0co 10.50.40.10 (RSA)
+256 SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E 10.50.40.10 (ED25519)
+--- known_hosts:31 (clave vieja) ---
+3072 SHA256:0hhLETdk6ongAdfjnJM00klGdXt9wICX+eW1Lyw0+eQ 10.50.40.10 (RSA)
+--- uptime del manager ---
+Received disconnect from 10.50.40.10 port 22:2: Too many authentication failures
+
+--- PASO 4f (02:08:04) consulta manager con el env de azure ---
+wazuh | CHANGED | rc=0 >>
+State Recv-Q Send-Q Local Address:Port Peer Address:Port Process
+ESTAB 0      0        10.50.40.10:1514 192.168.1.75:49783
+	 cubic wscale:8,7 rto:299 rtt:98.782/3.944 ato:87 mss:1270 pmtu:1500 rcvmss:1320 advmss:1460 cwnd:10 bytes_sent:37211 bytes_acked:37211 bytes_received:1628004 segs_out:1940 segs_in:2707 data_segs_out:226 data_segs_in:2544 send 1028527bps lastsnd:1796 lastrcv:292 lastack:292 pacing_rate 2057048bps delivery_rate 173696bps delivered:227 app_limited busy:21093ms rcv_rtt:6186.71 rcv_space:70822 rcv_ssthresh:982143 minrtt:57.421
+=== AGENTES ===
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+
+List of agentless devices:
+
+--- PASO 4g journal de la Pi: cuando se ejecuto el nft insert ---
+Nov 13 01:40:44 Ubuntu-server sudo[31084]: <oper-pi> : PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft list ruleset
+Nov 13 01:40:44 Ubuntu-server sudo[31088]: <oper-pi> : PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/swanctl --list-conns
+Nov 13 01:40:59 Ubuntu-server sudo[31176]: <oper-pi> : PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft list ruleset
+Nov 13 01:48:25 Ubuntu-server sudo[31522]: <oper-pi> : PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft list chain inet filter forward
+Nov 13 01:48:25 Ubuntu-server sudo[31521]: <oper-pi> : PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft list set inet filter azure_net
+Nov 13 02:01:32 Ubuntu-server sudo[31769]: <oper-pi> : TTY=pts/0 ; PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft insert rule inet filter forward ip daddr @azure_net tcp flags syn tcp option maxseg size set 1320
+Nov 13 02:01:32 Ubuntu-server sudo[31772]: <oper-pi> : TTY=pts/0 ; PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft insert rule
+Nov 13 02:02:20 Ubuntu-server sudo[31850]: <oper-pi> : TTY=pts/0 ; PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft list chain inet filter forward
+Nov 13 02:04:07 Ubuntu-server sudo[31939]: <oper-pi> : TTY=pts/0 ; PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft insert rule inet filter forward ip saddr @azure_net tcp flags syn tcp option maxseg size set 1320
+Nov 13 02:04:07 Ubuntu-server sudo[31942]: <oper-pi> : TTY=pts/0 ; PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft list chain inet
+Nov 13 02:04:19 Ubuntu-server sudo[32021]: <oper-pi> : TTY=pts/0 ; PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft insert rule inet filter forward ip saddr @azure_net tcp flags syn tcp option maxseg size set 1320
+Nov 13 02:04:19 Ubuntu-server sudo[32019]: <oper-pi> : TTY=pts/0 ; PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/sbin/nft list chain inet filter forward
+Nov 13 02:08:24 Ubuntu-server sudo[32115]: <oper-pi> : PWD=/home/<oper-pi> ; USER=root ; COMMAND=/usr/bin/journalctl --since '2026-11-13 01:40' --no-pager
+--- sesiones ---
+<oper-pi> pts/0        192.168.1.73     Fri Nov 13 02:04 - 02:04  (00:00)
+<oper-pi> pts/0        192.168.1.73     Fri Nov 13 02:04 - 02:04  (00:00)
+<oper-pi> pts/0        192.168.1.73     Fri Nov 13 02:02 - 02:02  (00:00)
+<oper-pi> pts/0        192.168.1.73     Fri Nov 13 02:01 - 02:01  (00:00)
+<oper-pi> pts/0        192.168.1.73     Sun Nov  8 18:17 - 18:17  (00:00)
+<oper-pi> pts/0        192.168.1.73     Sun Nov  8 18:16 - 18:16  (00:00)
+
+wtmp begins Mon Sep  7 18:21:10 2026
+
+--- PASO 4h win11 client.keys (solo tamano y cabecera) ---
+FK=84
+SVC=Running
+002 win11-lab
+wazuh | CHANGED | rc=0 >>
+2026/11/08 23:23:42 wazuh-authd: INFO: Received request for a new agent (vm-honeyserver) from: 10.50.30.10
+2026/11/13 08:03:26 wazuh-authd: INFO: Received request for a new agent (win11-lab) from: 192.168.1.75
+===
+Fri Nov 13 08:08:49 UTC 2026
+
+Wazuh agent_control. Agent information:
+   Agent ID:   002
+   Agent Name: win11-lab
+   IP address: any
+   Status:     Active
+
+   Operating system:    Microsoft Windows 11 Home
+   Client version:      Wazuh v4.14.10
+   Configuration hash:  ab73af41699f13fdd81903b5f23d8d00
+   Shared file hash:    e7c5c4c31c37ff20e25ba7c05c17a7e9
+   Last keep alive:     1794557310
+
+   Syscheck last started at:  Fri Nov 13 10:04:13 2026
+   Syscheck last ended at:    Fri Nov 13 10:04:25 2026
+
+=== PASO 5: CONCLUSION ===
+El cuello era la MSS, y el clamp la arregla; pero el enrolamiento lo produjo el PRIMER
+insert (ip daddr, 02:01:32), no el que el operador reporto a las 02:04:19.
+
+Linea temporal (CST, hora local del host; manager en UTC = +6):
+  01:48:23  Pi: forward policy drop, @azure_net=10.50.0.0/16, 0 reglas maxseg.
+  01:48:36  .74: ruta a 10.50.0.0/16 sin mtu (nada que revertir).
+  01:56:25  win11 ERROR SSL error (5)          <- intento iniciado 01:55:26, sin clamp
+  01:57:25  win11 Requesting a key
+  01:58:26  win11 ERROR SSL error (5)          <- intento 01:57:25, sin clamp
+  02:00:26  win11 ERROR SSL error (5)
+  02:02:26  win11 ERROR SSL error (5)          <- intento 02:01:26, SIN clamp (SYN 6 s antes)
+  02:01:32  Pi: nft insert ... ip daddr @azure_net ... maxseg 1320   <-- CAUSA
+  02:02:20  Pi: list chain (verificacion)
+  02:03:26  win11 Requesting a key -> Valid key received (mismo segundo)  PRIMER intento clampado
+  02:03:26  manager authd: "Received request for a new agent (win11-lab) from: 192.168.1.75" (08:03:26 UTC)
+  02:04:07  Pi: nft insert ... ip saddr @azure_net ... maxseg 1320   (redundante)
+  02:04:11  win11 Started (pid 2432), Connected to 10.50.40.10:1514
+  02:04:19  Pi: nft insert ... ip saddr @azure_net ... maxseg 1320   (duplicado redundante)
+  02:05:47  .74 openssl: 443 222 ms; 1515 205/202/209 ms (TLSv1.3)
+  02:06:10  win11: client.keys = 84 B, WazuhSvc Running
+  02:08:04  manager: agent 002 win11-lab Active; ss -tin -> rcvmss:1320 mss:1270
+            bytes_sent:37211 bytes_acked:37211 (nada atascado)
+
+Prueba directa del clamp en la conexion viva: rcvmss:1320. Antes el cliente anunciaba
+1460: el manager troceaba en segmentos de 1410 B que morian en el enlace (captura d5-3);
+ahora anuncia 1320 y el manager calcula mss:1270, por debajo del agujero.
+
+Notas:
+  - El clamp lo aplico el operador en caliente; es NO persistente: se pierde con
+    `nft -f /etc/nftables.conf` o al reiniciar la Pi. La regla daddr basta; la saddr
+    (x2) cubre SYNs iniciados desde Azure y sobra aqui.
+  - La regla saddr quedo DUPLICADA (02:04:07 y 02:04:19). Inocua; se limpia sola al
+    recargar el ruleset.
+  - No se toco ossec.conf, Netplan, authd.pass, Azure ni los clientes. El agente de
+    Ubuntu (.74) sigue inactive/disabled: no se arranco.
+  - `ansible` solo existe dentro de nix-shell (ansible/shell.nix) y requiere
+    `source ~/soc-tesis-secrets/azure-session.env` (define ANSIBLE_SSH_ARGS con el
+    known_hosts desechable); sin eso, el known_hosts del operador tiene la clave vieja
+    de 10.50.40.10 (linea 31) y ansible falla con HOST IDENTIFICATION HAS CHANGED.
+
+=== CIERRE ===
+| paso | resultado | hora |
+|------|-----------|------|
+| 1 Pi: cadena forward + @azure_net | OK (policy drop, 10.50.0.0/16, @vpn_clients) | 01:48:23 |
+| 1 .74 sin mtu en la ruta | OK (nada que revertir) | 01:48:36 |
+| 2 clamp MSS 1320 en la Pi | OK: daddr 02:01:32 (efectivo), saddr x2 02:04:07/02:04:19 (redundante) | 02:01-02:04 |
+| 3 TLS desde .74 (443/1515) | OK: 222 ms / 205-209 ms, 3 conexiones nuevas, CN=Wazuh | 02:05:47 |
+| 4 enrolamiento win11 | OK: Valid key 02:03:26; Active; client.keys 84 B | 02:03:26 / 02:06-02:08 |
+| 5 conclusion | El clamp daddr es la causa; MSS 1460 -> 1320 (rcvmss:1320 en vivo) | 02:08 |

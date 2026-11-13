@@ -4,51 +4,32 @@
 
 **Objetivo:** que los clientes Windows 11 (`192.168.1.75`) y Ubuntu (`192.168.1.74`) de la LAN (`192.168.1.0/24`) reporten a Wazuh (`10.50.40.10`) por el túnel, con eventos benignos visibles en el Dashboard y el ciclo `deallocate`/`start` recuperándose solo. Host de administración: `192.168.1.73` (IPs fijas por reserva MAC en el router, operador 2026-11-09).
 
-## Estado al 2026-11-09 (tras el Día 4)
+## Estado
 
-| Fase (plan maestro) | Estado |
-|---|---|
-| 1 Terraform y red | HECHO. 4 VMs, NSG con `for_each` (`4c67193`, plan no-op; `moved.tf` se borra tras el próximo `apply`) |
-| 2 strongSwan + Pi | HECHO. SA sola en ~26 s con `close_action = start`; R1 solo en `.73` y sin persistencia |
-| 3 Wazuh 4.14.10 | HECHO. 13 reglas locales + 100111 (sin commit) |
-| **4 Endpoints Win11/Ubuntu** | **PENDIENTE: lo cubre este plan** |
-| 5 Honeypots | HECHO. 7/7 `healthy`, Etapa M validada |
-| 6 Log Relay | HECHO. Agente `honeyserver` `Active` vía relay |
-| 7 Evidencia (Blob) | PENDIENTE. `terraform/evidence` sin aplicar |
-| 8–12 | PENDIENTES. Dependen de la 4 (TEST-005) y de la 7 |
-
-La red ya lo permite, así que la Fase 4 **no requiere tocar Terraform ni los roles**:
-- NSG `Allow-Lab-Agents-1514-1515` y `Allow-Lab-Dashboard-443` desde `lab_cidr` hacia `10.50.40.10`.
-- UFW de wazuh: 1514/1515/443 desde `wazuh_admin_cidr` (`192.168.1.0/24`).
-- La Pi no hace NAT: Azure ve el origen `192.168.1.x`.
-
-Lo que falta está en los clientes y en la Pi.
+Fases 1, 2, 3, 5 y 6 hechas (ver plan maestro). Esta es la Fase 4; la red ya lo permite (NSG y UFW sin cambios, la Pi no hace NAT), así que **no requiere tocar Terraform ni los roles**. Lo que falta está en los clientes y en la Pi.
 
 ---
 
 ## E0 · Cierre de lo pendiente (local, sin costo)
 
-- [ ] Validar la regla 100111: `cd ansible && nix-shell --run 'make clean preflight && make wazuh-rehearse rules-check && make clean'` (`wazuh-rehearse` necesita el stack arrancado y el relay configurado por `rehearse`, que corre dentro de `preflight`) → `rules-check: ok`. Después, commit de los 8 archivos modificados (100111 + documentación del Día 4).
-- [ ] `git push` (la rama va 2 commits por delante) y abrir el PR de `merge/ansible-local`.
-- [ ] Costos con días completos (desde el 2026-11-10): repetir la consulta de `d4-8b-costos-api.json` y cerrar el paso 8 del Día 4 frente a ≈ USD 35/mes.
+- [x] Regla 100111 validada (`make clean preflight && make wazuh-rehearse rules-check` → `rules-check: ok (38 eventos)`) y commit `d1c9dfa`.
+- [x] Push y merge `--no-ff` a `main` (`128b687`); sin PR (un solo autor). Rama `merge/ansible-local` borrada.
+- [x] Costos con días completos (2026-11-13): fijo 0,72 USD/día, proyección ≈ 33,6 USD/mes frente a ≈ 35 (`evidence/azure/2026-11-09/d4-8c-costos-dias-completos.json`).
 
 ## E1 · Inventario de clientes (sin costo)
 
-- [x] Anotar la IP de cada cliente: Win11 `ipconfig`, Ubuntu `ip -4 a`. **Actualización 2026-11-09 (operador):** Win11, Ubuntu y el host de administración ya tienen reservada su IP por MAC en el router. Esto corrige lo que dice ADR-005 D3 ("el router no permite reservas") para los clientes; registrado en ADR-005 §2 con las 3 IP: host de administración `192.168.1.73`, Ubuntu `192.168.1.74`, Windows 11 `192.168.1.75`. **Pendiente (se hace al ejecutar E2):** comprobar que la IP observada en cada cliente (`ip -4 a` en Ubuntu, `ipconfig` en Windows) coincide con la reservada.
+- [x] IP de cada cliente por reserva MAC en el router (operador 2026-11-09): `.73` administración, `.74` Ubuntu, `.75` Windows 11 (ADR-005 §2, corrige D3). La IP observada en cada cliente coincide con la reservada (verificado en E2).
 - [x] En la Pi, `sudo nft list set inet filter vpn_clients` (verificado 2026-11-09: las tres IP `.73`, `.74`, `.75` están en el set; sin cambios en la Pi) y reglas `rt ipsec exists/missing` intactas. Si faltaran, agregarlas en `/etc/nftables.conf` y aplicar `sudo nft -f /etc/nftables.conf`. **Gate:** autorización del operador (cambio en la Pi).
 
 ## E2 · R1 persistente en cada cliente (sin costo)
 
-**Estado:** R1 aplicado en Ubuntu y Windows; reinicio y verificación post-reinicio hechos el 2026-11-09/10, con evidencia en `e2-ubuntu-after-reboot.log` y `e2-windows-after-reboot.log`. El host de administración (.73) sigue sin persistencia por diseño.
+**Estado:** R1 aplicado en Ubuntu y Windows; reinicio y verificación post-reinicio hechos el 2026-11-09/10, con evidencia en `e2-ubuntu-after-reboot.log` y `e2-windows-after-reboot.log`. El host de administración (.73) sigue sin persistencia por diseño. Incidencia: SSH a Windows (.75) tardó ~5 min en responder tras el reinicio (00:09:53 a 00:15), sin causa identificada; si se repite en E4, revisar que `sshd` arranque en automático.
 
 - [x] **Ubuntu (`192.168.1.74`)**: `10.50.0.0/16 via 192.168.1.10` persiste por el YAML de Netplan (`/etc/netplan/00-installer-config.yaml`). El perfil de NetworkManager vive en `/run` y se regenera en cada arranque. Ruta por defecto `192.168.1.254` intacta.
 - [x] **Windows 11 (`192.168.1.75`)**: ruta persistente (`route print -4` → "Persistent Routes", métrica 1) hacia `192.168.1.10`. Ruta por defecto `192.168.1.254` intacta.
 - [x] Rechazar redirects ICMP (ADR-005, pendiente en los clientes). Ubuntu (`192.168.1.74`): `net.ipv4.conf.all.accept_redirects=0` (y `default`, `enp1s0`) en `/etc/sysctl.d/99-soc.conf`. Windows (`192.168.1.75`): `IcmpRedirects` = Disabled.
 - [x] Verificar (pre-reinicio): Ubuntu `ip route get 10.50.40.10` → `via 192.168.1.10`. Windows `Find-NetRoute -RemoteIPAddress 10.50.40.10` → NextHop `192.168.1.10`. IP observada coincide con la reservada (.74 y .75).
 - [x] Reiniciar cada cliente y repetir la verificación (para confirmar que la ruta persiste). Ambos clientes reiniciados; R1 persistente, ruta por defecto en `192.168.1.254` y redirects ICMP rechazados confirmados tras el reinicio.
-  - Ubuntu (`.74`): **hecho** (boot 2026-11-09 23:04; verificación 23:07, `evidence/azure/2026-11-09/e2-ubuntu-after-reboot.log`): IP .74, `10.50.0.0/16 via 192.168.1.10`, `ip route get` → `via 192.168.1.10`, default `192.168.1.254`, `accept_redirects=0` en all/default/enp1s0.
-  - Windows 11 (`.75`): **hecho** (reinicio autorizado y ejecutado 2026-11-10 00:09; verificación 00:15, `evidence/azure/2026-11-09/e2-windows-after-reboot.log`): IP .75, `10.50.0.0/16 via 192.168.1.10` en Persistent Routes, `Find-NetRoute` → `192.168.1.10`, default `192.168.1.254`, `IcmpRedirects` = Disabled. Incidencia: SSH no respondió unos 5 min tras el arranque.
-  - Nota: tras el reinicio, SSH a Windows (.75) tardó unos 5 min en responder (00:09:53 a 00:15), sin causa identificada. Si se repite en E4, revisar que `sshd` arranque en automático.
 
 ## E3 · Instalar el agente sin enrolar (sin costo; los clientes tienen Internet)
 
@@ -65,26 +46,20 @@ La versión del agente debe ser la del Manager: **4.14.10** (un agente más nuev
 
 ## E4 · Día 5 en Azure: enrolamiento y eventos (~1.5 h, con los gates habituales)
 
-- [ ] Restaurar R1 en `.73`; `make time-guard pin-check`; `az vm start` en orden; SA `ESTABLISHED` sola; `ansible all -m ping` → 4 `pong`.
-- [ ] Alcance desde cada cliente. Ubuntu (`192.168.1.74`): `nc -zv 10.50.40.10 1514` y `1515`. Windows (`192.168.1.75`): `Test-NetConnection 10.50.40.10 -Port 1514` y `-Port 1515` → `TcpTestSucceeded: True`. Si falla: revisar el set `vpn_clients` de la Pi (E1) antes que el NSG.
-- [ ] Arrancar los agentes. Ubuntu (`192.168.1.74`): `sudo systemctl enable --now wazuh-agent`. Windows (`192.168.1.75`): `Start-Service WazuhSvc` (deja el servicio en automático).
-- [ ] En el Manager: `ansible wazuh -b -m command -a '/var/ossec/bin/agent_control -l'` → `honeyserver`, `ubuntu-lab` y `win11-lab` `Active`. Ver también `/var/ossec/logs/ossec.log` en cada agente (`Connected to the server`).
-- [ ] Eventos benignos (Fase 4.4). Anotar la hora de la acción y la hora de la alerta:
+- [x] Restaurar R1 en `.73` **con MTU**: `sudo ip route replace 10.50.0.0/16 via 192.168.1.10 mtu 1360` (sin `mtu`, el SSH a las VMs se cuelga en el KEX; ADR-006 E1-11; incidencia del 2026-11-13); `make time-guard pin-check`; `az vm start` en orden; SA `ESTABLISHED` sola; `ansible all -m ping` → 4 `pong`.
+- [x] Alcance desde cada cliente. Ubuntu (`192.168.1.74`): `nc -zv 10.50.40.10 1514` y `1515`. Windows (`192.168.1.75`): `Test-NetConnection 10.50.40.10 -Port 1514` y `-Port 1515` → `TcpTestSucceeded: True`. Si falla: revisar el set `vpn_clients` de la Pi (E1) antes que el NSG.
+- [x] Arrancar los agentes. Ubuntu (`192.168.1.74`): `sudo systemctl enable --now wazuh-agent`. Windows (`192.168.1.75`): `Start-Service WazuhSvc` (deja el servicio en automático).
+- [x] En el Manager: `ansible wazuh -b -m command -a '/var/ossec/bin/agent_control -l'` → `honeyserver`, `ubuntu-lab` y `win11-lab` `Active`. Ver también `/var/ossec/logs/ossec.log` en cada agente (`Connected to the server`).
+- [x] Eventos benignos (Fase 4.4). Anotar la hora de la acción y la hora de la alerta:
   - Ubuntu (`192.168.1.74`): 3 × `ssh nouser@localhost` con contraseña errónea y un `sudo` con contraseña errónea.
   - Windows (`192.168.1.75`): 3 logons fallidos (`runas /user:nouser cmd`) → EventID 4625. También crear y borrar un usuario local de prueba → 4720/4726.
-- [ ] Confirmar en el Dashboard (`https://10.50.40.10` desde un cliente) que las alertas aparecen con el nombre de agente correcto (Fase 4.5). Guardar la consulta y los `rule.id` observados.
-- [ ] Ciclo con agentes: `deallocate` en orden inverso; generar 2–3 eventos en cada cliente con Azure apagado; `start` en orden. Los agentes deben reconectar solos y entregar los eventos que guardaron en el buffer (es la base de TEST-008: anotar tiempo de reconexión y eventos perdidos).
-- [ ] Evidencia en `evidence/azure/<fecha>/` (`d5-*`), `SHA256SUMS`, higiene 0/0 (PSK y `authd.pass`); `deallocate` en orden inverso.
+- [x] Confirmar en el Dashboard (`https://10.50.40.10` desde un cliente) que las alertas aparecen con el nombre de agente correcto (Fase 4.5). Guardar la consulta y los `rule.id` observados.
+- [x] Ciclo con agentes: `deallocate` en orden inverso; generar 2–3 eventos en cada cliente con Azure apagado; `start` en orden. Los agentes deben reconectar solos y entregar los eventos que guardaron en el buffer (es la base de TEST-008: anotar tiempo de reconexión y eventos perdidos).
+- [x] Evidencia en `evidence/azure/<fecha>/` (`d5-*`), `SHA256SUMS`, higiene 0/0 (PSK y `authd.pass`); `deallocate` en orden inverso.
+  - *Hecho 2026-11-13:* 3 agentes `Active`; latencia de alerta Ubuntu 0,14–0,35 s y Windows ~0,9 s; ciclo con agentes: caída de 13 min 28 s, SA sola en ~33 s, 0 eventos perdidos y 0 duplicados (base de TEST-008). **Causa que bloqueaba el alcance y el enrolamiento:** faltaba un MSS-clamp en el túnel (segmentos de 1410 B del Manager sin ACK); se resolvió con dos reglas `maxseg size set 1320` en la cadena `forward` de la Pi, persistidas en `/etc/nftables.conf`. Desvíos: `runas` → `net use` (sin TTY por SSH), `sudo` con contraseña errónea → 4.º login SSH (la cuenta es `NOPASSWD`), reloj de Win11 corregido (+7200 s). Evidencia: `evidence/azure/2026-11-13/` (`d5-*`, `11-cierre-dia5.md`).
 
 **Hecho cuando:** 3 agentes `Active`; eventos benignos de Win11 (`192.168.1.75`) y Ubuntu (`192.168.1.74`) visibles en el Dashboard con su latencia anotada; tras el ciclo, los agentes reconectan sin intervención; ningún secreto en los clientes fuera de `authd.pass`.
 
-**Consecuencia aceptada:** con Azure apagado, los agentes reintentan la conexión y acumulan eventos en el buffer; el tráfico es mínimo.
-
 ---
 
-## Después de la Fase 4 (orden sugerido)
-
-1. **Fase 7:** `terraform/evidence` (Blob 15 GB Cool LRS, inmutabilidad) con su propio gate de `apply`.
-2. **Fase 8:** recorrer la lista de validación funcional con los 3 agentes y el Blob.
-3. **Fase 9:** TEST-001…008, con las decisiones ya tomadas: TEST-001 con `-sV` (Dionaea no ve un connect scan) y TEST-002 por 100110 + 100111. **Decisión pendiente para TEST-005:** reglas por defecto de Windows (4625/4720/PowerShell) o añadir Sysmon. Recomendado: las reglas por defecto primero; Sysmon solo si deja un FN.
-4. **Fases 10–12:** medición, evaluación y destroy/rebuild conservando el Blob.
+**Decisión pendiente para TEST-005 (Fase 9):** reglas por defecto de Windows (4625/4720/PowerShell) o añadir Sysmon. Recomendado: las reglas por defecto primero; Sysmon solo si deja un FN.

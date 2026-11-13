@@ -1,0 +1,22 @@
+{"epoch":1794559230.772,"timestamp":"2026-11-13T08:40:30.772+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559230.772,"timestamp":"2026-11-13T08:40:30.772+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559232.63,"timestamp":"2026-11-13T08:40:32.630+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559234.629,"timestamp":"2026-11-13T08:40:34.629+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559234.688,"timestamp":"2026-11-13T08:40:34.688+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559236.631,"timestamp":"2026-11-13T08:40:36.631+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559240.633,"timestamp":"2026-11-13T08:40:40.633+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559240.692,"timestamp":"2026-11-13T08:40:40.692+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559242.63,"timestamp":"2026-11-13T08:40:42.630+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559246.631,"timestamp":"2026-11-13T08:40:46.631+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser2"}
+{"epoch":1794559246.691,"timestamp":"2026-11-13T08:40:46.691+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559248.632,"timestamp":"2026-11-13T08:40:48.632+0000","agent":"ubuntu-lab","rule_id":"5712","level":10,"desc":"sshd: brute force trying to get access to the system. Non existent user.","srcuser":"nouser2"}
+{"epoch":1794559293.177,"timestamp":"2026-11-13T08:41:33.177+0000","agent":"win11-lab","rule_id":"60122","level":5,"desc":"Logon Failure - Unknown user or bad password","eventID":"4625"}
+{"epoch":1794559355.313,"timestamp":"2026-11-13T08:42:35.313+0000","agent":"win11-lab","rule_id":"60160","level":5,"desc":"Domain Users Group Changed","eventID":"4728"}
+{"epoch":1794559355.325,"timestamp":"2026-11-13T08:42:35.325+0000","agent":"win11-lab","rule_id":"60109","level":8,"desc":"User account enabled or created","eventID":"4722"}
+{"epoch":1794559355.325,"timestamp":"2026-11-13T08:42:35.325+0000","agent":"win11-lab","rule_id":"60109","level":8,"desc":"User account enabled or created","eventID":"4720"}
+{"epoch":1794559355.327,"timestamp":"2026-11-13T08:42:35.327+0000","agent":"win11-lab","rule_id":"60110","level":8,"desc":"User account changed","eventID":"4738"}
+{"epoch":1794559355.372,"timestamp":"2026-11-13T08:42:35.372+0000","agent":"win11-lab","rule_id":"60170","level":5,"desc":"Users Group Changed","eventID":"4732"}
+{"epoch":1794559358.43,"timestamp":"2026-11-13T08:42:38.430+0000","agent":"win11-lab","rule_id":"60160","level":5,"desc":"Domain Users Group Changed","eventID":"4729"}
+{"epoch":1794559358.43,"timestamp":"2026-11-13T08:42:38.430+0000","agent":"win11-lab","rule_id":"60170","level":5,"desc":"Users Group Changed","eventID":"4733"}
+{"epoch":1794559358.435,"timestamp":"2026-11-13T08:42:38.435+0000","agent":"win11-lab","rule_id":"60111","level":8,"desc":"User account disabled or deleted","eventID":"4726"}
+{"epoch":1794559453.018,"timestamp":"2026-11-13T08:44:13.018+0000","agent":"win11-lab","rule_id":"60122","level":5,"desc":"Logon Failure - Unknown user or bad password","eventID":"4625"}

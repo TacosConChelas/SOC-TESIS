@@ -1,0 +1,14 @@
+=== 2026-11-13 04:12:11.777 CST deallocate final (autorizado por el operador), orden inverso ===
+2026-11-13 04:12:11.780 CST deallocate vm-honeyserver
+2026-11-13 04:12:43.941 CST fin vm-honeyserver rc=0
+2026-11-13 04:12:43.943 CST deallocate vm-logrelay
+2026-11-13 04:13:16.047 CST fin vm-logrelay rc=0
+2026-11-13 04:13:16.049 CST deallocate vm-wazuh
+2026-11-13 04:13:49.125 CST fin vm-wazuh rc=0
+2026-11-13 04:13:49.128 CST deallocate vm-strongswan
+2026-11-13 04:14:21.696 CST fin vm-strongswan rc=0
+=== 2026-11-13 04:14:21.698 CST estado ===
+vm-honeyserver	VM deallocated
+vm-logrelay	VM deallocated
+vm-strongswan	VM deallocated
+vm-wazuh	VM deallocated

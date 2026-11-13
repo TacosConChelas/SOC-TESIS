@@ -1,0 +1,731 @@
+2026-11-13 03:44:04.229 CST
+total 172
+drwxr-xr-x 2 tacosconchelas users  4096 Nov 13 03:44 .
+drwxr-xr-x 6 tacosconchelas users  4096 Nov 13 00:51 ..
+-rw-r--r-- 1 tacosconchelas users 28972 Nov 13 01:19 d5-1-preflight-y-start.log
+-rw-r--r-- 1 tacosconchelas users 13765 Nov 13 01:24 d5-2-alcance-y-agentes.log
+-rw-r--r-- 1 tacosconchelas users 11774 Nov 13 01:41 d5-3-diagnostico-mtu-authd.log
+-rw-r--r-- 1 tacosconchelas users 21019 Nov 13 02:09 d5-4-mss-clamp.log
+-rw-r--r-- 1 tacosconchelas users 14334 Nov 13 02:31 d5-5-clamp-persistente-y-ubuntu.log
+-rw-r--r-- 1 tacosconchelas users  3885 Nov 13 02:49 d5-6-alertas.jsonl
+-rw-r--r-- 1 tacosconchelas users 28333 Nov 13 02:52 d5-6-eventos-benignos.log
+-rw-r--r-- 1 tacosconchelas users  2949 Nov 13 03:35 d5-7-dashboard.md
+-rw-r--r-- 1 tacosconchelas users 15001 Nov 13 03:35 d5-7-dashboard-y-reloj.log
+-rw-r--r-- 1 tacosconchelas users    28 Nov 13 03:44 d5-8-ciclo-agentes.log
+2026-11-13 03:44:09.748 CST
+En `alerts.jsonl` no hay nombres de cuenta reales del operador; los `srcuser`
+del ejercicio son `nouser` y `nouser2` (usuarios inexistentes usados a
+propósito). No hay nada que sustituir por `<oper>`.
+rc=
+propósito). No hay nada que sustituir por `<oper>`.
+Confirmacion del operador (2026-11-13, tras d5-7): el operador accedio al Dashboard y confirmo la verificacion visual de las alertas; no aporto conteos numericos.
+2026-11-13 03:44:13.279 CST
+ansible/Makefile
+ansible/shell.nix
+azure-session: ok (suscripcion esperada, estado Enabled)
+rc=
+2026-11-13 03:44:14.348 CST
+vm-honeyserver	VM running
+vm-logrelay	VM running
+vm-strongswan	VM running
+vm-wazuh	VM running
+rc=
+2026-11-13 03:44:21.602 CST
+plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+lab: #5, ESTABLISHED, IKEv2, a0827220147bc516_i* 0329827add01a0eb_r
+  established 10095s ago, rekeying in 3657s
+rc=
+shell_check bash=none zsh=5.9.1
+pipe_test rc=0 y
+2026-11-13 03:44:28.292 CST
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+
+List of agentless devices:
+rc=0
+2026-11-13 03:44:38.035 CST
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. Agent information:
+   Agent ID:   001
+   Agent Name: vm-honeyserver
+   IP address: any
+   Status:     Active
+
+   Operating system:    Linux |vm-honeyserver |6.8.0-1064-azure |#72~22.04.1-Ubuntu SMP Wed Jul 22 23:39:45 UTC 2026 |x86_64
+   Client version:      Wazuh v4.14.10
+   Configuration hash:  ab73af41699f13fdd81903b5f23d8d00
+   Shared file hash:    e7c5c4c31c37ff20e25ba7c05c17a7e9
+   Last keep alive:     1794563074
+
+   Syscheck last started at:  Fri Nov 13 06:56:34 2026
+   Syscheck last ended at:    Fri Nov 13 06:56:53 2026
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. Agent information:
+   Agent ID:   002
+   Agent Name: win11-lab
+   IP address: any
+   Status:     Active
+
+   Operating system:    Microsoft Windows 11 Home
+   Client version:      Wazuh v4.14.10
+   Configuration hash:  ab73af41699f13fdd81903b5f23d8d00
+   Shared file hash:    e7c5c4c31c37ff20e25ba7c05c17a7e9
+   Last keep alive:     1794563072
+
+   Syscheck last started at:  Fri Nov 13 10:04:13 2026
+   Syscheck last ended at:    Fri Nov 13 10:04:25 2026
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. Agent information:
+   Agent ID:   003
+   Agent Name: ubuntu-lab
+   IP address: any
+   Status:     Active
+
+   Operating system:    Linux |ubuntu-host-client-1 |7.0.0-42-generic |#42-Ubuntu SMP PREEMPT_DYNAMIC Thu Oct 15 08:06:44 UTC 2026 |x86_64
+   Client version:      Wazuh v4.14.10
+   Configuration hash:  ab73af41699f13fdd81903b5f23d8d00
+   Shared file hash:    e7c5c4c31c37ff20e25ba7c05c17a7e9
+   Last keep alive:     1794563080
+
+   Syscheck last started at:  Fri Nov 13 08:30:44 2026
+   Syscheck last ended at:    Fri Nov 13 08:30:46 2026
+wazuh | CHANGED | rc=0 >>
+2026-11-13T09:44:48.810Z
+rc=0
+== PASO 1: deallocate 1/4 vm-honeyserver ==
+2026-11-13 03:44:52.632 CST antes
+rc=0
+2026-11-13 03:45:25.720 CST despues
+== PASO 1: deallocate 2/4 vm-logrelay ==
+2026-11-13 03:45:27.451 CST antes
+rc=0
+2026-11-13 03:46:00.500 CST despues
+== PASO 1: deallocate 3/4 vm-wazuh ==
+2026-11-13 03:46:02.232 CST antes
+rc=0
+2026-11-13 03:46:35.313 CST despues
+== PASO 1: deallocate 4/4 vm-strongswan ==
+2026-11-13 03:46:37.670 CST antes
+rc=0
+T_off (fin deallocate vm-strongswan): 2026-11-13 03:47:11.256 CST
+2026-11-13T09:47:11.259Z
+vm-honeyserver	VM deallocated
+vm-logrelay	VM deallocated
+vm-strongswan	VM deallocated
+vm-wazuh	VM deallocated
+rc=0
+== PASO 2: espera 90 s desde T_off ==
+2026-11-13 03:47:43.779 CST inicio espera
+rc=0
+2026-11-13 03:49:13.792 CST fin espera
+2026-11-13 03:49:16.576 CST
+-- ubuntu74 ossec.log (lineas de desconexion) --
+2026/11/13 03:46:04 wazuh-agentd: ERROR: (1137): Lost connection with manager. Setting lock.
+2026/11/13 03:46:04 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 03:48:27 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 03:48:47 wazuh-logcollector: WARNING: Process locked due to agent is offline. Waiting for connection...
+rc=0
+2026-11-13 03:49:17.132 CST
+-- win11 ossec.log (tail 15) --
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+2026/11/13 01:46:16 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+2026/11/13 01:46:37 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.'.
+2026/11/13 01:46:47 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+2026/11/13 01:47:08 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.'.
+2026/11/13 01:47:18 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+2026/11/13 01:47:39 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.'.
+2026/11/13 01:47:49 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+2026/11/13 01:48:10 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.'.
+2026/11/13 01:48:10 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+2026/11/13 01:48:31 wazuh-agent: ERROR: (1208): Unable to connect to enrollment service at '[10.50.40.10]:1515'
+2026/11/13 01:48:41 wazuh-agent: WARNING: (4101): Waiting for server reply (not started). Tried: '10.50.40.10'. Ensure that the manager version is 'v4.14.10' or higher.
+2026/11/13 01:48:41 wazuh-agent: WARNING: Unable to connect to any server.
+2026/11/13 01:48:41 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+2026/11/13 01:49:02 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond.'.
+2026/11/13 01:49:12 wazuh-agent: INFO: Trying to connect to server ([10.50.40.10]:1514/tcp).
+rc=0
+== NOTA: reanudacion. Ultimo paso completado antes de PASO 3: PASO 2 (03:49 CST). Pasos 0-2 no se repiten (instruccion del coordinador). ==
+2026-11-13 03:56:32.857 CST
+72:setsid: /usr/bin/setsid
+73:ssh-askpass: AUSENTE
+85:  askpass temporal: .ap-BlBxdA.sh (0700, se borra al terminar)
+91:  askpass temporal borrado: NO
+93:  restos askpass en /tmp: 0
+328:3. PASO 1b: sshpass no esta instalado en .74. Se uso SSH_ASKPASS + setsid con un script
+337:6. El ~/.ssh/known_hosts del operador tenia una clave vieja para 10.50.40.10 y ansible no
+339:   ~/soc-tesis-secrets/azure_known_hosts, cuyo fingerprint ED25519 (SHA256:iCmLJV2L...) coincide
+340:   con el que presenta el Manager. No se modifico ningun known_hosts.
+341:7. Los "restos_tmp_manager" y el askpass de .74 se comprobaron a 0.
+--- 1b/1c: logins SSH fallidos (nouser x3 + nouser2 por desvio NOPASSWD) ---
+  askpass temporal: .ap-BlBxdA.sh (0700, se borra al terminar)
+  login fallido user=nouser   inicio=2026-11-13 02:40:29.850 CST (epoch 1794559229.845) fin=2026-11-13 02:40:31.897 CST rc=255
+  login fallido user=nouser   inicio=2026-11-13 02:40:33.914 CST (epoch 1794559233.910) fin=2026-11-13 02:40:37.893 CST rc=255
+  login fallido user=nouser   inicio=2026-11-13 02:40:39.908 CST (epoch 1794559239.904) fin=2026-11-13 02:40:43.889 CST rc=255
+  DESVIO 1c: <oper> es NOPASSWD:ALL -> no hay fallo de sudo que generar; 4.o login con nouser2
+  login fallido user=nouser2  inicio=2026-11-13 02:40:45.905 CST (epoch 1794559245.901) fin=2026-11-13 02:40:48.336 CST rc=255
+  askpass temporal borrado: NO
+  (el trap se ejecuta al salir; comprobacion posterior)
+  restos askpass en /tmp: 0
+
+--- 1d: evidencia local en auth.log (solo las lineas relevantes) ---
+== PASO 3a: Ubuntu (ubuntu74) 3 logins fallidos nouser@127.0.0.1 (esperado 5710 x3), 2 s entre intentos ==
+2026-11-13 03:56:40.521 CST local .73 antes
+askpass temporal creado: /tmp/.ap-d58.sh (0700)
+known_hosts localhost presente rc=0 (solo lectura)
+2026-11-13 03:58:56.457 CST
+NOTA: el intento U1 quedo colgado >2 min en ssh cliente (pid 11268 en ubuntu74, sin registro en auth.log). Se para SOLO el cliente de prueba y el script remoto de esta prueba; ningun agente/servicio tocado.
+  11254   11253 bash -s
+kill ssh 11268 rc=0
+Terminated                 setsid -w env SSH_ASKPASS=/tmp/.ap-d58.sh SSH_ASKPASS_REQUIRE=force ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password -o NumberOfPasswordPrompts=1 -o ConnectTimeout=10 nouser@127.0.0.1 true < /dev/null > /dev/null 2>&1
+U1 login nouser inicio=2026-11-13 03:56:41.703 CST fin=2026-11-13 03:58:56.652 CST rc=143
+rc_ssh=255
+2026-11-13 03:58:58.653 CST local .73 despues
+askpass restos: 0
+0
+rc=0
+2026-11-13 03:59:08.281 CST
+14
+2026-11-13T02:40:56.088158-06:00 ubuntu-host-client-1 sudo: <oper> :  PWD=/home/<oper> ; USER=root ; COMMAND=/usr/bin/grep -E nouser|sudo.*(incorrect|authenticati
+2026-11-13T03:59:08.460087-06:00 ubuntu-host-client-1 sudo: <oper> :  PWD=/home/<oper> ; USER=root ; COMMAND=/usr/bin/grep -c nouser /var/log/auth.log
+2026-11-13T03:59:08.467772-06:00 ubuntu-host-client-1 sudo: <oper> :  PWD=/home/<oper> ; USER=root ; COMMAND=/usr/bin/grep -E nouser /var/log/auth.log
+--- tail auth.log 03:56-03:59 ---
+2026-11-13T03:59:08.467378-06:00 ubuntu-host-client-1 sudo: pam_unix(sudo:session): session opened for user root(uid=0) by <oper>(uid=1000)
+2026-11-13T03:59:08.467772-06:00 ubuntu-host-client-1 sudo: <oper> :  PWD=/home/<oper> ; USER=root ; COMMAND=/usr/bin/grep -E nouser /var/log/auth.log
+2026-11-13T03:59:08.469081-06:00 ubuntu-host-client-1 sudo: pam_unix(sudo:session): session closed for user root
+2026-11-13T03:59:08.475732-06:00 ubuntu-host-client-1 sudo: pam_unix(sudo:session): session opened for user root(uid=0) by <oper>(uid=1000)
+2026-11-13T03:59:08.476093-06:00 ubuntu-host-client-1 sudo: <oper> :  PWD=/home/<oper> ; USER=root ; COMMAND=/usr/bin/grep -E 03:5[6-9]|03:58 /var/log/auth.log
+rc=0
+2026-11-13 03:59:15.834 CST
+known_hosts 127.0.0.1 entradas: 0
+known_hosts localhost entradas: 2
+-rw-r--r-- 1 <oper> <oper> 142 Nov 13 02:40 /home/<oper>/.ssh/known_hosts
+rc=0
+== PASO 3a (reintento): causa del cuelgue = 127.0.0.1 sin entrada en known_hosts -> prompt de clave de host respondido por askpass. Se usa localhost (como dice el encargo; tiene 2 entradas). known_hosts NO se toca. U1 anterior: interrumpido por el operador-agente (rc=143), no cuenta como evento. ==
+2026-11-13 03:59:21.827 CST local .73 antes
+askpass temporal creado: /tmp/.ap-d58.sh (0700)
+U1 login nouser@localhost inicio=2026-11-13 03:59:22.195 CST fin=2026-11-13 03:59:26.867 CST rc=255
+U2 login nouser@localhost inicio=2026-11-13 03:59:28.115 CST fin=2026-11-13 03:59:30.419 CST rc=255
+U3 login nouser@localhost inicio=2026-11-13 03:59:32.507 CST fin=2026-11-13 03:59:36.394 CST rc=255
+askpass borrado; restos=0
+rc_ssh=0
+2026-11-13 03:59:36.049 CST local .73 despues
+== PASO 3b: Windows (win11) 2 rondas alta/baja soc-test-a y soc-test-b, 3 s entre alta y baja (esperado 60109 x2, 60111 x2) ==
+2026-11-13 03:59:45.348 CST local .73 antes
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+#< CLIXML
+ALTA soc-test-a inicio=2026-11-13 01:59:47.188 fin=2026-11-13 01:59:47.344 ok=True
+BAJA soc-test-a inicio=2026-11-13 01:59:50.349 fin=2026-11-13 01:59:50.365 ok=True
+ALTA soc-test-b inicio=2026-11-13 01:59:50.367 fin=2026-11-13 01:59:50.404 ok=True
+BAJA soc-test-b inicio=2026-11-13 01:59:53.417 fin=2026-11-13 01:59:53.421 ok=True
+VERIFICACION usuarios soc-test-* restantes: 0
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Obj S="progress" RefId="0"><TN RefId="0"><T>System.Management.Automation.PSCustomObject</T><T>System.Object</T></TN><MS><I64 N="SourceId">1</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil /><PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj><Obj S="progress" RefId="1"><TNRef RefId="0" /><MS><I64 N="SourceId">2</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil /><PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj><Obj S="progress" RefId="2"><TNRef RefId="0" /><MS><I64 N="SourceId">1</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil /><PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj></Objs>rc=0
+2026-11-13 03:59:53.479 CST local .73 despues
+2026-11-13 03:59:59.267 CST
+-- ubuntu auth.log nouser (ultimas 6, mas recientes) --
+2026-11-13T03:59:22.091568-06:00 ubuntu-host-client-1 sshd-session[200461]: Invalid user nouser from 127.0.0.1 port 38002
+2026-11-13T03:59:24.292013-06:00 ubuntu-host-client-1 sshd-session[200461]: Failed password for invalid user nouser from 127.0.0.1 port 38002 ssh2
+2026-11-13T03:59:28.086459-06:00 ubuntu-host-client-1 sshd-session[200469]: Invalid user nouser from 127.0.0.1 port 46154
+2026-11-13T03:59:30.021736-06:00 ubuntu-host-client-1 sshd-session[200469]: Failed password for invalid user nouser from 127.0.0.1 port 46154 ssh2
+2026-11-13T03:59:32.132871-06:00 ubuntu-host-client-1 sshd-session[200477]: Invalid user nouser from 127.0.0.1 port 46170
+2026-11-13T03:59:34.547003-06:00 ubuntu-host-client-1 sshd-session[200477]: Failed password for invalid user nouser from 127.0.0.1 port 46170 ssh2
+rc=0
+-- win11 4720/4726 ultimos 10 min (hora Windows = CST-2h) --
+'Select' is not recognized as an internal or external command,
+operable program or batch file.
+rc=255
+2026-11-13 04:00:03.511 CST
+-- win11 4720/4726 ultimos 10 min (hora Windows = CST-2h) --
+
+TimeCreated             Id
+-----------             --
+11/13/2026 1:59:53 AM 4726
+11/13/2026 1:59:50 AM 4720
+11/13/2026 1:59:50 AM 4726
+11/13/2026 1:59:47 AM 4720
+11/13/2026 2:42:37 AM 4726
+11/13/2026 2:42:34 AM 4720
+
+
+
+rc=0
+LOCAL73_EPOCH_UTC_MS_antes 1794564011270 2026-11-13 04:00:11.273 CST
+WIN_EPOCH_UTC 1794564011985
+WIN_LOCAL 2026-11-13 02:00:12.058 tz=Pacific Standard Time
+LOCAL73_EPOCH_UTC_MS_despues 1794564012125 2026-11-13 04:00:12.128 CST
+NOTA: el desfase de win11 se calcula con el punto medio local frente a WIN_EPOCH_UTC (ver linea anterior)
+2026-11-13 04:00:21.988 CST
+EV 4726 local=2026-11-13 01:59:53.422 utc=2026-11-13T09:59:53.422Z
+EV 4720 local=2026-11-13 01:59:50.368 utc=2026-11-13T09:59:50.368Z
+EV 4726 local=2026-11-13 01:59:50.364 utc=2026-11-13T09:59:50.364Z
+EV 4720 local=2026-11-13 01:59:47.287 utc=2026-11-13T09:59:47.287Z
+EV 4726 local=2026-11-13 02:42:37.707 utc=2026-11-13T10:42:37.707Z
+EV 4720 local=2026-11-13 02:42:34.596 utc=2026-11-13T10:42:34.596Z
+rc=0
+2026-11-13 04:00:35.705 CST
+CORRECCION: la interrupcion de U1 (rc=143, 03:56:41-03:58:56 CST) la hice yo al parar el proceso de prueba colgado; no fue el operador ni el orquestador. No cuenta como evento.
+ZONA WINDOWS: el reloj de win11 es correcto (epoch = .73 con diff ~0,3 s). Su zona mostrada es Pacific Standard Time (UTC-8); 03:59 CST = 01:59 en Windows. Los 4720/4726 de 02:42 (Windows, zona de entonces) son de la prueba d5-6, no de este ciclo (inferido por hora).
+TIEMPOS PASO 3 en UTC (Windows, Get-WinEvent): ALTA soc-test-a 09:59:47.287Z; BAJA soc-test-a 09:59:50.364Z; ALTA soc-test-b 09:59:50.368Z; BAJA soc-test-b 09:59:53.422Z. Ubuntu U1 03:59:22.195 CST, U2 03:59:28.115 CST, U3 03:59:32.507 CST (inicio de cada intento).
+== PASO 4/5: duracion caida exacta al iniciar start: T_off=09:47:11.259Z; inicio start strongswan a continuacion ==
+2026-11-13T10:00:39.669Z inicio_start_strongswan_UTC
+2026-11-13 04:00:39.671 CST antes
+rc=0
+2026-11-13 04:01:23.756 CST despues
+2026-11-13T10:01:23.759Z fin_start_strongswan_UTC
+2026-11-13T10:01:26.734Z inicio_start_wazuh_UTC
+2026-11-13 04:01:26.737 CST antes
+rc=0
+2026-11-13 04:02:10.308 CST despues
+2026-11-13T10:02:10.310Z T_fin_wazuh_UTC
+2026-11-13T10:02:12.438Z inicio_start_logrelay_UTC
+2026-11-13 04:02:12.440 CST antes
+rc=0
+2026-11-13 04:02:56.038 CST despues
+2026-11-13T10:02:56.040Z fin_start_logrelay_UTC
+2026-11-13T10:02:58.592Z inicio_start_honeyserver_UTC
+2026-11-13 04:02:58.596 CST antes
+rc=0
+2026-11-13 04:03:41.691 CST despues
+2026-11-13T10:03:41.694Z T_fin_honeyserver_UTC
+vm-honeyserver	VM running
+vm-logrelay	VM running
+vm-strongswan	VM running
+vm-wazuh	VM running
+rc=0
+== PASO 6a: SA (solo lectura, cada 10 s, tope 6 min desde T_ini_strongswan=10:00:39.669Z) ==
+[2026-11-13 04:03:52.627 CST] lab: #6, ESTABLISHED, IKEv2, d2548f22608d3f79_i* 6d48ab617701bbc6_r
+  established 160s ago, rekeying in 14232s
+SA_ESTABLISHED_detectada=1
+2026-11-13T10:03:53.455Z fin_vigilancia_SA_UTC
+== PASO 6b: agent_control -l cada 15 s; SA estimada 10:01:12Z; tope 10 min desde SA (10:11:12Z) ==
+[2026-11-13T10:04:02.780Z] ID: 001, Name: vm-honeyserver, IP: any, Active ID: 002, Name: win11-lab, IP: any, Active ID: 003, Name: ubuntu-lab, IP: any, Active 
+AMBOS 002 y 003 Active en 2026-11-13T10:04:02.780Z
+2026-11-13T10:04:10.487Z fin_6b_UTC
+== PASO 6b/6c: keepalive y estado tras reconexion ==
+2026-11-13T10:04:18.578Z
+wazuh | CHANGED | rc=0 >>
+   Agent Name: vm-honeyserver
+   Status:     Active
+   Last keep alive:     1794564262
+wazuh | CHANGED | rc=0 >>
+   Agent Name: win11-lab
+   Status:     Active
+   Last keep alive:     1794564252
+wazuh | CHANGED | rc=0 >>
+   Agent Name: ubuntu-lab
+   Status:     Active
+   Last keep alive:     1794564249
+2026-11-13T10:04:27.625Z
+-- ubuntu74 --
+2026/11/13 02:30:20 wazuh-agentd: INFO: (4102): Connected to the server ([10.50.40.10]:1514/tcp).
+2026/11/13 03:46:04 wazuh-agentd: ERROR: (1137): Lost connection with manager. Setting lock.
+2026/11/13 03:46:04 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 03:48:27 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 03:50:50 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 03:53:14 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 03:55:37 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 03:57:52 wazuh-agentd: ERROR: (1208): Unable to connect to enrollment service at '[10.50.40.10]:1515'
+2026/11/13 03:58:02 wazuh-agentd: WARNING: Unable to connect to any server.
+2026/11/13 04:00:16 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 04:02:39 wazuh-agentd: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'Transport endpoint is not connected'.
+2026/11/13 04:02:49 wazuh-agentd: INFO: (4102): Connected to the server ([10.50.40.10]:1514/tcp).
+rc=0
+-- win11 (hora Windows = Pacific, UTC-8) --
+'Select-String' is not recognized as an internal or external command,
+operable program or batch file.
+rc=255
+2026-11-13 04:04:33.420 CST
+2026/11/13 01:57:51 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 01:58:22 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 01:58:53 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 01:59:24 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 01:59:55 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 02:00:16 wazuh-agent: ERROR: (1208): Unable to connect to enrollment service at '[10.50.40.10]:1515'
+2026/11/13 02:00:26 wazuh-agent: WARNING: Unable to connect to any server.
+2026/11/13 02:00:47 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 02:01:18 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 02:01:49 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'A connection attempt 
+2026/11/13 02:02:01 wazuh-agent: ERROR: (1216): Unable to connect to '[10.50.40.10]:1514/tcp': 'No connection could be 
+2026/11/13 02:02:12 wazuh-agent: INFO: (4102): Connected to the server ([10.50.40.10]:1514/tcp).
+rc=0
+keepalive epoch 1794564262 = 2026-11-13T10:04:22Z
+keepalive epoch 1794564252 = 2026-11-13T10:04:12Z
+keepalive epoch 1794564249 = 2026-11-13T10:04:09Z
+== PASO 7: espera 60 s tras ultimo Active (observado 10:04:02.780Z) y lectura de alertas > T_off (09:47:11.259Z) ==
+2026-11-13T10:04:56.285Z inicio_espera_7
+2026-11-13T10:05:56.293Z fin_espera_7
+borrado local rc=0
+rc=0
+200
+{"timestamp": "2026-11-13T10:02:13.774+0000", "agent.name": "win11-lab", "rule.id": "67024", "rule.level": 3, "rule.description": "Service logon event registered from non standard service account.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.778+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.784+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.787+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.787+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.829+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.846+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.869+0000", "agent.name": "win11-lab", "rule.id": "67023", "rule.level": 3, "rule.description": "Non service account logged off.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.889+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.953+0000", "agent.name": "win11-lab", "rule.id": "67024", "rule.level": 3, "rule.description": "Service logon event registered from non standard service account.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:13.983+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.034+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.060+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.083+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.114+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.145+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.162+0000", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.162+0000", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.180+0000", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.202+0000", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.220+0000", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.259+0000", "agent.name": "win11-lab", "rule.id": "60111", "rule.level": 8, "rule.description": "User account disabled or deleted", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.259+0000", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.277+0000", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.294+0000", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.316+0000", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.334+0000", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.352+0000", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.374+0000", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.392+0000", "agent.name": "win11-lab", "rule.id": "60111", "rule.level": 8, "rule.description": "User account disabled or deleted", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.410+0000", "agent.name": "win11-lab", "rule.id": "67023", "rule.level": 3, "rule.description": "Non service account logged off.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.432+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.468+0000", "agent.name": "win11-lab", "rule.id": "67024", "rule.level": 3, "rule.description": "Service logon event registered from non standard service account.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.489+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.546+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.568+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.586+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.626+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.643+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.661+0000", "agent.name": "win11-lab", "rule.id": "67023", "rule.level": 3, "rule.description": "Non service account logged off.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.683+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.719+0000", "agent.name": "win11-lab", "rule.id": "67024", "rule.level": 3, "rule.description": "Service logon event registered from non standard service account.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.745+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.798+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.816+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.838+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.883+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.895+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.913+0000", "agent.name": "win11-lab", "rule.id": "67023", "rule.level": 3, "rule.description": "Non service account logged off.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.934+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.974+0000", "agent.name": "win11-lab", "rule.id": "67024", "rule.level": 3, "rule.description": "Service logon event registered from non standard service account.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:14.994+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.055+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.085+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.103+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.138+0000", "agent.name": "win11-lab", "rule.id": "60106", "rule.level": 3, "rule.description": "Windows Logon Success", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.160+0000", "agent.name": "win11-lab", "rule.id": "67028", "rule.level": 3, "rule.description": "Special privileges assigned to new logon.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.189+0000", "agent.name": "win11-lab", "rule.id": "67023", "rule.level": 3, "rule.description": "Non service account logged off.", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.189+0000", "agent.name": "win11-lab", "rule.id": "60137", "rule.level": 3, "rule.description": "Windows User Logoff", "srcuser": null}
+{"timestamp": "2026-11-13T10:02:15.230+0000", "agent.name": "win11-lab", "rule.id": "67024", "rule.level": 3, "rule.description": "Service logon event registered from non standard service account.", "srcuser": null}
+2026-11-13T10:06:03.616Z fin_lectura_alertas
+2026-11-13T10:06:23.519Z consulta alertas v2
+rc=0
+CNT {"agent.name": "ubuntu-lab", "rule.id": "52000", "n": 8}
+CNT {"agent.name": "ubuntu-lab", "rule.id": "52002", "n": 40}
+CNT {"agent.name": "ubuntu-lab", "rule.id": "5402", "n": 7}
+CNT {"agent.name": "ubuntu-lab", "rule.id": "5501", "n": 21}
+CNT {"agent.name": "ubuntu-lab", "rule.id": "5502", "n": 19}
+CNT {"agent.name": "ubuntu-lab", "rule.id": "5503", "n": 3}
+CNT {"agent.name": "ubuntu-lab", "rule.id": "5710", "n": 6}
+CNT {"agent.name": "ubuntu-lab", "rule.id": "5715", "n": 10}
+CNT {"agent.name": "win11-lab", "rule.id": "60106", "n": 16}
+CNT {"agent.name": "win11-lab", "rule.id": "60109", "n": 4}
+CNT {"agent.name": "win11-lab", "rule.id": "60110", "n": 4}
+CNT {"agent.name": "win11-lab", "rule.id": "60111", "n": 2}
+CNT {"agent.name": "win11-lab", "rule.id": "60137", "n": 16}
+CNT {"agent.name": "win11-lab", "rule.id": "60160", "n": 4}
+CNT {"agent.name": "win11-lab", "rule.id": "67023", "n": 8}
+CNT {"agent.name": "win11-lab", "rule.id": "67024", "n": 8}
+CNT {"agent.name": "win11-lab", "rule.id": "67028", "n": 24}
+TOTAL_POST_TOFF 200
+{"mgr_ts": "2026-11-13T10:02:14.162+0000", "evt_ts": "2026-11-13T09:59:47.2876793Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4728", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.162+0000", "evt_ts": "2026-11-13T09:59:47.2879981Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4720", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.180+0000", "evt_ts": "2026-11-13T09:59:47.2916936Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4722", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.202+0000", "evt_ts": "2026-11-13T09:59:47.2917525Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.220+0000", "evt_ts": "2026-11-13T09:59:47.3276237Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.259+0000", "evt_ts": "2026-11-13T09:59:50.3642273Z", "agent.name": "win11-lab", "rule.id": "60111", "rule.level": 8, "rule.description": "User account disabled or deleted", "eventID": "4726", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.259+0000", "evt_ts": "2026-11-13T09:59:50.3639425Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4729", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.277+0000", "evt_ts": "2026-11-13T09:59:50.3683814Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4728", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.294+0000", "evt_ts": "2026-11-13T09:59:50.3686133Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4720", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.316+0000", "evt_ts": "2026-11-13T09:59:50.3688593Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4722", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.334+0000", "evt_ts": "2026-11-13T09:59:50.3689102Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.352+0000", "evt_ts": "2026-11-13T09:59:50.3999589Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.374+0000", "evt_ts": "2026-11-13T09:59:53.4218085Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4729", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.392+0000", "evt_ts": "2026-11-13T09:59:53.4221774Z", "agent.name": "win11-lab", "rule.id": "60111", "rule.level": 8, "rule.description": "User account disabled or deleted", "eventID": "4726", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:53.110+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.120+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.120+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.138+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.138+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.138+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+2026-11-13T10:06:51.905Z consulta v3 (descripciones y horas de evento)
+{"agent.name": "ubuntu-lab", "rule.id": "52000", "n": 8, "desc": "Apparmor messages grouped.", "kinds": [], "evt_first": "Nov 13 09:49:16", "evt_last": "Nov 13 10:04:28"}
+{"agent.name": "ubuntu-lab", "rule.id": "52002", "n": 40, "desc": "Apparmor DENIED", "kinds": [], "evt_first": "Nov 13 09:49:17", "evt_last": "Nov 13 10:04:38"}
+{"agent.name": "ubuntu-lab", "rule.id": "5402", "n": 7, "desc": "Successful sudo to ROOT executed.", "kinds": [], "evt_first": "Nov 13 09:49:17", "evt_last": "Nov 13 10:04:28"}
+{"agent.name": "ubuntu-lab", "rule.id": "5501", "n": 21, "desc": "PAM: Login session opened.", "kinds": [], "evt_first": "Nov 13 09:49:16", "evt_last": "Nov 13 10:04:28"}
+{"agent.name": "ubuntu-lab", "rule.id": "5502", "n": 19, "desc": "PAM: Login session closed.", "kinds": [], "evt_first": "Nov 13 09:49:17", "evt_last": "Nov 13 10:04:28"}
+{"agent.name": "ubuntu-lab", "rule.id": "5503", "n": 3, "desc": "PAM: User login failed.", "kinds": [], "evt_first": "Nov 13 09:59:22", "evt_last": "Nov 13 09:59:32"}
+{"agent.name": "ubuntu-lab", "rule.id": "5710", "n": 6, "desc": "sshd: Attempt to login using a non-existent user", "kinds": ["Failed password", "Invalid user"], "evt_first": "Nov 13 09:59:22", "evt_last": "Nov 13 09:59:34"}
+{"agent.name": "ubuntu-lab", "rule.id": "5715", "n": 10, "desc": "sshd: authentication success.", "kinds": [], "evt_first": "Nov 13 09:49:16", "evt_last": "Nov 13 10:04:27"}
+{"agent.name": "win11-lab", "rule.id": "60106", "n": 16, "desc": "Windows Logon Success", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "60109", "n": 4, "desc": "User account enabled or created", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "60110", "n": 4, "desc": "User account changed", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "60111", "n": 2, "desc": "User account disabled or deleted", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "60137", "n": 16, "desc": "Windows User Logoff", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "60160", "n": 4, "desc": "Domain Users Group Changed", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "67023", "n": 8, "desc": "Non service account logged off.", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "67024", "n": 8, "desc": "Service logon event registered from non standard service account.", "kinds": [], "evt_first": "-", "evt_last": "-"}
+{"agent.name": "win11-lab", "rule.id": "67028", "n": 24, "desc": "Special privileges assigned to new logon.", "kinds": [], "evt_first": "-", "evt_last": "-"}
+rc=0
+2026-11-13 04:07:19.851 CST
+37
+0
+temporales /tmp de consulta borrados: 0
+== PASO 7 cerrado: alertas en evidence/azure/2026-11-13/d5-8-alertas.jsonl ==
+== PASO 8: estado final (solo lectura) ==
+2026-11-13 04:07:23.285 CST
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+
+List of agentless devices:
+wazuh | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+honeyserver | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+logrelay | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+strongswan | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+[ERROR]: Task failed: Finalization of task args for 'ansible.builtin.command' failed: Error while resolving value for '_raw_params': Syntax error in template: unexpected '.'
+
+Task failed.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'docker ps --format {{.Names}}_{{.Status}}'}, 'timeout': 0, [...]
+
+<<< caused by >>>
+
+Finalization of task args for 'ansible.builtin.command' failed.
+Origin: <CLI option '-m'>
+
+command
+
+<<< caused by >>>
+
+Error while resolving value for '_raw_params'.
+Origin: <CLI option '-a'>
+
+docker ps --format {{.Names}}_{{.Status}}
+
+<<< caused by >>>
+
+Syntax error in template: unexpected '.'
+Origin: <CLI option '-a'>:1
+
+docker ps --format {{.Names}}_{{.Status}}
+
+honeyserver | FAILED | rc=-1 >>
+Task failed: Finalization of task args for 'ansible.builtin.command' failed: Error while resolving value for '_raw_params': Syntax error in template: unexpected '.'
+rc=2
+lab: #6, ESTABLISHED, IKEv2, d2548f22608d3f79_i* 6d48ab617701bbc6_r
+  established 381s ago, rekeying in 14011s
+rc=0
+== PASO 8 reintento (formato docker sin Jinja; el fallo anterior fue de quoting de ansible, no del servicio) ==
+2026-11-13 04:07:38.799 CST
+honeyserver | CHANGED | rc=0 >>
+CONTAINER ID   IMAGE                                   COMMAND                  CREATED      STATUS                   PORTS                                                                                                                                                                                                                                                                                                                                                                                                                                                                          NAMES
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': '/var/ossec/bin/wazuh-control status'}, 'timeout': 0, 'async_val': [...]
+
+wazuh | FAILED | rc=1 >>
+wazuh-clusterd not running...
+wazuh-modulesd is running...
+wazuh-monitord is running...
+wazuh-logcollector is running...
+wazuh-remoted is running...
+wazuh-syscheckd is running...
+wazuh-analysisd is running...
+wazuh-maild not running...
+wazuh-execd is running...
+wazuh-db is running...
+wazuh-authd is running...
+wazuh-agentlessd not running...
+wazuh-integratord not running...
+wazuh-csyslogd not running...
+wazuh-apid is running...The command exited with a non-zero return code.
+rc=2
+2026-11-13 04:07:53.272 CST
+rc=0
+honeyserver | CHANGED | rc=0 >>
+CONTAINER ID   IMAGE                                   COMMAND                  CREATED      STATUS                   PORTS                                     
+2026-11-13 04:08:04.874 CST
+honeyserver | CHANGED | rc=0 >>
+active
+honeyserver | CHANGED | rc=0 >>
+2026-11-13 10:03:12
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could c
+honeyserver | CHANGED | rc=0 >>
+  docker.service                                        loaded    active     running       Docker Application Container Engine
+rc=0
+2026-11-13 04:08:26.927 CST
+557:{'action': 'command', 'args': {'_raw_params': 'docker ps --format {{.Names}}_{{.Status}}'}, 'timeout': 0, [...]
+571:docker ps --format {{.Names}}_{{.Status}}
+578:docker ps --format {{.Names}}_{{.Status}}
+2026-11-13 04:08:30.263 CST
+ansible/requirements.yml
+ansible/roles/honeypot/tasks/main.yml
+ansible/local/scripts/tags-contract.py
+rc=0
+2026-11-13 04:08:31.933 CST
+7:- name: Omitir el rol si está deshabilitado (el preflight local no instala Docker)
+9:  when: not (honeypot_enabled | bool)
+12:- name: Comprobar que la administración usa el puerto 22222
+20:- name: Asegurar el directorio de centinelas
+23:    state: directory
+27:- name: Escribir el marcador del rol honeypot
+34:- name: Leer si el señuelo ya arrancó alguna vez
+41:- name: Instalar gnupg (verificación de las huellas)
+43:    name: gnupg
+44:    state: present
+48:- name: Asegurar el directorio de claves descargadas (todavía sin confianza)
+51:    state: directory
+58:- name: Leer si las claves apt ya están en disco
+67:- name: Descargar las claves apt de Docker y Wazuh
+76:  when: not honeypot_key_files.results[honeypot_key_idx].stat.exists
+79:- name: Leer la huella de cada clave descargada
+85:  changed_when: false
+89:- name: Exigir la huella fijada en cada clave (clave primaria, 40 hex)
+102:- name: Instalar las claves ya verificadas
+115:- name: Agregar los repos de Docker y de Wazuh
+118:    filename: "{{ item.name }}"
+120:    state: present
+127:- name: Leer las versiones instaladas de los paquetes fijados
+132:  changed_when: false
+133:  failed_when: false
+139:- name: Instalar Docker, Compose y el Wazuh Agent en las versiones fijadas (D1)
+141:    name: "{{ honeypot_package_specs }}"
+145:  when: honeypot_repos is changed or (honeypot_package_specs | difference(honeypot_dpkg.stdout_lines) | length > 0)
+148:- name: Retener los paquetes fijados (hold)
+150:    name: "{{ item | regex_replace('=.*$', '') }}"
+157:- name: Dejar Docker y el agente detenidos y deshabilitados (E1-3)
+159:    name: "{{ item }}"
+160:    state: stopped
+167:  when: not honeypot_started.stat.exists
+171:- name: Crear el directorio del proyecto compose
+174:    state: directory
+178:- name: Copiar docker-compose.yml y .env (sin secretos, D2)
+190:- name: Copiar config/ de Dionaea y Tanner
+201:- name: Leer el centinela de imágenes
+205:  failed_when: false
+2026-11-13 04:08:39.070 CST
+Running
+win rc=0
+active
+0
+1
+ubuntu rc=0
+7:Host win11 192.168.1.75
+9:    User [oculto]
+13:Host ubuntu74 192.168.1.74
+15:    User [oculto]
+PASS_COUNT=0
+no_medido
+2026-11-13 04:08:48.949 CST
+NOTA: PASS_COUNT real = 0 (grep -c devolvio 0; el texto no_medido fue del fallback || echo).
+conteo_<oper>_en_LOG=9
+2026-11-13 04:08:58.223 CST
+usuarios_config_encontrados win=si ubuntu=si
+conteo_<oper>_tras_sanear=0
+conteo_usuario_win_tras_sanear=0
+na
+conteo_usuario_ubuntu_tras_sanear=1
+conteo_oper_en_log=12
+longitud_cuenta_ubuntu=5 (valor no impreso)
+conteo_cuenta_ubuntu_tras_sanear=0
+conteo_user1=0
+conteo_authd_pass_en_log=0
+conteo_psk_hex: no se consulta
+alertas_con_cuenta_real=0/0/0
+2026-11-13 04:09:30.942 CST
+vm-honeyserver	VM running
+vm-logrelay	VM running
+vm-strongswan	VM running
+vm-wazuh	VM running
+== RESUMEN DE TIEMPOS (UTC; CST = UTC-6) ==
+T_base (Manager) 09:44:48.810Z | T_off (fin deallocate strongswan) 09:47:11.259Z
+Caida: inicio de start 10:00:39.669Z -> duracion 13 min 28.410 s (808.410 s) >= 5 min
+T_ini_strongswan 10:00:39.669Z (fin 10:01:23.759Z) | T_ini_wazuh 10:01:26.734Z, T_fin_wazuh 10:02:10.310Z | logrelay 10:02:12.438-10:02:56.040Z | honeyserver 10:02:58.592-10:03:41.694Z
+SA lab #6 ESTABLISHED: estimada 10:01:12.6Z (+/-1 s, por "established 160s ago" a las 10:03:52.627Z) -> t_SA ~33 s desde T_ini_strongswan
+Win11 (002) reconexion 10:02:12Z (log cliente, hora Pacific); t_react ~2 s desde T_fin_wazuh, ~60 s desde SA
+Ubuntu (003) reconexion 10:02:49Z (log cliente, reloj no medido); t_react ~39 s desde T_fin_wazuh, ~96 s desde SA
+honeyserver (001) reconexion NO MEDIDA (no se leyo su log). Active observado en primera consulta 10:04:02.780Z (cota superior)
+Win11 y Ubuntu Active observados en la primera consulta 10:04:02.780Z (cota superior; no hubo consulta previa)
+== EVENTOS (hora accion CST -> UTC; alerta manager; retraso = mgr - accion) ==
+U1 03:59:22.195 CST (09:59:22.195Z): 5710 x2 (Invalid user + Failed password); mgr 10:02:53.110 ; retraso ~199-211 s (rango de los 6); DESPUES de reconectar
+U2 03:59:28.115 CST (09:59:28.115Z): 5710 x2; mgr 10:02:53.120-.138 ; DESPUES de reconectar
+U3 03:59:32.507 CST (09:59:32.507Z): 5710 x2; mgr 10:02:53.138 ; DESPUES de reconectar
+W-ALTA a 03:59:47.288 CST (09:59:47.288Z; 4720): 60109 mgr 10:02:14.162 ; retraso 146.874 s ; DESPUES (reconexion 10:02:12)
+W-BAJA a 03:59:50.364 CST (09:59:50.364Z; 4726): 60111 mgr 10:02:14.259 ; retraso 143.895 s ; DESPUES
+W-ALTA b 03:59:50.369 CST (09:59:50.369Z; 4720): 60109 mgr 10:02:14.294 ; retraso 143.925 s ; DESPUES
+W-BAJA b 03:59:53.422 CST (09:59:53.422Z; 4726): 60111 mgr 10:02:14.392 ; retraso 140.970 s ; DESPUES
+Ubuntu: generados 3 intentos -> 6 alertas 5710 (2/intento). Esperado 3. Perdidas 0. Duplicadas 0 (lineas sshd distintas).
+Win11: generados 2 altas + 2 bajas -> 60109 x4 (4720 x2 + 4722 x2), 60111 x2. Esperado 60109 x2 (4720). Perdidas 0. Duplicadas 0 (evt_ts unicos).
+Derivadas no esperadas: win 60110 x4 (4738), 60160 x4 (4728/4729); logons 60106 x16, 60137 x16, 67023/67024 x8, 67028 x24; ubuntu 5402 x7, 5501 x21, 5502 x19, 5503 x3, 5715 x10, 52000 x8, 52002 x40 (AppArmor DENIED, origen no atribuido).
+NOTA: 4720/4726 de 02:42 (zona de entonces) no son de este ciclo.
+resumen escrito

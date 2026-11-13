@@ -1,0 +1,15 @@
+--- /etc/nftables.conf.bak-20261113	2026-11-13 02:17:37.141198424 -0600
++++ /etc/nftables.conf	2026-11-13 02:23:04.739044604 -0600
+@@ -21,6 +21,9 @@
+ 
+ chain forward {
+     type filter hook forward priority filter; policy drop;
++    # MSS-clamp 1320: ESP sobre 1500 parte los segmentos grandes (d5-3/d5-4)
++    ip saddr @azure_net tcp flags syn tcp option maxseg size set 1320
++    ip daddr @azure_net tcp flags syn tcp option maxseg size set 1320
+     ct state invalid drop
+     ct state established,related accept
+     iifname "eth0" oifname "eth0" ip saddr @vpn_clients ip daddr @azure_net rt ipsec exists accept
+diff_rc=1
+245b0e726de518f2da28004d9e547cbec11f2baf75df838608eb2152d3986a1a  /etc/nftables.conf
+b03aa8b807e0696af81777bd5f23dea7dc2f03942cc0189d818a2443df6b8efc  /etc/nftables.conf.bak-20261113

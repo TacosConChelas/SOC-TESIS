@@ -1,0 +1,216 @@
+=== E4 paso 3 · diagnostico MTU y authd · 2026-11-13 01:33:51 CST (-0600) ===
+
+--- PASO 1a Manager: wazuh-control status 01:33:51 ---
+wazuh | CHANGED | rc=0 >>
+wazuh-remoted is running...
+wazuh-analysisd is running...
+wazuh-authd is running...
+rc=0
+
+--- PASO 1b Manager: listeners 01:34:02 ---
+wazuh | CHANGED | rc=0 >>
+LISTEN 0      128               0.0.0.0:1515       0.0.0.0:*    users:(("wazuh-authd",pid=1287,fd=6))    
+LISTEN 0      128               0.0.0.0:1514       0.0.0.0:*    users:(("wazuh-remoted",pid=1435,fd=4))  
+rc=0
+
+--- PASO 1c Manager: lineas de authd en ossec.log 01:34:11 ---
+wazuh | CHANGED | rc=0 >>
+2026/11/08 23:33:30 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/08 23:33:31 wazuh-authd: INFO: Exiting...
+2026/11/08 23:33:35 wazuh-authd: INFO: Started (pid: 64272).
+2026/11/08 23:33:35 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/08 23:33:38 wazuh-remoted: INFO: (1410): Reading authentication keys file.
+2026/11/08 23:38:26 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/08 23:38:27 wazuh-authd: INFO: Exiting...
+2026/11/08 23:38:30 wazuh-authd: INFO: Started (pid: 66098).
+2026/11/08 23:38:30 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/08 23:38:33 wazuh-remoted: INFO: (1410): Reading authentication keys file.
+2026/11/08 23:41:11 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/08 23:41:12 wazuh-authd: INFO: Exiting...
+2026/11/09 00:00:38 wazuh-authd: INFO: Started (pid: 1281).
+2026/11/09 00:00:38 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/09 00:00:43 wazuh-remoted: INFO: (1410): Reading authentication keys file.
+2026/11/09 00:34:54 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/09 00:34:55 wazuh-authd: INFO: Exiting...
+2026/11/09 07:09:46 wazuh-authd: INFO: Started (pid: 1282).
+2026/11/09 07:09:46 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/09 07:09:51 wazuh-remoted: INFO: (1410): Reading authentication keys file.
+2026/11/09 07:19:44 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/09 07:19:45 wazuh-authd: INFO: Exiting...
+2026/11/09 07:19:48 wazuh-authd: INFO: Started (pid: 5764).
+2026/11/09 07:19:48 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/09 07:19:52 wazuh-remoted: INFO: (1410): Reading authentication keys file.
+2026/11/09 07:55:26 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/09 07:55:27 wazuh-authd: INFO: Exiting...
+2026/11/13 06:55:09 wazuh-authd: INFO: Started (pid: 1287).
+2026/11/13 06:55:09 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/13 06:55:14 wazuh-remoted: INFO: (1410): Reading authentication keys file.
+rc=0
+
+--- PASO 1d Manager: permisos y tamano (sin contenido) 01:34:21 ---
+wazuh | CHANGED | rc=0 >>
+-rw-r----- 1 root wazuh 45 Nov  8 22:54 /var/ossec/etc/authd.pass
+-rw-r----- 1 root wazuh 88 Nov  9 07:55 /var/ossec/etc/client.keys
+===
+/var/ossec/etc/authd.pass mode=640 owner=root group=wazuh size=45
+/var/ossec/etc/client.keys mode=640 owner=root group=wazuh size=88
+rc=0
+
+--- PASO 1e Manager: tcpdump disponible? 01:34:30 ---
+wazuh | CHANGED | rc=0 >>
+/usr/bin/tcpdump
+rc=0
+
+--- PASO 1f Manager: bloque <auth> de ossec.conf 01:34:43 ---
+wazuh | CHANGED | rc=0 >>
+  <auth>
+    <disabled>no</disabled>
+    <port>1515</port>
+    <use_source_ip>no</use_source_ip>
+    <purge>yes</purge>
+    <use_password>yes</use_password>
+    <ciphers>HIGH:!ADH:!EXP:!MD5:!RC4:!3DES:!CAMELLIA:@STRENGTH</ciphers>
+    <!-- <ssl_agent_ca></ssl_agent_ca> -->
+    <ssl_verify_host>no</ssl_verify_host>
+    <ssl_manager_cert>etc/sslmanager.cert</ssl_manager_cert>
+    <ssl_manager_key>etc/sslmanager.key</ssl_manager_key>
+    <ssl_auto_negotiate>no</ssl_auto_negotiate>
+  </auth>
+rc=0
+
+--- PASO 2 win11: TLS a 10.50.40.10:1515 (sin escribir, no enrola) 01:35:06 ---
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+#< CLIXML
+tcp_connect=ok 157ms
+handshake_fallo proto=Tls12 dur=154ms tipo=AggregateException msg=One or more errors occurred.
+handshake_fallo proto=Tls dur=7ms tipo=PSInvalidOperationException msg=There is no Runspace available to run scripts in this thread. You can provide one in the DefaultRunspace property of the System.Management.Automation.Runspaces.Runspace type. The script block you attempted to invoke was:  param($a,$b,$c,$d) return $true 
+total=350ms
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Obj S="progress" RefId="0"><TN RefId="0"><T>System.Management.Automation.PSCustomObject</T><T>System.Object</T></TN><MS><I64 N="SourceId">1</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil /><PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj></Objs>
+rc=0
+
+--- PASO 2b win11: TLS C# a 1515 y 443 (solo lectura, no enrola) 01:35:24 ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+--- 1515 (authd) ---
+tcp_connect=ok 76ms
+HANDSHAKE_OK dur=203ms proto=Tls12 cipher=Aes256 kex=44550
+cert_subject=CN=Wazuh, S=California, C=US | emisor=CN=Wazuh, S=California, C=US
+total=207ms
+
+--- 443 (control nginx) ---
+tcp_connect=ok 59ms
+HANDSHAKE_OK dur=187ms proto=Tls12 cipher=Aes128 kex=44550
+cert_subject=CN=wazuh-dashboard, OU=Wazuh, O=Wazuh, L=California, C=US | emisor=L=California, O=Wazuh, OU=Wazuh
+total=188ms
+
+rc=0
+
+--- PASO 2c win11: enrollment en el cliente (solo lectura) 01:35:52 ---
+--- bloque client/enrollment de ossec.conf ---
+<client>
+<server>
+<address>10.50.40.10</address>
+<port>1514</port>
+<protocol>tcp</protocol>
+</server>
+<config-profile>windows, windows10</config-profile>
+<crypto_method>aes</crypto_method>
+<notify_time>20</notify_time>
+<time-reconnect>60</time-reconnect>
+<auto_restart>yes</auto_restart>
+<enrollment>
+<enabled>yes</enabled>
+<agent_name>win11-lab</agent_name>
+</enrollment>
+</client>
+
+
+<!-- Agent buffer options -->
+<client_buffer>
+--- posibles ficheros de password/keys (solo tamano y fecha) ---
+PASS authd.pass size=45 mtime=2026-11-10 00:29:53
+KEYS client.keys size=0 mtime=2026-11-10 00:29:46
+--- estado de la configuracion aplicada (wazuh-agent) ---
+authd.pass PRESENTE
+rc=0
+
+--- PASO 2d Manager: tcpdump 185 s sobre 1515 (esperando 1 intento del agente) 01:36:25 ---
+wazuh | CHANGED | rc=0 >>
+inicio=07:36:31
+2026-11-13 07:36:35.062810 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49762: Flags [.], seq 1383151020:1383152430, ack 4046940948, win 501, length 1410
+2026-11-13 07:37:24.995686 eth0  In  IP 192.168.1.75.49765 > 10.50.40.10.1515: Flags [P.], seq 1:1569, ack 1, win 255, length 1568
+2026-11-13 07:37:24.997285 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [P.], seq 1:2464, ack 1569, win 501, length 2463
+2026-11-13 07:37:25.126807 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [P.], seq 1411:2464, ack 1569, win 501, length 1053
+2026-11-13 07:37:25.390804 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:37:25.942801 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:37:27.030813 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:37:29.142822 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:37:33.430819 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:37:42.134825 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:37:59.030808 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:38:33.846789 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49765: Flags [.], seq 1:1411, ack 1570, win 501, length 1410
+2026-11-13 07:39:25.059966 eth0  In  IP 192.168.1.75.49767 > 10.50.40.10.1515: Flags [P.], seq 1:1569, ack 1, win 255, length 1568
+2026-11-13 07:39:25.061614 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [P.], seq 1:2464, ack 1569, win 501, length 2463
+2026-11-13 07:39:25.190796 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [P.], seq 1411:2464, ack 1569, win 501, length 1053
+2026-11-13 07:39:25.251588 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:39:25.518814 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:39:26.070820 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:39:27.158822 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:39:29.270839 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+2026-11-13 07:39:33.750827 eth0  Out IP 10.50.40.10.1515 > 192.168.1.75.49767: Flags [.], seq 1:1411, ack 1569, win 501, length 1410
+
+fin=07:39:36
+rc=0
+
+--- PASO 2e Manager: MTU que cree tener hacia los clientes 01:40:37 ---
+wazuh | CHANGED | rc=0 >>
+eth0             UP             7c:ed:8d:e1:c5:46 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+192.168.1.75 via 10.50.40.1 dev eth0 src 10.50.40.10 uid 0 
+    cache 
+192.168.1.74 via 10.50.40.1 dev eth0 src 10.50.40.10 uid 0 
+    cache 
+net.ipv4.tcp_mtu_probing = 0
+rc=0
+
+--- PASO 2f Pi: clamp de MSS / MTU de la SA (solo lectura) 01:40:43 ---
+--- ninguna regla mss arriba si esta vacio ---
+Device "br0" does not exist.
+--- fin ---
+rc=0
+
+--- PASO 2g Manager: MTU real de eth0 01:40:52 ---
+wazuh | CHANGED | rc=0 >>
+1500
+2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc mq state UP mode DEFAULT group default qlen 1000
+
+--- PASO 2h Pi: interfaces actuales 01:40:58 ---
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+eth0             UP             2c:cf:67:1e:35:a5 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+wlan0            DOWN           2c:cf:67:1e:35:a6 <BROADCAST,MULTICAST> 
+===
+lo               UNKNOWN        127.0.0.1/8 
+eth0             UP             192.168.1.10/24 
+===
+1500
+65536
+1500
+===
+0
+
+--- PASO 3a ubuntu74: verificacion previa de la interfaz (solo lectura) 01:41:18 ---
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+enp1s0           UP             52:54:00:3c:b9:6e <BROADCAST,MULTICAST,UP,LOWER_UP> 
+===
+enp1s0           UP             192.168.1.74/24 
+===
+1500
+===
+10.50.0.0/16 via 192.168.1.10 dev enp1s0 proto static metric 100 
+rc=0
+
+PASO 2 RESUMEN: TLS 1515 desde win11 COMPLETA (203 ms, cert CN=Wazuh). authd sano y escuchando.
+Captura en el Manager: el agente pide clave, authd responde 2463 B y el segmento de 1410 B manager->.75
+NUNCA recibe ACK (reenvios cada 0.1/0.2/0.5/1/2/4/8/16/34 s hasta que el agente aborta con SSL error 5
+= SSL_ERROR_SYSCALL). Manager eth0 mtu 1500 y tcp_mtu_probing=0; Pi sin clamp de MSS (0 reglas maxseg).
+mtu 1500 en los dos extremos: nadie negocia el MTU real del tunel -> perdida de segmentos grandes, sin ICMP de vuelta.
+PENDIENTE: paso 3 (lo ejecuta el operador con sudo en .74).

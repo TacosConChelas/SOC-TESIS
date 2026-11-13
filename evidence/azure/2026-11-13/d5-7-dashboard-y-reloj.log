@@ -1,0 +1,293 @@
+=== D5-7 DASHBOARD (Fase 4.5) Y RELOJ DE WIN11 (continuacion E4) ===
+inicio: 2026-11-13 03:24:35 CST / 2026-11-13T09:24:35Z
+controlador: hotdoggy 192.168.1.73
+
+--- PASO 2a: lectura del reloj en win11 (antes de cualquier cambio) ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+FINDSTR: Cannot open echo
+FINDSTR: Cannot open ---SVC---;
+FINDSTR: Cannot open powershell
+FINDSTR: Cannot open -NoProfile
+FINDSTR: Cannot open -Command
+FINDSTR: Cannot open (Get-Service w32time).Status;
+FINDSTR: Cannot open echo
+FINDSTR: Cannot open ---TZ---;
+FINDSTR: Cannot open tzutil
+FINDSTR: Cannot open /g;
+FINDSTR: Cannot open echo
+FINDSTR: Cannot open ---W32TMSTATUSRC---
+rc_ssh=1
+  (nota: una primera invocacion encadenada con ';' no es valida en cmd.exe; se repite con invocaciones separadas)
+--- w32tm /query /status ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Leap Indicator: 3(not synchronized)
+Stratum: 0 (unspecified)
+Precision: -23 (119.209ns per tick)
+Root Delay: 0.0000000s
+Root Dispersion: 0.0000000s
+ReferenceId: 0x00000000 (unspecified)
+Last Successful Sync Time: unspecified
+Source: Local CMOS Clock
+Poll Interval: 10 (1024s)
+
+rc=0
+--- w32tm /query /configuration | findstr Type/NtpServer ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Type: NTP (Local)
+NtpServer: time.windows.com,0x9 (Local)
+NtpServer (Local)
+rc=0
+--- (Get-Service w32time).Status ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Running
+rc=0
+--- tzutil /g ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Pacific Standard Timerc=0
+--- sonda de epoch remoto (prueba de formato) ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+1794540324.20878
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+1794569125014
+--- PASO 2a: offset de win11 respecto a .73 (epoch UTC; offset = t_remoto - t_73_mid) ---
+  win11 intento1 rtt=0.787s offset=+7200.673s
+  win11 intento1 rtt=0.787s offset=+7200.673s
+  win11 intento2 rtt=0.810s offset=+7200.668s
+  win11 intento2 rtt=0.810s offset=+7200.668s
+  win11 intento3 rtt=0.781s offset=+7200.669s
+  win11 intento3 rtt=0.781s offset=+7200.669s
+  local_73=2026-11-13 03:25:57 CST epoch=1794561957
+--- PASO 2b: aplicando configuracion de w32time en win11 ---
+identidad: win-host-client\user2
+[1] Set-Service w32time -StartupType Automatic; Start-Service w32time
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Running
+rc=0
+[2] w32tm /config /manualpeerlist:time.windows.com,0x9 /syncfromflags:manual /reliable:no /update
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+The command completed successfully.
+rc=0
+[3] w32tm /resync /force (intento 1)
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Sending resync command to local computer
+The computer did not resync because no time data was available.
+rc=0
+[3b] w32tm /resync /force (intento 2) tras 5 s
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Sending resync command to local computer
+The command completed successfully.
+rc=0
+--- w32tm /query /status tras intento 2 ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Leap Indicator: 0(no warning)
+Stratum: 5 (secondary reference - syncd by (S)NTP)
+Precision: -23 (119.209ns per tick)
+Root Delay: 0.0440341s
+Root Dispersion: 7.7712417s
+ReferenceId: 0x287706E4 (source IP:  40.119.6.228)
+Last Successful Sync Time: 11/13/2026 1:26:41 AM
+Source: time.windows.com,0x9 
+Poll Interval: 10 (1024s)
+
+--- w32tm /query /source ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+time.windows.com,0x9 
+--- PASO 2c: offset tras el resync (epoch UTC) ---
+  win11 intento1 rtt=0.776s offset=+0.344s
+  win11 intento2 rtt=0.825s offset=+0.369s
+  win11 intento3 rtt=0.873s offset=+0.389s
+  local_73=2026-11-13 03:27:07 CST epoch=1794562027
+  win11 local: 2026-11-13T01:27:08.4779409-08:00
+  win11 tz: Pacific Standard Time
+  win11 source: time.windows.com,0x9 
+  w32time startup: Automatic
+--- PASO 2d: agentes tras el salto de reloj de -2 h (03:27:27 CST) ---
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+
+List of agentless devices:
+rc=0
+--- PASO 2d: ossec.log de win11 (tail 20) tras el cambio ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+2026/11/13 02:04:11 wazuh-agent: INFO: (1950): Analyzing file: 'active-response\active-responses.log'.
+2026/11/13 02:04:11 wazuh-modulesd:ciscat: INFO: Module disabled. Exiting...
+2026/11/13 02:04:11 wazuh-modulesd:osquery: INFO: Module disabled. Exiting...
+2026/11/13 02:04:11 wazuh-modulesd:syscollector: INFO: Module started.
+2026/11/13 02:04:11 wazuh-modulesd:syscollector: INFO: Starting evaluation.
+2026/11/13 02:04:11 wazuh-agent: INFO: Started (pid: 2432).
+2026/11/13 02:04:11 sca: INFO: Starting evaluation of policy: 'C:\Program Files (x86)\ossec-agent\ruleset\sca\cis_win11_enterprise.yml'
+2026/11/13 02:04:13 wazuh-agent: INFO: (6000): Starting daemon...
+2026/11/13 02:04:13 wazuh-agent: INFO: (6010): File integrity monitoring scan frequency: 43200 seconds
+2026/11/13 02:04:13 wazuh-agent: INFO: (6008): File integrity monitoring scan started.
+2026/11/13 02:04:13 rootcheck: INFO: Starting rootcheck scan.
+2026/11/13 02:04:14 wazuh-modulesd:syscollector: INFO: Evaluation finished.
+2026/11/13 02:04:19 rootcheck: INFO: Ending rootcheck scan.
+2026/11/13 02:04:25 wazuh-agent: INFO: (6009): File integrity monitoring scan ended.
+2026/11/13 02:04:25 wazuh-agent: INFO: FIM sync module started.
+2026/11/13 02:04:26 wazuh-agent: INFO: (6012): Real-time file integrity monitoring started.
+2026/11/13 02:04:53 sca: INFO: Evaluation finished for policy 'C:\Program Files (x86)\ossec-agent\ruleset\sca\cis_win11_enterprise.yml'
+2026/11/13 02:04:53 sca: INFO: Security Configuration Assessment scan finished. Duration: 42 seconds.
+2026/11/13 03:04:15 wazuh-modulesd:syscollector: INFO: Starting evaluation.
+2026/11/13 03:04:26 wazuh-modulesd:syscollector: INFO: Evaluation finished.
+rc=0
+--- PASO 2d bis: re-chequeo de agentes tras 2 min (03:28:19 CST) ---
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+
+List of agentless devices:
+rc=0
+
+--- PASO 3: instantanea previa al ciclo (2026-11-13 03:30:48 CST) ---
+[3.1] agent_control -l (completo)
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+
+List of agentless devices:
+[3.2] agent_control -i 001
+   Agent ID:   001
+   Agent Name: vm-honeyserver
+   IP address: any
+   Status:     Active
+   Operating system:    Linux |vm-honeyserver |6.8.0-1064-azure |#72~22.04.1-Ubuntu SMP Wed Jul 22 23:39:45 UTC 2026 |x86_64
+   Last keep alive:     1794562254
+[3.2] agent_control -i 002
+   Agent ID:   002
+   Agent Name: win11-lab
+   IP address: any
+   Status:     Active
+   Operating system:    Microsoft Windows 11 Home
+   Last keep alive:     1794562251
+[3.2] agent_control -i 003
+   Agent ID:   003
+   Agent Name: ubuntu-lab
+   IP address: any
+   Status:     Active
+   Operating system:    Linux |ubuntu-host-client-1 |7.0.0-42-generic |#42-Ubuntu SMP PREEMPT_DYNAMIC Thu Oct 15 08:06:44 UTC 2026 |x86_64
+   Last keep alive:     1794562260
+[3.2b] agent_control -i 002 (salida completa, para version)
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. Agent information:
+   Agent ID:   002
+   Agent Name: win11-lab
+   IP address: any
+   Status:     Active
+
+   Operating system:    Microsoft Windows 11 Home
+   Client version:      Wazuh v4.14.10
+   Configuration hash:  ab73af41699f13fdd81903b5f23d8d00
+   Shared file hash:    e7c5c4c31c37ff20e25ba7c05c17a7e9
+   Last keep alive:     1794562291
+
+   Syscheck last started at:  Fri Nov 13 10:04:13 2026
+   Syscheck last ended at:    Fri Nov 13 10:04:25 2026
+[3.2c] agent_control -i 001 -> Client version / Last keep alive
+   Agent Name: vm-honeyserver
+   Status:     Active
+   Client version:      Wazuh v4.14.10
+   Last keep alive:     1794562314
+[3.2c] agent_control -i 003 -> Client version / Last keep alive
+   Agent Name: ubuntu-lab
+   Status:     Active
+   Client version:      Wazuh v4.14.10
+   Last keep alive:     1794562320
+[3.3] ansible all -m ping (se esperan 4 pong)
+wazuh | SUCCESS => {
+    "ping": "pong"
+strongswan | SUCCESS => {
+    "ping": "pong"
+logrelay | SUCCESS => {
+    "ping": "pong"
+honeyserver | SUCCESS => {
+    "ping": "pong"
+rc=0
+  pong=4/4
+[3.4] SA IPsec (soc71): sudo -n swanctl --list-sas | grep -E 'ESTABLISHED|established'
+plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+lab: #5, ESTABLISHED, IKEv2, a0827220147bc516_i* 0329827add01a0eb_r
+  established 9385s ago, rekeying in 4367s
+rc=0
+
+=== CIERRE D5-7 (2026-11-13 03:35:43 CST) ===
+Paso | Resultado | Hora
+1 Dashboard | d5-7-dashboard.md creado con DQL exacto y cruce con alerts.jsonl (17/22 lineas cumplen el DQL); NOTAS DEL OPERADOR pendientes: no hubo observacion en esta sesion | 03:32
+2a Lectura reloj win11 | Source=Local CMOS Clock, Leap=3(not synchronized), w32time Running, TZ=Pacific Standard Time; offset +7200.669 s (3 muestras, rtt<=0.81 s) | 03:25:57
+2b Cambio acotado | StartupType=Automatic, Start=Running; config manualpeerlist=time.windows.com,0x9 syncfromflags=manual; resync 1 = 'no time data available', resync 2 = exito | 03:26-03:27
+2c Verificacion reloj | offset +0.344/+0.369/+0.389 s (< 2 s); Source=time.windows.com,0x9; TZ sin cambio (Pacific Standard Time); salto -7200 s aplicado | 03:27:07
+2d Agente tras el salto | win11-lab Active en agent_control -l a los ~10 s y a los 2 min; ossec.log tail 20 sin ERROR/CRITICAL (ultima linea 03:04:26, escritura previa al salto) | 03:27:27 / 03:28:19
+3 Instantanea | 001/002/003 Active, Client version Wazuh v4.14.10 en los 3, Last keep alive 1794562251-1794562320; ansible all -m ping 4/4 pong; SA 'lab #5, ESTABLISHED, IKEv2' (9385 s) | 03:30:48-03:31
+
+Offset win11 antes: +7200.669 s  ->  despues: +0.344..+0.389 s
+win11-lab: Active antes, durante y despues del salto; no se reinicio el agente.
+Archivos creados: evidence/azure/2026-11-13/d5-7-dashboard.md, evidence/azure/2026-11-13/d5-7-dashboard-y-reloj.log
+Sin commit, sin SHA256SUMS, sin deallocate; VMs y agentes encendidos.
