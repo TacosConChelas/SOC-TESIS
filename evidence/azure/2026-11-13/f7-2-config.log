@@ -1,0 +1,20 @@
+{
+  "fw": "Deny",
+  "ips": [
+    "201.96.0.0/12"
+  ],
+  "key": false,
+  "public": false,
+  "sku": "Standard_LRS",
+  "tier": "Cool",
+  "tls": "TLS1_2"
+}
+{
+  "softDelete": 7,
+  "versioning": true
+}
+{
+  "dias": 90,
+  "estado": "Unlocked"
+}
+rbac: ok tras 1 intentos

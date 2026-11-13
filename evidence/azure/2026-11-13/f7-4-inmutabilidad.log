@@ -1,0 +1,21 @@
+Alive[################################################################]  100.0000%Finished[#############################################################]  100.0000%
+upload rc=0
+== sobrescribir ==
+RequestId:<guid>
+Time:2026-11-13T10:38:13.9175529Z
+ErrorCode:BlobImmutableDueToPolicy
+If you want to overwrite the existing one, please add --overwrite in your command.
+overwrite rc=1
+== borrar ==
+ERROR: This operation is not permitted as the blob is immutable due to a policy.
+RequestId:<guid>
+Time:2026-11-13T10:38:17.5236034Z
+ErrorCode:BlobImmutableDueToPolicy
+delete rc=1
+== clave compartida ==
+ERROR: Key based authentication is not permitted on this storage account.
+RequestId:<guid>
+Time:2026-11-13T10:38:21.5272589Z
+ErrorCode:KeyBasedAuthenticationNotPermitted
+key rc=1
+contenido: canario

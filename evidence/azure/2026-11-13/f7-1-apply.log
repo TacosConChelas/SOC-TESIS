@@ -1,0 +1,27 @@
+/tmp/tfplan-evidence: OK
+azurerm_resource_group.evidence: Creating...
+azurerm_resource_group.evidence: Still creating... [00m10s elapsed]
+azurerm_resource_group.evidence: Still creating... [00m20s elapsed]
+azurerm_resource_group.evidence: Creation complete after 28s [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence]
+azurerm_storage_account.evidence: Creating...
+azurerm_storage_account.evidence: Still creating... [00m10s elapsed]
+azurerm_storage_account.evidence: Still creating... [00m20s elapsed]
+azurerm_storage_account.evidence: Creation complete after 25s [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01]
+azurerm_role_assignment.operator_blob: Creating...
+azurerm_storage_container.evidence: Creating...
+azurerm_storage_container.evidence: Still creating... [00m10s elapsed]
+azurerm_role_assignment.operator_blob: Still creating... [00m10s elapsed]
+azurerm_storage_container.evidence: Creation complete after 11s [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/blobServices/default/containers/evidencia-soc-tesis]
+azurerm_storage_container_immutability_policy.evidence: Creating...
+azurerm_storage_container_immutability_policy.evidence: Creation complete after 2s [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/blobServices/default/containers/evidencia-soc-tesis/immutabilityPolicies/default]
+azurerm_role_assignment.operator_blob: Still creating... [00m20s elapsed]
+azurerm_role_assignment.operator_blob: Creation complete after 30s [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/providers/Microsoft.Authorization/roleAssignments/<guid>]
+
+Apply complete! Resources: 5 added, 0 changed, 0 destroyed.
+
+Outputs:
+
+container_name = "evidencia-soc-tesis"
+resource_group_name = "rg-soc-tesis-evidence"
+storage_account_id = "/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01"
+storage_account_name = "socesisevidencia01"

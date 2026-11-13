@@ -1,0 +1,66 @@
+data.azurerm_client_config.current: Reading...
+azurerm_resource_group.evidence: Refreshing state... [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence]
+data.azurerm_client_config.current: Read complete after 0s [id=<client-config-base64>]
+azurerm_storage_account.evidence: Refreshing state... [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01]
+azurerm_role_assignment.operator_blob: Refreshing state... [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/providers/Microsoft.Authorization/roleAssignments/<guid>]
+azurerm_storage_container.evidence: Refreshing state... [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/blobServices/default/containers/evidencia-soc-tesis]
+azurerm_storage_container_immutability_policy.evidence: Refreshing state... [id=/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/blobServices/default/containers/evidencia-soc-tesis/immutabilityPolicies/default]
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  - destroy
+
+Terraform planned the following actions, but then encountered a problem:
+
+  # azurerm_role_assignment.operator_blob will be destroyed
+  - resource "azurerm_role_assignment" "operator_blob" {
+      - id                                     = "/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/providers/Microsoft.Authorization/roleAssignments/<guid>" -> null
+      - name                                   = "<guid>" -> null
+      - principal_id                           = "<guid>" -> null
+      - principal_type                         = "User" -> null
+      - role_definition_id                     = "/subscriptions/<guid>/providers/Microsoft.Authorization/roleDefinitions/<guid>" -> null
+      - role_definition_name                   = "Storage Blob Data Contributor" -> null
+      - scope                                  = "/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01" -> null
+        # (4 unchanged attributes hidden)
+    }
+
+  # azurerm_storage_container_immutability_policy.evidence will be destroyed
+  - resource "azurerm_storage_container_immutability_policy" "evidence" {
+      - id                                    = "/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/blobServices/default/containers/evidencia-soc-tesis/immutabilityPolicies/default" -> null
+      - immutability_period_in_days           = 90 -> null
+      - locked                                = false -> null
+      - protected_append_writes_all_enabled   = false -> null
+      - protected_append_writes_enabled       = false -> null
+      - storage_container_resource_manager_id = "/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01/blobServices/default/containers/evidencia-soc-tesis" -> null
+    }
+
+Plan: 0 to add, 0 to change, 2 to destroy.
+
+Changes to Outputs:
+  - container_name       = "evidencia-soc-tesis" -> null
+  - resource_group_name  = "rg-soc-tesis-evidence" -> null
+  - storage_account_id   = "/subscriptions/<guid>/resourceGroups/rg-soc-tesis-evidence/providers/Microsoft.Storage/storageAccounts/socesisevidencia01" -> null
+  - storage_account_name = "socesisevidencia01" -> null
+
+Error: Instance cannot be destroyed
+
+  on storage.tf line 72:
+  72: resource "azurerm_storage_container_immutability_policy" "evidence" {
+
+Resource azurerm_storage_container_immutability_policy.evidence has
+lifecycle.prevent_destroy set, but the plan calls for this resource to be
+destroyed. To avoid this error and continue with the plan, either disable
+lifecycle.prevent_destroy or reduce the scope of the plan using the -target
+option.
+== state de lab ==
+0
+recursos en lab: 67
+
+== Interpretación (coordinador) ==
+Terraform recorre el destroy en orden inverso de dependencias y aborta el plan entero en el primer recurso con prevent_destroy
+(la política de inmutabilidad, hoja del grafo); por eso solo aparece 1 error y "2 to destroy" (política + rol). Con el plan
+en error no hay nada que aplicar: el destroy completo queda bloqueado.
+prevent_destroy = true en storage.tf: azurerm_resource_group.evidence, azurerm_storage_account.evidence,
+azurerm_storage_container.evidence, azurerm_storage_container_immutability_policy.evidence (4).
+-target=azurerm_storage_account.evidence y -target=azurerm_resource_group.evidence: mismo resultado (1 error, plan abortado).
+El rol operator_blob no está protegido (a propósito: se puede recrear sin perder evidencia).
