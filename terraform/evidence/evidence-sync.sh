@@ -45,6 +45,15 @@ for s in "$SECRETS/ipsec/psk.hex" "$SECRETS/wazuh/authd.pass" "$SECRETS/ssh/id_e
   fi
 done
 
+# IDs de Azure (suscripción, tenant, objeto) escondidos en base64, p. ej. el id de
+# data.azurerm_client_config: la redacción por regex de GUID no los ve.
+guid='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+while read -r tok; do
+  if printf '%s' "$tok" | base64 -d 2>/dev/null | grep -aqE "$guid"; then
+    echo "evidence-sync: $DIR contiene un ID de Azure codificado en base64; redactarlo antes de subir" >&2; exit 1
+  fi
+done < <(grep -rhoE '[A-Za-z0-9+/]{48,}={0,2}' "$DIR" || true)
+
 ACCOUNT=$(terraform -chdir="$TF" output -raw storage_account_name)
 CONTAINER=$(terraform -chdir="$TF" output -raw container_name)
 
