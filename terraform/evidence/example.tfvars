@@ -1,8 +1,7 @@
 # Plantilla VERSIONABLE (sin secretos). Copiar a `terraform.tfvars`.
 
-# D6 — PENDIENTE: ver la nota equivalente en terraform/lab/example.tfvars.
-# Placeholder de documentación (RFC 5737), NO una IP real.
-lab_public_ip = "203.0.113.1" # <-- PLACEHOLDER, NO REAL (D6 pendiente)
+# Prefijos de salida del laboratorio (ADR-005 N3). Mismo valor que terraform/lab.
+lab_source_cidrs = ["201.96.0.0/12"]
 
 # Verificar disponibilidad global del nombre antes de `apply`:
 #   az storage account check-name-availability --name <nombre>

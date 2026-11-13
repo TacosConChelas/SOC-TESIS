@@ -9,3 +9,7 @@ output "container_name" {
 output "resource_group_name" {
   value = azurerm_resource_group.evidence.name
 }
+
+output "storage_account_id" {
+  value = azurerm_storage_account.evidence.id
+}
