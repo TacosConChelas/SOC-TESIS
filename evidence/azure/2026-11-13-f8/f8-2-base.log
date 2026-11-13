@@ -1,0 +1,81 @@
+=== B2.4 baseline counts 2026-11-13 14:14:13 CST / 2026-11-13T20:14:13Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+id=100100 count=1143
+id=100101 count=3
+id=100102 count=121
+id=100103 count=1632
+id=100110 count=0
+id=100111 count=0
+id=100200 count=203
+id=100201 count=0
+id=100210 count=0
+id=100300 count=3742
+id=100301 count=0
+id=100400 count=16
+id=100410 count=0
+id=5710 count=15
+id=5712 count=1
+id=5503 count=7
+id=60122 count=2
+=== B2.5 ventana 120 s healthcheck 2026-11-13 14:14:23 CST / 2026-11-13T20:14:23Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+T0=2026-11-13T20:14:29Z
+total_100300_before=3743 after=3750 diff=7
+healthcheck_127_before=1434 after=1434 diff=0
+=== B2.5b inspeccion solo-lectura de los 7 alerts 100300 nuevos 2026-11-13 14:16:34 CST / 2026-11-13T20:16:34Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+"timestamp":"2026-11-13T20:14:58.796+0000"	full_log":"Nov 13 20:14:58 vm-honeyserver soc-tesis-mailoney[698]: {\	"timestamp":"Nov 13 20:14:58"
+"timestamp":"2026-11-13T20:15:14.832+0000"	full_log":"Nov 13 20:15:13 vm-honeyserver soc-tesis-mailoney[698]: {\	"timestamp":"Nov 13 20:15:13"
+"timestamp":"2026-11-13T20:15:28.798+0000"	full_log":"Nov 13 20:15:28 vm-honeyserver soc-tesis-mailoney[698]: {\	"timestamp":"Nov 13 20:15:28"
+"timestamp":"2026-11-13T20:15:44.800+0000"	full_log":"Nov 13 20:15:43 vm-honeyserver soc-tesis-mailoney[698]: {\	"timestamp":"Nov 13 20:15:43"
+"timestamp":"2026-11-13T20:16:00.801+0000"	full_log":"Nov 13 20:15:58 vm-honeyserver soc-tesis-mailoney[698]: {\	"timestamp":"Nov 13 20:15:58"
+"timestamp":"2026-11-13T20:16:14.802+0000"	full_log":"Nov 13 20:16:14 vm-honeyserver soc-tesis-mailoney[698]: {\	"timestamp":"Nov 13 20:16:14"
+"timestamp":"2026-11-13T20:16:30.803+0000"	full_log":"Nov 13 20:16:29 vm-honeyserver soc-tesis-mailoney[698]: {\	"timestamp":"Nov 13 20:16:29"
+=== step1 count-1 2026-11-13 14:22:48 CST / 2026-11-13T20:22:48Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'shell' task>
+
+{'action': 'shell', 'args': {'_raw_params': 'grep -c \'"id":"100300"\' /var/ossec/logs/alerts/alerts.json; grep -c [...]
+
+wazuh | FAILED | rc=1 >>
+3771
+0The command exited with a non-zero return code.
+=== step1 count-2 2026-11-13 14:24:54 CST / 2026-11-13T20:24:54Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[ERROR]: Task failed: Module failed: The command exited with a non-zero return code.
+Origin: <adhoc 'shell' task>
+
+{'action': 'shell', 'args': {'_raw_params': 'grep -c \'"id":"100300"\' /var/ossec/logs/alerts/alerts.json; grep -c [...]
+
+wazuh | FAILED | rc=1 >>
+3771
+0The command exited with a non-zero return code.

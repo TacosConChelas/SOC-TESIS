@@ -1,0 +1,226 @@
+=== setup 2026-11-13 14:06:48 CST / 2026-11-13T20:06:48Z ===
+=== step1 time-guard 2026-11-13 14:06:48 CST / 2026-11-13T20:06:48Z ===
+make: Entering directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+time-guard: ok (14:06)
+make: Leaving directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+=== step2a start vm-strongswan 2026-11-13 14:06:51 CST / 2026-11-13T20:06:51Z ===
+rc= duration=43s finished 2026-11-13 14:07:34 CST / 2026-11-13T20:07:34Z
+VM running
+=== step2b start vm-wazuh 2026-11-13 14:07:40 CST / 2026-11-13T20:07:40Z ===
+rc=0 duration=45s finished 2026-11-13 14:08:25 CST / 2026-11-13T20:08:25Z
+=== step2c start vm-logrelay 2026-11-13 14:08:26 CST / 2026-11-13T20:08:26Z ===
+rc=0 duration=43s finished 2026-11-13 14:09:09 CST / 2026-11-13T20:09:09Z
+=== step2d start vm-honeyserver 2026-11-13 14:09:11 CST / 2026-11-13T20:09:11Z ===
+rc=0 duration=43s finished 2026-11-13 14:09:54 CST / 2026-11-13T20:09:54Z
+=== step3 vm list 2026-11-13 14:09:56 CST / 2026-11-13T20:09:56Z ===
+N               S           Ip
+--------------  ----------  ---------------
+vm-honeyserver  VM running  130.131.218.113
+vm-logrelay     VM running
+vm-strongswan   VM running  172.202.13.163
+vm-wazuh        VM running
+=== step4 tunnel poll (15s x <=4min) 2026-11-13 14:10:05 CST / 2026-11-13T20:10:05Z ===
+--- poll 1 14:10:06 CST / 20:10:06 rc=0
+plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+lab: #7, ESTABLISHED, IKEv2, 0e337b27abf9b67f_i* 1142ef93158b8a36_r
+  local  'pi.soc-tesis' @ 192.168.1.10[4500]
+  remote 'azure-vpn.soc-tesis' @ 172.202.13.163[4500]
+  AES_GCM_16-256/PRF_HMAC_SHA2_384/ECP_384
+  established 121s ago, rekeying in 13072s
+  lab: #15, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256
+    installed 121s ago, rekeying in 3359s, expires in 3839s
+    in  c7e19e77,  14063 bytes,   273 packets,     1s ago
+    out cf730e69, 212622 bytes,   332 packets,     1s ago
+    local  192.168.1.0/24
+    remote 10.50.0.0/16
+SA ESTABLISHED+INSTALLED first seen: poll 1 at 2026-11-13T20:10:06Z
+result: poll 1 at 2026-11-13T20:10:06Z
+=== step5 ping 2026-11-13 14:10:09 CST / 2026-11-13T20:10:09Z ===
+PING 10.50.40.10 (10.50.40.10) 56(84) bytes of data.
+
+--- 10.50.40.10 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2088ms
+
+PING 10.50.10.10 (10.50.10.10) 56(84) bytes of data.
+
+--- 10.50.10.10 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2025ms
+
+=== hygiene 2026-11-13 14:10:38 CST / 2026-11-13T20:10:38Z ===
+=== nota: ICMP bloqueado por NSG (sin regla ICMP); tunel verificado por TCP 22/1514/443 y 22222 y ping a 10.50.20.10 ===
+=== step6 ansible ping 2026-11-13 14:11:04 CST / 2026-11-13T20:11:04Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'strongswan' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'logrelay' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+honeyserver | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+wazuh | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+strongswan | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+logrelay | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+=== step7 clocks 2026-11-13 14:11:15 CST / 2026-11-13T20:11:15Z ===
+--- local: 2026-11-13T20:11:15.714Z
+honeyserver | CHANGED | rc=0 >>
+Reference ID    : 50484330 (PHC0)
+Stratum         : 1
+Ref time (UTC)  : Fri Nov 13 20:11:11 2026
+System time     : 0.000000284 seconds slow of NTP time
+Last offset     : -0.000000305 seconds
+RMS offset      : 0.000030605 seconds
+Frequency       : 10.983 ppm slow
+Residual freq   : -0.006 ppm
+Skew            : 0.264 ppm
+Root delay      : 0.000000001 seconds
+Root dispersion : 0.000017499 seconds
+Update interval : 8.0 seconds
+Leap status     : Normal
+wazuh | CHANGED | rc=0 >>
+Reference ID    : 50484330 (PHC0)
+Stratum         : 1
+Ref time (UTC)  : Fri Nov 13 20:11:08 2026
+System time     : 0.000000000 seconds slow of NTP time
+Last offset     : +0.000006624 seconds
+RMS offset      : 0.000012105 seconds
+Frequency       : 12.496 ppm slow
+Residual freq   : +0.042 ppm
+Skew            : 1.088 ppm
+Root delay      : 0.000000001 seconds
+Root dispersion : 0.000032608 seconds
+Update interval : 8.0 seconds
+Leap status     : Normal
+strongswan | CHANGED | rc=0 >>
+Reference ID    : 50484330 (PHC0)
+Stratum         : 1
+Ref time (UTC)  : Fri Nov 13 20:11:16 2026
+System time     : 0.000001710 seconds slow of NTP time
+Last offset     : -0.000002061 seconds
+RMS offset      : 0.000037844 seconds
+Frequency       : 6.326 ppm slow
+Residual freq   : -0.005 ppm
+Skew            : 0.272 ppm
+Root delay      : 0.000000001 seconds
+Root dispersion : 0.000009945 seconds
+Update interval : 8.0 seconds
+Leap status     : Normal
+logrelay | CHANGED | rc=0 >>
+Reference ID    : 50484330 (PHC0)
+Stratum         : 1
+Ref time (UTC)  : Fri Nov 13 20:11:15 2026
+System time     : 0.000000457 seconds slow of NTP time
+Last offset     : +0.000000586 seconds
+RMS offset      : 0.000042303 seconds
+Frequency       : 1.580 ppm fast
+Residual freq   : +0.009 ppm
+Skew            : 0.403 ppm
+Root delay      : 0.000000001 seconds
+Root dispersion : 0.000012264 seconds
+Update interval : 8.0 seconds
+Leap status     : Normal
+--- ubuntu74 timedatectl
+               Local time: Fri 2026-11-13 05:54:04 CST
+           Universal time: Fri 2026-11-13 11:54:04 UTC
+                 RTC time: Fri 2026-11-13 11:51:49
+                Time zone: America/Mexico_City (CST, -0600)
+System clock synchronized: no
+              NTP service: active
+          RTC in local TZ: no
+--- win11 w32tm (rc=0)
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Leap Indicator: 0(no warning)
+Stratum: 5 (secondary reference - syncd by (S)NTP)
+Precision: -23 (119.209ns per tick)
+Root Delay: 0.0440341s
+Root Dispersion: 7.7712417s
+ReferenceId: 0x287706E4 (source IP:  40.119.6.228)
+Last Successful Sync Time: 11/13/2026 1:26:41 AM
+Source: time.windows.com,0x9 
+Poll Interval: 10 (1024s)
+
+--- win11 Get-Date (before 2026-11-13T20:11:22.418Z)
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+2026-11-13T03:51:48.0766037-08:00
+rc=0 after 2026-11-13T20:11:23.286Z
+=== step8a containers 2026-11-13 14:11:31 CST / 2026-11-13T20:11:31Z ===
+[ERROR]: Task failed: Finalization of task args for 'ansible.builtin.shell' failed: Error while resolving value for '_raw_params': Syntax error in template: unexpected '.'
+
+Task failed.
+Origin: <adhoc 'shell' task>
+
+{'action': 'shell', 'args': {'_raw_params': 'docker ps --format "{{.Names}} {{.Status}}"'}, 'timeout': 0, [...]
+
+<<< caused by >>>
+
+Finalization of task args for 'ansible.builtin.shell' failed.
+Origin: <CLI option '-m'>
+
+shell
+
+<<< caused by >>>
+
+Error while resolving value for '_raw_params'.
+Origin: <CLI option '-a'>
+
+docker ps --format "{{.Names}} {{.Status}}"
+
+<<< caused by >>>
+
+Syntax error in template: unexpected '.'
+Origin: <CLI option '-a'>:1
+
+docker ps --format "{{.Names}} {{.Status}}"
+
+honeyserver | FAILED | rc=-1 >>
+Task failed: Finalization of task args for 'ansible.builtin.shell' failed: Error while resolving value for '_raw_params': Syntax error in template: unexpected '.'
+=== step8b agents try 1 2026-11-13 14:11:42 CST / 2026-11-13T20:11:42Z ===
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+
+List of agentless devices:

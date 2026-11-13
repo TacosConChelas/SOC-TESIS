@@ -1,0 +1,48 @@
+T_START=2026-11-13T20:30:49.094Z
+=== 3a ts_utc=2026-11-13T20:30:52.743Z ===
+Warning: Permanently added '130.131.218.113' (ED25519) to the list of known hosts.
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+Permission denied, please try again.
+rc=5
+=== 3b ts_utc=2026-11-13T20:31:33.445Z ===
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-11-13 14:31 -0600
+Nmap scan report for 130.131.218.113
+Host is up (0.18s latency).
+
+PORT     STATE SERVICE
+21/tcp   open  ftp
+445/tcp  open  microsoft-ds
+1433/tcp open  ms-sql-s
+1883/tcp open  mqtt
+3306/tcp open  mysql
+
+Nmap done: 1 IP address (1 host up) scanned in 1.84 seconds
+rc=0
+=== 3c ts_utc=2026-11-13T20:32:12.441Z ===
+rc=1
+=== 3d ts_utc=2026-11-13T20:32:50.040Z ===
+200
+rc=0
+=== 3e1 ts_utc=2026-11-13T20:33:27.323Z ===
+200
+rc=0
+=== 3e2 ts_utc=2026-11-13T20:34:04.855Z ===
+200
+rc=0
+=== 3b-bis (nmap -sT cerro con RST sin que Dionaea registrara accept; se repite con -sV) ts_utc=2026-11-13T20:39:43.799Z ===
+Starting Nmap 7.99 ( https://nmap.org ) at 2026-11-13 14:39 -0600
+Nmap scan report for 130.131.218.113
+Host is up (0.059s latency).
+
+PORT     STATE SERVICE      VERSION
+21/tcp   open  ftp          vsftpd 2.0.8 or later
+445/tcp  open  microsoft-ds Dionaea honeypot smbd
+1433/tcp open  ms-sql-s     Dionaea honeypot MS-SQL server
+1883/tcp open  mqtt
+3306/tcp open  mysql        MySQL 5.7.16
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 13.30 seconds
+rc=NO_CAPTURADO (PIPESTATUS vacio en zsh; nmap termino con "Nmap done" normal, exit 0 inferido, no medido)
