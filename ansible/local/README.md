@@ -192,7 +192,7 @@ Qué comprueba `honeypot-check`:
 3. tras `install,config`, Docker, containerd y el agente inactivos y deshabilitados (lo llama `honeypot-rehearse`);
 4. tras `start`, 7 contenedores `healthy`, el 22 atendido por el señuelo y sshd solo en el 22222;
 5. `ossec.conf` con el relay, `client_buffer` y los `localfile` de D4;
-6. `authd.pass`;
+6. `authd.pass`: presente y igual al del controlador antes de `start`; ausente tras `start`;
 7. el agente activo en el Manager, a través del relay;
 8. cada honeypot escribe un evento de prueba, y `wazuh-logcollector` lo lee: en `wazuh-logcollector.state` deben tener `events > 0` los 4 `localfile` (Cowrie, Dionaea y Tanner en JSON, y Mailoney en `journald`). El archivo lo escribe el agente en ejecución, así que sus contadores son los de la sesión actual;
 9. prueba negativa: con el egreso abierto, `start` falla en la sonda.
