@@ -22,6 +22,7 @@ esperado = [
     ("global/logall_json", "no"),
     ("auth/use_password", "yes"),
     ("auth/use_source_ip", "no"),
+    ("auth/force/enabled", "no"),
     ("vulnerability-detection/enabled", "no"),
     ("active-response/disabled", "yes"),
 ]

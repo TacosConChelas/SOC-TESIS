@@ -248,11 +248,22 @@
 # Con `force` activo, authd reemplaza el registro de un agente existente (mismo nombre o IP)
 # cuando lleva desconectado un rato: un honeyserver comprometido podría tomar la identidad de
 # otro agente. Apagado, un nombre ya registrado se rechaza.
-- name: Apagar el reenrolamiento forzado de agentes (force)
+# El ossec.conf de la 4.14.10 NO trae <force> (se aplica el valor interno, activado): hay que
+# insertarlo. Si algun dia lo trae en "yes", la primera tarea lo apaga.
+- name: Apagar el reenrolamiento forzado de agentes (force), si el bloque existe
   ansible.builtin.replace:
     path: /var/ossec/etc/ossec.conf
     regexp: '(?s)(<auth>(?:(?!</auth>).)*?<force>\s*<enabled>)\s*yes\s*(</enabled>)'
     replace: '\1no\2'
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
+# No coincide si <auth> ya tiene <force>: idempotente.
+- name: Insertar force=no en <auth> si no existe
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(?s)(<auth>(?:(?!</auth>|<force>).)*?)(\s*</auth>)'
+    replace: '\1\n    <force>\n      <enabled>no</enabled>\n    </force>\2'
   notify: Reiniciar wazuh-manager
   tags: [config]
 
@@ -272,7 +283,7 @@
       - (wazuh_ossec.content | b64decode) is search('<logall_json>no</logall_json>')
       - (wazuh_ossec.content | b64decode) is search('(?s)<vulnerability-detection>\s*<enabled>no</enabled>')
       - (wazuh_ossec.content | b64decode) is search('(?s)<active-response>\s*<disabled>yes</disabled>')
-      - ('<force>' not in (wazuh_ossec.content | b64decode)) or ((wazuh_ossec.content | b64decode) is search('(?s)<force>\s*<enabled>no</enabled>'))
+      - (wazuh_ossec.content | b64decode) is search('(?s)<auth>.*<force>\s*<enabled>no</enabled>.*</auth>')
     fail_msg: >-
       ossec.conf no tiene los valores de D5 (las sustituciones no coincidieron con el formato
       del archivo instalado). Revisa /var/ossec/etc/ossec.conf y ajusta las expresiones del rol.
