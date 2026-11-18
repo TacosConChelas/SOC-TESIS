@@ -211,7 +211,7 @@ stage9-rehearse: wazuh-secrets known-hosts
 	@bash "$(LOCAL)/scripts/net-toggle.sh" operate
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 	@echo "== stage9-rehearse: envejeciendo la caché de apt en las 4 VMs =="
-	@bash "$(LOCAL)/scripts/stage9-rehearse-apt-age.sh"
+	@for c in strongswan wazuh logrelay honeyserver; do docker exec soc-local-$$c touch -d '-2 hours' /var/lib/apt/lists; done
 	@echo "== stage9-rehearse: pasada completa 1 (sin tags, sin --limit) =="
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml \
 	  -e wazuh_enabled=true -e honeypot_enabled=true 2>&1 | tee "$(LOGS)/stage9-pass1.log"

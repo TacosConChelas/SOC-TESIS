@@ -111,10 +111,10 @@ Orden de roles: `common → strongswan → wazuh → logrelay → honeypot`. En 
 ### Notas del rol `wazuh` (Etapa 6)
 - Reglas locales (2026-11-09, Día 4): con tráfico real, 6 logins aceptados dieron 6 × 100102 con MTTD de 0,7 s; 12 fallos dieron 10 × 100101 y 2 × 100110 (una por ráfaga, en el 5.º fallo); sin falsos positivos (0 en la 1002 y 0 en los healthchecks de nivel 0).
 - Cowrie acepta a `root` con cualquier contraseña que no esté en su lista negra por defecto (`root`, `123456`...). Una fuerza bruta con otras contraseñas entra al primer intento y no genera `login.failed`: 100110 solo se activa con contraseñas vetadas o con claves públicas. La regla 100111 cubre ese caso (5 logins aceptados en 60 s desde la misma IP).
-- Requiere en el controlador `~/soc-tesis-secrets/wazuh/authd.pass` (D8, `openssl rand -base64 32`); el rol falla si falta o si ese directorio está dentro del repo.
+- Requiere en el controlador (`192.168.1.73`) `~/soc-tesis-secrets/wazuh/authd.pass` (D8, `openssl rand -base64 32`); el rol falla si falta o si ese directorio está dentro del repo.
 - La instalación con el asistente descarga más de 1 GB y tarda de 10 a 25 minutos: planear la ventana de egreso. Antes, `make pin-check` (la versión que instala el asistente puede diferir del baseline).
 - Si el gate de versión falla, es una desviación del baseline D1: se decide si sube `wazuh_expected_version`; el rol no instala nada más.
-- Al terminar, `wazuh-install-files.tar` (contraseñas de admin/API) queda en el controlador (`0600`) y se destruye en la VM. Cambiar la contraseña de admin es un paso manual posterior.
+- Al terminar, `wazuh-install-files.tar` (contraseñas de admin/API) queda en el controlador (`192.168.1.73`; `0600`) y se destruye en la VM. Cambiar la contraseña de admin es un paso manual posterior.
 
 ### Notas del rol `honeypot` (Etapa 6)
 - Validado en un ciclo real (2026-11-09, Día 4): tras `deallocate`/`start` sin tocar nada, 7/7 `healthy` y `RestartCount` 0 en tanner y snare (el fix `mode=1777` funciona).

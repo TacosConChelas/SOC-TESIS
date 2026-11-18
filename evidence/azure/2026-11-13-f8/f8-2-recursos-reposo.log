@@ -1,0 +1,129 @@
+=== step2 vmstat 2026-11-13 14:25:07 CST / 2026-11-13T20:25:07Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'logrelay' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  0      0 5332708  73436 1050256    0    0   232    59  292  248  4  2 92  2  0
+ 0  0      0 5332300  73456 1050572    0    0     0    64  462  442  0  0 100  0  0
+ 0  0      0 5332300  73480 1050676    0    0     0   254  459  428  0  0 99  1  0
+ 0  0      0 5332300  73532 1050848    0    0     0   134  572  595  0  0 99  0  0
+ 0  0      0 5328520  73588 1050812    0    0     0   120  520  466  1  0 99  0  0
+ 0  0      0 5328268  73636 1050712    0    0     0   165  550  492  1  0 99  0  0
+ 0  0      0 5328268  73692 1050632    0    0     0    96  506  482  0  0 99  0  0
+ 0  0      0 5328268  73704 1050876    0    0     0    76  447  428  0  0 100  0  0
+ 0  0      0 5328016  73736 1051052    0    0     0    80  448  429  0  0 99  0  0
+ 0  0      0 5328016  73796 1051316    0    0     0   164  570  594  0  0 99  0  0
+ 0  0      0 5328016  73816 1051476    0    0     0    71  478  435  1  0 99  0  0
+ 0  0      0 5328016  73868 1051456    0    0     0   124  574  501  1  0 98  0  0
+ 0  0      0 5327260  73976 1050940    0    0     0   248  580  537  1  0 99  1  0
+ 0  0      0 5327260  74000 1051208    0    0     0    74  456  433  0  0 100  0  0
+ 0  0      0 5327260  74040 1051372    0    0     0    86  510  509  0  0 99  0  0
+ 0  0      0 5327260  74104 1051632    0    0     0   175  559  571  0  0 99  0  0
+ 0  0      0 5327008  74132 1051840    0    0     0    79  462  447  0  0 100  0  0
+ 0  0      0 5326252  74180 1051852    0    0     0    96  534  500  1  0 99  0  0
+ 0  0      0 5326252  74580 1051440    0    0     0   297  698  651  1  0 98  1  0
+ 0  0      0 5326252  74628 1051644    0    0     0   274  489  456  0  0 99  0  0
+ 0  0      0 5326252  74648 1051876    0    0     0    36  505  505  0  0 100  0  0
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0      0 5326252  74740 1052208    0    0     0   178  583  600  0  0 99  0  0
+ 0  0      0 5326252  74804 1052628    0    0     0   130  514  492  0  0 99  0  0
+ 0  0      0 5326252  74828 1052412    0    0     0   153  554  493  1  0 98  0  0
+ 0  0      0 5326252  74896 1052384    0    0     0   108  524  494  0  0 99  0  0
+ 1  0      0 5325804  74948 1052928    0    0     0   150  674  675  1  0 99  0  0
+ 0  0      0 5325804  75016 1053744    0    0     0   109  643  624  1  0 99  0  0
+ 0  0      0 5325804  75084 1053784    0    0     0   110  557  570  0  0 99  0  0
+ 0  0      0 5325804  75100 1053484    0    0     0   112  489  455  0  0 99  0  0
+ 0  0      0 5318536  75132 1053752    0    0     0    82  583  553  1  0 98  0  0
+logrelay | CHANGED | rc=0 >>
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  0      0 326780  19544 319540    0    0   130    13   68   71  0  1 99  0  0
+ 0  0      0 326780  19576 319540    0    0     0   136   90   76  0  0 97  2  0
+ 0  0      0 326780  19592 319540    0    0     0     8   71   64  0  0 100  0  0
+ 0  0      0 326780  19612 319532    0    0     0    13   74   64  0  0 100  0  0
+ 0  0      0 326780  19620 319540    0    0     0     3  124  158  0  0 100  0  0
+ 0  0      0 326780  19636 319540    0    0     0     6   77   63  0  0 100  0  0
+ 0  0      0 326780  19644 319544    0    0     0     4   67   57  0  0 100  0  0
+ 0  0      0 326780  19660 319544    0    0     0     6   80   67  0  0 100  0  0
+ 0  0      0 326780  19676 319544    0    0     0     6   69   58  0  0 100  0  0
+ 0  0      0 326780  19692 319536    0    0     0     5   69   59  0  0 100  0  0
+ 0  0      0 326780  19700 319544    0    0     0     4  127  151  0  0 100  0  0
+ 0  0      0 326780  19716 319544    0    0     0     6   74   63  0  0 100  0  0
+ 0  0      0 326780  19724 319544    0    0     0     3   65   57  0  0 100  0  0
+ 0  0      0 326780  19740 319544    0    0     0     6   80   69  0  0 100  0  0
+ 0  0      0 326780  19756 319544    0    0     0     6   73   62  0  0 100  0  0
+ 0  0      0 326780  19772 319536    0    0     0     5   71   60  0  0 100  0  0
+ 0  0      0 326780  19780 319544    0    0     0     3  128  154  0  0 100  0  0
+ 0  0      0 326780  19796 319544    0    0     0     6   72   63  0  0 100  0  0
+ 0  1      0 326780  19812 319536    0    0     0     5   65   58  0  0 100  0  0
+ 0  0      0 326780  19820 319544    0    0     0     3   72   64  0  0 100  0  0
+ 0  0      0 326780  19836 319544    0    0     0     6   75   63  0  0 100  0  0
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  0      0 326780  19852 319548    0    0     0     5   66   59  0  0 100  0  0
+ 0  0      0 326780  19860 319548    0    0     0     3  143  167  0  0 100  0  0
+ 0  0      0 326780  19876 319548    0    0     0     8   76   65  0  0 100  0  0
+ 0  0      0 326780  19884 319552    0    0     0     3   64   57  0  0 100  0  0
+ 0  0      0 326780  19900 319552    0    0     0     8  123   86  0  0 100  0  0
+ 0  0      0 326780  19916 319552    0    0     0     6  111   79  0  0 100  0  0
+ 0  0      0 326780  19924 319552    0    0     0     3   60   56  0  0 100  0  0
+ 0  0      0 326780  19940 319552    0    0     0     6  131  160  0  0 100  0  0
+ 0  0      0 326780  19956 319552    0    0     0     6   74   65  0  0 100  0  0
+honeyserver | CHANGED | rc=0 >>
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 0  0      0 2019624  72956 1188376    0    0   530    38  329  565  3  2 93  1  0
+ 0  0      0 2020104  72980 1188464    0    0     0   129  425  713  2  1 96  1  0
+ 0  0      0 2007784  73012 1188492    0    0     0    66  539 1057  3  1 96  0  0
+ 0  0      0 2009304  73020 1188524    0    0     0    15  577 1027  3  1 96  0  0
+ 1  0      0 2016656  73052 1188572    0    0     0    78  406  685  3  1 97  0  0
+ 0  0      0 2025572  73068 1188588    0    0     0    28  528  971  2  1 97  0  0
+ 1  0      0 2024980  73092 1188636    0    0     0    86  601 1110  3  1 96  1  0
+ 0  0      0 2029608  73120 1188656    0    0     0    38  412  719  2  1 97  0  0
+ 0  0      0 2036520  73136 1188680    0    0     0    51  481  908  2  1 97  0  0
+ 0  0      0 2024752  73160 1188720    0    0     0    36  639 1155  4  1 95  0  0
+ 0  0      0 2027568  73184 1188720    0    0     0    42  389  676  2  1 97  0  0
+ 0  0      0 2031320  73200 1188756    0    0     0    26  556 1050  2  1 97  0  0
+ 0  0      0 2025800  73224 1188732    0    0     0    78  620 1139  4  1 95  0  0
+ 0  0      0 2016432  73248 1188732    0    0     0    40  401  687  2  1 97  0  0
+ 0  0      0 2031344  73264 1188748    0    0     0    34  518  966  3  1 96  0  0
+ 0  0      0 2033808  73288 1188776    0    0     0    50  613 1132  3  1 96  0  0
+ 0  0      0 2028080  73312 1188936    0    0     0    79  427  702  2  1 97  0  0
+ 0  0      0 2025060  73328 1188952    0    0     0    40  528 1017  2  1 97  0  0
+ 0  0      0 2027644  73360 1188984    0    0     0    68  618 1141  4  1 95  0  0
+ 0  0      0 2031088  73392 1188996    0    0     0    42  395  703  1  1 98  0  0
+ 0  0      0 2030344  73408 1189036    0    0     0    36  507  940  2  1 97  0  0
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0      0 2032744  73440 1189060    0    0     0    43  582 1105  2  1 97  0  0
+ 0  0      0 2027484  73464 1189084    0    0     0    78  427  720  2  1 97  0  0
+ 0  0      0 2034352  73480 1189108    0    0     0    42  547 1033  2  1 97  0  0
+ 0  0      0 2032572  73504 1189132    0    0     0    57  566 1113  2  1 96  0  0
+ 0  0      0 2028740  73532 1189304    0    0     2    41  662 1007  5  1 93  0  0
+ 0  0      0 2032832  73572 1189360    0    0     0    56  666 1079  6  1 93  0  0
+ 0  0      0 2027232  73604 1189384    0    0     0    49  623 1140  3  1 96  0  0
+ 0  0      0 2029672  73636 1189408    0    0     0    97  447  715  3  1 96  1  0
+ 0  0      0 2035348  73652 1189476    0    0     3    28  544 1027  2  1 96  0  0
+=== step2 mem/disk/cpu 2026-11-13 14:30:04 CST / 2026-11-13T20:30:04Z ===
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+               total        used        free      shared  buff/cache   available
+Mem:           15988        9684        5201           4        1102        5996
+Swap:              0           0           0
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/root        62G   23G   39G  37% /
+/dev/root        62G   23G   39G  37% /
+4

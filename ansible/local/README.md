@@ -192,7 +192,7 @@ Qué comprueba `honeypot-check`:
 3. tras `install,config`, Docker, containerd y el agente inactivos y deshabilitados (lo llama `honeypot-rehearse`);
 4. tras `start`, 7 contenedores `healthy`, el 22 atendido por el señuelo y sshd solo en el 22222;
 5. `ossec.conf` con el relay, `client_buffer` y los `localfile` de D4;
-6. `authd.pass`;
+6. `authd.pass`: presente y igual al del controlador antes de `start`; ausente tras `start`;
 7. el agente activo en el Manager, a través del relay;
 8. cada honeypot escribe un evento de prueba, y `wazuh-logcollector` lo lee: en `wazuh-logcollector.state` deben tener `events > 0` los 4 `localfile` (Cowrie, Dionaea y Tanner en JSON, y Mailoney en `journald`). El archivo lo escribe el agente en ejecución, así que sus contadores son los de la sesión actual;
 9. prueba negativa: con el egreso abierto, `start` falla en la sonda.
@@ -210,5 +210,5 @@ Pasada completa de `site.yml` sin `--tags` ni `--limit` sobre las 4 VMs, con el 
 
 - **Va después de `make wazuh-rehearse` y `make honeypot-rehearse`.** Exige el Manager de Wazuh activo y `/etc/soc-tesis/honeypot-started` en `honeyserver`; si falta alguno, falla diciendo qué correr antes.
 - **No está en `preflight`:** depende del Manager y de los dos rehearse previos. El objetivo en sí dura unos minutos.
-- **Qué hace:** cierra el egreso, envejece la caché en las 4 VMs (`stage9-rehearse-apt-age.sh` verifica el mtime), hace dos pasadas completas que deben dar `changed=0 failed=0`, un `--check --diff` igual y los checks finales.
+- **Qué hace:** cierra el egreso, envejece la caché en las 4 VMs (`touch -d '-2 hours'` sobre `/var/lib/apt/lists`), hace dos pasadas completas que deben dar `changed=0 failed=0`, un `--check --diff` igual y los checks finales.
 - **Qué NO valida:** el ciclo `deallocate`/`start` de Azure, el NSG real, el pull a través de `Allow-Out-Maintenance-Egress` ni el estado de Terraform.

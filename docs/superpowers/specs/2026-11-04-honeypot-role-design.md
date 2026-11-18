@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-11-04
 **Rama:** `practica/ansible-local`
-**Estado:** implementado en la rama `practica/ansible-local` (plan `docs/superpowers/plans/2026-11-04-honeypot-role.md`); refinamientos en §9 (decisión E1-3 del agente durante `install`: §9.10).
+**Estado:** implementado en la rama `practica/ansible-local`; refinamientos en §9 (decisión E1-3 del agente durante `install`: §9.10).
 **Fuentes:** `.knowledge/18_DECISIONES_IMPLEMENTACION.md` (D2, D4, D8), `.knowledge/17_SOFTWARE_BASELINE.md` (D1 §1–§2), `.knowledge/20_COMPOSE_REPRODUCIBLE.md`, ADR-006 (A6, E1-2, E1-3, E1-7, E1-8), `ansible/PIPELINE.md`, `docker-compose.yml`, `.env.example`, documentación de Wazuh (`localfile`).
 **Contexto:** cuarto subproyecto de P-A1. `common`, `logrelay` y `wazuh` ya están hechos.
 
@@ -21,7 +21,7 @@ En ningún momento puede haber un servicio del señuelo activo o habilitado mien
 |---|---|
 | Política del daemon (E1-3) | **Enfoque 1:** el daemon de Docker solo corre durante el pull de `install` y desde `start` en adelante. `install` no crea contenedores. |
 | Enfoque 2, descartado | `compose up --no-start` crea contenedores con `restart: unless-stopped`, y un reinicio o un `docker start` accidental los levanta con el egreso abierto. |
-| Enfoque 3, descartado | `docker save`/`load` desde el controlador. Evita el egreso para las imágenes, pero ningún ADR lo contempla y no ejercita el camino real del pull por digest. |
+| Enfoque 3, descartado | `docker save`/`load` desde el controlador (`192.168.1.73`). Evita el egreso para las imágenes, pero ningún ADR lo contempla y no ejercita el camino real del pull por digest. |
 | Versión del agente | `wazuh-agent={{ wazuh_expected_version }}-1` (hoy 4.14.10-1). Un agente más nuevo que el Manager no es válido, así que se usa la misma variable que el rol `wazuh`. |
 | Mailoney (D4) | **APROBADO (operador, 2026-11-04):** se queda en `journald` con filtro `CONTAINER_NAME`, sin etiqueta (ver §4.4). El plan B de D4 se descarta mientras el ensayo confirme que el decodificador JSON lee el mensaje. |
 | `containerd.io` | **APROBADO (operador, 2026-11-04):** `2.3.6-1~ubuntu.22.04~jammy`. Es la versión vigente en el repo cuando se publicó `docker-ce` 29.8.2 (2.3.6-1 el 2026-09-25 y docker-ce 29.8.2 el 2026-09-30, según el listado del pool `jammy`), y cumple `containerd.io (>= 2.1.5)` del `Depends` de `docker-ce`. La rama 2.4.x (2.4.2-3, 2026-10-20) queda fuera porque es posterior al par que publicó Docker. |
@@ -109,7 +109,7 @@ Si cambian los digests en producción (`honeypot-started` existe), el bloque se 
 - La clave lleva el prefijo `@` porque Wazuh descarta la etiqueta si la clave ya existe en el evento.
 - `<label>` solo funciona con `log_format json`. Mailoney se distingue por `CONTAINER_NAME` en las reglas. Si el operador elige el plan B de D4 (stdout a un archivo del bind), pasa a `json` con etiqueta y se agrega un cuarto directorio.
 
-`authd.pass`: el mismo patrón que el rol `wazuh`. Se lee de `wazuh_secrets_dir` en el controlador (el rol falla si no existe o si está dentro del repo) y se entrega en `/var/ossec/etc/authd.pass` con `640 root:wazuh` y `no_log`.
+`authd.pass`: el mismo patrón que el rol `wazuh`. Se lee de `wazuh_secrets_dir` en el controlador (`192.168.1.73`; el rol falla si no existe o si está dentro del repo) y se entrega en `/var/ossec/etc/authd.pass` con `640 root:wazuh` y `no_log`.
 
 ### 4.5 `start`
 
@@ -153,7 +153,7 @@ Si cambian los digests en producción (`honeypot-started` existe), el bloque se 
 | 3 | Tras `install,config`: docker, socket, containerd, agente y contenedores inactivos **y** deshabilitados |
 | 4 | Tras `start`: 7 contenedores `healthy`; el 22 lo atiende Cowrie (banner distinto de OpenSSH del host) y sshd sigue en el 22222 |
 | 5 | `ossec.conf` con el relay, `client_buffer`, los 4 `localfile` y las etiquetas `@honeypot` en los tres JSON |
-| 6 | `authd.pass` en `640 root:wazuh` con el mismo `sha256` que el del controlador, sin imprimirlo |
+| 6 | `authd.pass` en `640 root:wazuh` con el mismo `sha256` que el del controlador (`192.168.1.73`), sin imprimirlo |
 | 7 | El agente aparece activo en `agent_control -l` del Manager |
 | 8 | Un login fallido contra Cowrie aparece en `alerts.json` del Manager con `@honeypot: cowrie` |
 | 9 | Prueba negativa: con el egreso abierto, `start` falla en la sonda y no arranca nada |
@@ -172,14 +172,14 @@ Si cambian los digests en producción (`honeypot-started` existe), el bloque se 
 - Compose, `.env.example` y `config/` versionados (§2).
 - `pin-check` ampliado (parte de la implementación): lee directamente el índice `download.docker.com/linux/ubuntu/dists/jammy/stable/binary-amd64/Packages`, igual que ya hace con el de Wazuh y sin configurar el repo en el contenedor. Exige que `docker-ce`, `docker-ce-cli`, `containerd.io` y `docker-compose-plugin` existan en la versión de los `defaults` del rol y que `wazuh-agent` tenga `${wazuh_expected_version}-1`. También avisa si la clave de Wazuh caduca en menos de 60 días.
 - Baseline `17_SOFTWARE_BASELINE.md` actualizado a `wazuh-agent` 4.14.10-1 (Linux y MSI de Windows), a cargo del operador. Ya está comprobado que `4.14.10-1` existe en `packages.wazuh.com/4.x/apt` para agent, manager, indexer y dashboard (índice consultado el 2026-11-05).
-- `community.docker` en `requirements.yml` para el controlador real.
+- `community.docker` en `requirements.yml` para el controlador real (`192.168.1.73`).
 
 ## 8. Fuera de alcance
 
 - Reglas y decodificadores por honeypot en `local_rules.xml` (otra fase).
 - Plan B de Mailoney (descartado, §2).
 - Verificación E3 de los healthchecks contra las imágenes (se registra como resultado del ensayo).
-- Agentes del laboratorio (Windows 11, Ubuntu).
+- Agentes del laboratorio (Windows 11 `192.168.1.75`, Ubuntu `192.168.1.74`).
 
 ## 9. Refinamientos del plan de implementación (2026-11-04)
 

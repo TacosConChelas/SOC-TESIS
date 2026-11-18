@@ -1,0 +1,3 @@
+# Una entrada por acción. Sin credenciales (doc 19 §4): referenciarlas por nombre de variable.
+# L<n> | ts_utc | host_origen | comando | exit_code
+L1 | AAAA-MM-DDTHH:MM:SSZ | 192.168.1.73 | <comando exacto> | <rc>

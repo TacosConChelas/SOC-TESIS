@@ -1,0 +1,41 @@
+# E3 Windows 11 (192.168.1.75) - 2026-11-10 (sin enrolar, servicio parado)
+# Comandos ejecutados desde el host de administracion via ssh win11 (sesion con privilegios de Administrador).
+
+## Integridad del MSI (SHA-512)
+## Local (Get-FileHash -Algorithm SHA512 sobre wazuh-agent-4.14.10-1.msi):
+54f83c01dd35573d8501eab553ebdd72ad4de75383636efb25f01e782521e83281065f8075a369239c13a5a5e3f3599a754eb3204ff56cfce2b2afd9ae911152
+## Publicado (packages.wazuh.com/4.x/checksums/wazuh/4.14.10/wazuh-agent-4.14.10-1.msi.sha512):
+54f83c01dd35573d8501eab553ebdd72ad4de75383636efb25f01e782521e83281065f8075a369239c13a5a5e3f3599a754eb3204ff56cfce2b2afd9ae911152
+## Resultado: COINCIDEN (comparacion exacta, sin distinguir mayusculas)
+
+## Instalacion
+## msiexec /i <MSI> /q WAZUH_MANAGER=10.50.40.10 WAZUH_AGENT_NAME=win11-lab
+## Codigo de salida msiexec: 0
+## Ruta de instalacion existe: C:\Program Files (x86)\ossec-agent\wazuh-agent.exe
+
+## Version
+## FileVersion wazuh-agent.exe: v4.14.10
+## Paquete (Get-Package "Wazuh agent"): 4.14.10
+
+## Servicio WazuhSvc
+## Status: Stopped (no se arranco)
+## StartType: Automatic (no se cambio)
+
+## authd.pass (contenido NO leido; transferido solo por scp desde el host de administracion)
+## Tamano: 45 bytes
+## Ruta: C:\Program Files (x86)\ossec-agent\authd.pass
+## icacls (estado final):
+##   NT AUTHORITY\SYSTEM:(F)
+##   BUILTIN\Administrators:(F)
+## Herencia: deshabilitada (AreAccessRulesProtected = True); propietario: BUILTIN\Administrators
+## Nota: el primer icacls /grant:r dejo una entrada residual del usuario local (User2) con (F).
+##       Se quito con icacls /remove:g antes de dar por valido el estado. Estado final: solo SYSTEM y Administrators.
+
+## Limpieza
+## Eliminados: directorio Temp\wazuh-e3 (con el MSI), Temp\authd.pass.stage (ya no existia tras el Move-Item).
+## Comprobado: wazuh-e3 no existe; authd.pass.stage no existe; ningun MSI de Wazuh queda en C:\Users.
+
+## Higiene (sin exponer el secreto)
+## Get-ChildItem C:\Users -Recurse -Filter 'authd.pass*' (incluye Descargas, Escritorio y Temp) -> 0 coincidencias
+## Coincidencias fuera de C:\Users: 1 (C:\Program Files (x86)\ossec-agent\authd.pass, esperado)
+## Ningun comando del operador/agente llevo la contrasena en argv: la clave solo se movio como archivo.

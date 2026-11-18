@@ -1,0 +1,21 @@
+# E3 Ubuntu (192.168.1.74) - relectura 2026-11-10 (sin enrolar, sin arrancar)
+# Comandos ejecutados desde el host de administracion via ssh ubuntu74.
+
+## dpkg -l wazuh-agent
+hi  wazuh-agent    4.14.10-1    amd64        Wazuh agent
+
+## apt-mark showhold
+wazuh-agent
+
+## systemctl is-active wazuh-agent
+inactive
+
+## systemctl is-enabled wazuh-agent
+disabled
+
+## sudo -n stat -c "%A %U:%G %s bytes" /var/ossec/etc/authd.pass
+-rw-r----- root:wazuh 45 bytes
+
+## Higiene
+## sudo -n grep -cFf /var/ossec/etc/authd.pass ~/.bash_history  -> 0 coincidencias (grep rc=1, normal)
+## ls /tmp/authd.pass*  -> no existe

@@ -1,0 +1,24 @@
+== E2 Windows 192.168.1.75 — post-reinicio — 2026-11-10 00:15 CST
+== reinicio ordenado: shutdown /r /t 5 iniciado 2026-11-10 00:09:00 (evento 1074, motivo "E2 verificacion R1")
+== boot (LastBootUpTime) = Tuesday, November 10, 2026 12:09:47 AM
+== incidencia: SSH sin respuesta desde ~00:09:53 hasta ~00:15 (tiempo de arranque y servicios; sin causa identificada)
+
+== IPv4 Ethernet
+192.168.1.75
+
+== Get-NetRoute 10.50.0.0/16
+DestinationPrefix NextHop            Store
+10.50.0.0/16      192.168.1.10 ActiveStore
+
+== Get-NetRoute 0.0.0.0/0 (IPv4)
+NextHop 192.168.1.254
+
+== Get-NetIPv4Protocol IcmpRedirects
+Disabled
+
+== Find-NetRoute -RemoteIPAddress 10.50.40.10
+NextHop 192.168.1.10  InterfaceAlias Ethernet
+
+== route print -4 (10.50.0.0)
+Active Routes:     10.50.0.0  255.255.0.0  192.168.1.10  192.168.1.75  26
+Persistent Routes: 10.50.0.0  255.255.0.0  192.168.1.10  1

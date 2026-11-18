@@ -1,0 +1,68 @@
+== E2 Windows 192.168.1.75 — tras aplicar (pre-reinicio) — 2026-11-09T23:24:38-06:00
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+== route print -4
+===========================================================================
+Interface List
+ 10...XX XX XX XX XX XX ......Intel(R) 82574L Gigabit Network Connection
+  1...........................Software Loopback Interface 1
+===========================================================================
+
+IPv4 Route Table
+===========================================================================
+Active Routes:
+Network Destination        Netmask          Gateway       Interface  Metric
+          0.0.0.0          0.0.0.0    192.168.1.254     192.168.1.75     25
+        10.50.0.0      255.255.0.0     192.168.1.10     192.168.1.75     26
+        127.0.0.0        255.0.0.0         On-link         127.0.0.1    331
+        127.0.0.1  255.255.255.255         On-link         127.0.0.1    331
+  127.255.255.255  255.255.255.255         On-link         127.0.0.1    331
+      192.168.1.0    255.255.255.0         On-link      192.168.1.75    281
+     192.168.1.75  255.255.255.255         On-link      192.168.1.75    281
+    192.168.1.255  255.255.255.255         On-link      192.168.1.75    281
+        224.0.0.0        240.0.0.0         On-link         127.0.0.1    331
+        224.0.0.0        240.0.0.0         On-link      192.168.1.75    281
+  255.255.255.255  255.255.255.255         On-link         127.0.0.1    331
+  255.255.255.255  255.255.255.255         On-link      192.168.1.75    281
+===========================================================================
+Persistent Routes:
+  Network Address          Netmask  Gateway Address  Metric
+        10.50.0.0      255.255.0.0     192.168.1.10       1
+===========================================================================
+
+== Find-NetRoute 10.50.40.10
+
+
+IPAddress      : 192.168.1.75
+NextHop        : 
+InterfaceAlias : Ethernet
+
+IPAddress      : 
+NextHop        : 192.168.1.10
+InterfaceAlias : Ethernet
+
+
+
+== IcmpRedirects
+
+
+IcmpRedirects : Disabled
+
+
+
+== ipconfig
+
+Windows IP Configuration
+
+
+Ethernet adapter Ethernet:
+
+   Connection-specific DNS Suffix  . : 
+   IPv6 Address. . . . . . . . . . . : 2806:10a6:f:d95:2561:6f6b:f51b:627d
+   Temporary IPv6 Address. . . . . . : 2806:10a6:f:d95:81fd:261f:dd47:36db
+   Link-local IPv6 Address . . . . . : fe80::b25b:6826:e862:a523%10
+   IPv4 Address. . . . . . . . . . . : 192.168.1.75
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Default Gateway . . . . . . . . . : fe80::1%10
+                                       192.168.1.254

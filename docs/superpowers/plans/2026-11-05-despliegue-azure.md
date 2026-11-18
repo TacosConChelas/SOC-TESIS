@@ -1,6 +1,8 @@
 # Primer despliegue en Azure — plan de implementación
 
 > **Para agentes:** SUB-SKILL REQUERIDA: superpowers:executing-plans (en esta sesión, con puntos de control). La Parte A se puede delegar por tarea; la Parte B **no**: cada `apply`, cada gate y cada paso con el PSK los ejecuta o autoriza el operador. Los pasos usan casillas (`- [ ]`).
+>
+> **Actualización 2026-11-09 (E1):** «equipo del operador» = host de administración `192.168.1.73` (IP fija por reserva MAC en el router, operador 2026-11-09). El texto original se conserva.
 
 **Objetivo:** llevar las 4 VMs de `terraform/lab` de cero a capturando, siguiendo `ansible/PIPELINE.md` (Etapas 0–9), con lo aprendido en el ensayo local del 2026-11-05.
 
@@ -31,7 +33,7 @@
 | En Azure, con el egreso cerrado, `curl` da **timeout**, no error de DNS | `Allow-Out-DNS` (prio 100) sigue permitido; en local la red `internal` no tenía DNS (`curl: (6)`). Los checks aceptan cualquier fallo. |
 | Se instala también **`charon-systemd`** (rol `strongswan` y bootstrap) | Hallado al ejecutar la Tarea A2: `strongswan-swanctl` solo trae la CLI, y el daemon IKE y `strongswan.service` vienen en `charon-systemd`. En Azure, la Etapa 8 (`Asegurar strongSwan activo`) habría fallado y el túnel no habría levantado. En local no se veía porque esa tarea se salta en contenedor. |
 | El ciclo `deallocate`/`start` es una **prueba explícita** (Día 3) | Es el mayor riesgo del diseño y en local solo se aproxima. |
-| Red Docker local en `10.50.0.0/16` | Choca con la ruta a Azure en el equipo del operador; `make clean` tras A3. |
+| Red Docker local en `10.50.0.0/16` | Choca con la ruta a Azure en el equipo del operador (`192.168.1.73`); `make clean` tras A3. |
 
 ---
 
@@ -105,7 +107,7 @@ La Pi debe usar las mismas identidades, invertidas.
 
 **Archivos:**
 - Crear: `ansible/azure/bootstrap-strongswan.sh` (se ejecuta **en la VM**)
-- Crear: `ansible/azure/psk-deliver.sh` (se ejecuta en el equipo del operador)
+- Crear: `ansible/azure/psk-deliver.sh` (se ejecuta en el equipo del operador `192.168.1.73`)
 
 **Interfaces:**
 - `bootstrap-strongswan.sh` recibe el PSK en la variable de entorno `PSK`. Es idempotente e imprime `swanctl --list-conns` y `psk-sha256: <12 hex>`.
@@ -306,7 +308,7 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - [x] Higiene: `grep -rFf ~/soc-tesis-secrets/ipsec/psk.hex ~/.zsh_history ~/.bash_history .. 2>/dev/null | wc -l` → `0`. `az vm run-command list -g rg-soc-tesis-lab --vm-name vm-strongswan -o tsv | wc -l` → `0`.
 
 **Etapa 5 · Túnel** — **Gate:** sin túnel no se sigue.
-- [x] En el equipo del operador (R1, no persistente): `sudo ip route replace 10.50.0.0/16 via 192.168.1.10` y `ip route get 10.50.20.10` → `via 192.168.1.10`.
+- [x] En el equipo del operador (`192.168.1.73`) (R1, no persistente): `sudo ip route replace 10.50.0.0/16 via 192.168.1.10` y `ip route get 10.50.20.10` → `via 192.168.1.10`.
 - [ ] En la Pi: `ssh -t soc71 sudo /root/soc-tesis-ipsec/activar.sh <strongswan_public_ip>` (P8: arranca sin `enable`; tras un reinicio de la Pi se vuelve a ejecutar).
 - [ ] `swanctl --list-sas` (Pi) → `ESTABLISHED` + `INSTALLED`. `ping -c3 10.50.20.10` desde la Pi y desde 192.168.1.73.
 - [x] `ansible all -m ping` → 4 `pong` (honeyserver por el 22222) con `StrictHostKeyChecking` activo.
@@ -323,12 +325,12 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - [x] `terraform -chdir=../terraform/lab apply -var maintenance_egress=false` (el plan solo quita las 4 reglas).
 - [x] `ansible all -m command -a 'curl -m5 -sS -o /dev/null http://1.1.1.1'` y `… https://example.com` → **fallan en las 4** (timeout; el DNS sí resuelve).
 - [x] `ansible all -m ping` → 4 `pong` (el túnel sigue).
-- [x] Cierre del día: `az vm deallocate` en orden inverso; `swanctl --terminate --ike lab` en la Pi. Tras reiniciar el equipo del operador, repetir la ruta R1 (`sudo ip route replace 10.50.0.0/16 via 192.168.1.10`): no persiste.
+- [x] Cierre del día: `az vm deallocate` en orden inverso; `swanctl --terminate --ike lab` en la Pi. Tras reiniciar el equipo del operador (`192.168.1.73`), repetir la ruta R1 (`sudo ip route replace 10.50.0.0/16 via 192.168.1.10`): no persiste.
 
 ## Día 2 — Wazuh, honeypot, cierre y arranque (~3 h)
 
 - [x] Repetir la Tarea A3 (`pin-check` como mínimo); si se repite el ensayo, `make clean` después. `make time-guard`.
-- [x] `az vm start` en orden: strongswan → wazuh → logrelay → honeyserver. En la Pi: `swanctl --list-sas`; si no hay SA, `--initiate`. Si se reinició el equipo del operador, reponer la ruta R1 (`sudo ip route replace 10.50.0.0/16 via 192.168.1.10`). `ansible all -m ping` → 4 `pong`. **Primera observación del ciclo:** anotar cuánto tardó la SA y si hizo falta intervenir.
+- [x] `az vm start` en orden: strongswan → wazuh → logrelay → honeyserver. En la Pi: `swanctl --list-sas`; si no hay SA, `--initiate`. Si se reinició el equipo del operador (`192.168.1.73`), reponer la ruta R1 (`sudo ip route replace 10.50.0.0/16 via 192.168.1.10`). `ansible all -m ping` → 4 `pong`. **Primera observación del ciclo:** anotar cuánto tardó la SA y si hizo falta intervenir.
 - [x] **Abrir egreso** (Etapa 3, gate escrito).
 
 **Etapa 6b · Wazuh** (descarga >1 GB, 10–25 min)
@@ -362,7 +364,7 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - [x] `ansible-playbook site.yml --check --diff` → sin cambios.
 - [x] `terraform -chdir=../terraform/lab plan -var maintenance_egress=false -detailed-exitcode` → 0.
 - [x] Evidencia en `evidence/azure/<fecha>/`: logs, huellas, versiones, tabla del ciclo, `SHA256SUMS`. Higiene: `grep -rFf ~/soc-tesis-secrets/ipsec/psk.hex ../$EV` y lo mismo con `authd.pass` → 0.
-- [ ] Cost Management: comparar el gasto real con el ≈ USD 35/mes de ADR-006 §6.
+- [x] Cost Management: comparar el gasto real con el ≈ USD 35/mes de ADR-006 §6. (2026-11-13: proyección ≈ 33,6 USD/mes, ver `10-cierre-dia4.md`.)
 - [x] `deallocate` en orden inverso.
 
 ## Si algo falla
@@ -388,7 +390,7 @@ EV=evidence/azure/$(date +%F); mkdir -p "../$EV"      # salidas sin secretos
 - **Día 1** (infraestructura, bootstrap, túnel, roles base y cierre de egreso): [`7-cierre-egreso-y-dia1.md`](../../../evidence/azure/2026-11-08/7-cierre-egreso-y-dia1.md) y [`6a-resumen.md`](../../../evidence/azure/2026-11-08/6a-resumen.md). Hallazgos: DNS con la IP del resolver y `--name` en `psk-deliver` (commit `7dd495e`).
 - **Día 2** (Wazuh, honeypot, arranque y evento de prueba): [`8-cierre-dia2.md`](../../../evidence/azure/2026-11-08/8-cierre-dia2.md). Sin reglas de Cowrie, el evento llega a Wazuh pero no genera alerta.
 - **Día 3** (ciclo `deallocate`/`start` y aceptación): [`9-cierre-dia3.md`](../../../evidence/azure/2026-11-08/9-cierre-dia3.md). Hallazgos: tanner no sobrevivió al ciclo (corregido con `mode=1777`, commit `0689283`; confirmado en el Día 4 tras un `deallocate`/`start` real: 7/7 `healthy`); el túnel no se levantaba solo tras un `start` (causa y arreglo `close_action = start`; **resuelto en el Día 4**), diagnosticado en [`2026-11-08-riesgos-post-dia3.md`](2026-11-08-riesgos-post-dia3.md) (L4).
-- **Día 4** (validación de los fixes y de las reglas): [`10-cierre-dia4.md`](../../../evidence/azure/2026-11-09/10-cierre-dia4.md). Tanner, túnel (SA sola en ~26 s), detección (MTTD 0,7 s) y Etapa M validados. Costos: 1,73 USD acumulados, aún sin día completo.
+- **Día 4** (validación de los fixes y de las reglas): [`10-cierre-dia4.md`](../../../evidence/azure/2026-11-09/10-cierre-dia4.md). Tanner, túnel (SA sola en ~26 s), detección (MTTD 0,7 s) y Etapa M validados. Costos: 4,67 USD acumulados al 11-12; fijo 0,72 USD/día, proyección ≈ 33,6 USD/mes.
 - **Sin registro por paso:** las casillas del Día 1 que siguen en `[ ]` (Etapas 1–5) se ejecutaron (las etapas posteriores dependen de ellas), pero su salida no quedó en la evidencia; no se marcan para no afirmar lo que no está registrado.
 - **Higiene del Día 3** (verificada 2026-11-08 19:00): 0 coincidencias de `psk.hex` y `authd.pass` en la carpeta; `SHA256SUMS` correcto.
-- **Pendiente:** Cost Management frente a ≈ USD 35/mes: la API devolvió 1,73 USD acumulados el 2026-11-09 (datos del 11-09 parciales); comparar con días completos pasadas 24–48 h (`az rest` a `Microsoft.CostManagement/query`; `az consumption` devuelve nulos).
+- **Costos (cerrado 2026-11-13):** con días completos, fijo 0,72 USD/día (discos + IPs) y cómputo ≈ 0,234 USD/h → ≈ 33,6 USD/mes a 50 h, frente a ≈ 35 de ADR-006 §6. Se consulta con `az rest` a `Microsoft.CostManagement/query` (`az consumption` devuelve nulos).

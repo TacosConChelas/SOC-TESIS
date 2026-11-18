@@ -1,0 +1,37 @@
+{"mgr_ts": "2026-11-13T10:02:14.162+0000", "evt_ts": "2026-11-13T09:59:47.2876793Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4728", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.162+0000", "evt_ts": "2026-11-13T09:59:47.2879981Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4720", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.180+0000", "evt_ts": "2026-11-13T09:59:47.2916936Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4722", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.202+0000", "evt_ts": "2026-11-13T09:59:47.2917525Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.220+0000", "evt_ts": "2026-11-13T09:59:47.3276237Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.259+0000", "evt_ts": "2026-11-13T09:59:50.3642273Z", "agent.name": "win11-lab", "rule.id": "60111", "rule.level": 8, "rule.description": "User account disabled or deleted", "eventID": "4726", "targetUser": "soc-test-a"}
+{"mgr_ts": "2026-11-13T10:02:14.259+0000", "evt_ts": "2026-11-13T09:59:50.3639425Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4729", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.277+0000", "evt_ts": "2026-11-13T09:59:50.3683814Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4728", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.294+0000", "evt_ts": "2026-11-13T09:59:50.3686133Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4720", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.316+0000", "evt_ts": "2026-11-13T09:59:50.3688593Z", "agent.name": "win11-lab", "rule.id": "60109", "rule.level": 8, "rule.description": "User account enabled or created", "eventID": "4722", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.334+0000", "evt_ts": "2026-11-13T09:59:50.3689102Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.352+0000", "evt_ts": "2026-11-13T09:59:50.3999589Z", "agent.name": "win11-lab", "rule.id": "60110", "rule.level": 8, "rule.description": "User account changed", "eventID": "4738", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:14.374+0000", "evt_ts": "2026-11-13T09:59:53.4218085Z", "agent.name": "win11-lab", "rule.id": "60160", "rule.level": 5, "rule.description": "Domain Users Group Changed", "eventID": "4729", "targetUser": "None"}
+{"mgr_ts": "2026-11-13T10:02:14.392+0000", "evt_ts": "2026-11-13T09:59:53.4221774Z", "agent.name": "win11-lab", "rule.id": "60111", "rule.level": 8, "rule.description": "User account disabled or deleted", "eventID": "4726", "targetUser": "soc-test-b"}
+{"mgr_ts": "2026-11-13T10:02:53.110+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.120+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.120+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.138+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.138+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"mgr_ts": "2026-11-13T10:02:53.138+0000", "evt_ts": "Nov", "agent.name": "ubuntu-lab", "rule.id": "5710", "rule.level": 5, "rule.description": "sshd: Attempt to login using a non-existent user", "srcuser": "nouser"}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "52000", "n": 8}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "52002", "n": 40}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "5402", "n": 7}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "5501", "n": 21}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "5502", "n": 19}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "5503", "n": 3}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "5710", "n": 6}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "ubuntu-lab", "rule.id": "5715", "n": 10}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "60106", "n": 16}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "60109", "n": 4}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "60110", "n": 4}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "60111", "n": 2}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "60137", "n": 16}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "60160", "n": 4}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "67023", "n": 8}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "67024", "n": 8}}
+{"resumen_conteo_por_regla_post_T_off": {"agent.name": "win11-lab", "rule.id": "67028", "n": 24}}

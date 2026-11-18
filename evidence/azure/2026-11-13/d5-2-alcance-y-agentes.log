@@ -1,0 +1,253 @@
+
+=== E4 paso 2 · alcance y agentes · 2026-11-13 01:19:34 CST (-0600) ===
+Log: evidence/azure/2026-11-13/d5-2-alcance-y-agentes.log
+
+--- PASO 1a ubuntu74 estado (solo lectura) 2026-11-13 01:19:39 CST ---
+lo               UNKNOWN        127.0.0.1/8 
+enp1s0           UP             192.168.1.74/24 
+--- route ---
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache 
+--- agente ---
+inactive
+disabled
+bash: line 8: bc: command not found
+bash: line 8: printf: : invalid number
+rc_ssh_ubuntu74=1  t_ssh_ubuntu74=0.0s
+PASO 1a bis: ssh ubuntu74 solo conexion rc=0 t=183ms 01:19:47
+
+--- PASO 1b win11 estado (solo lectura) 2026-11-13 01:19:53 CST ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+
+IPAddress    PrefixLength InterfaceAlias
+---------    ------------ --------------
+192.168.1.75           24 Ethernet      
+
+
+--- route ---
+
+IPAddress    NextHop      DestinationPrefix
+---------    -------      -----------------
+192.168.1.75                               
+             192.168.1.10 10.50.0.0/16     
+
+
+--- servicio ---
+Running
+rc_ssh_win11=0  t_ssh_win11=2828ms
+
+--- PASO 2a ubuntu74 alcance TCP 2026-11-13 01:20:06 CST ---
+/usr/bin/nc
+== 1514 ==
+Connection to 10.50.40.10 1514 port [tcp/*] succeeded!
+rc1514=0
+== 1515 ==
+Connection to 10.50.40.10 1515 port [tcp/*] succeeded!
+rc1515=0
+rc_ssh=0
+
+--- PASO 2b win11 alcance TCP 2026-11-13 01:20:10 CST ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+1514 TcpTestSucceeded=True
+1515 TcpTestSucceeded=True
+rc_ssh_win11=0
+
+--- PASO 3a ubuntu74 handshake TLS 1515 (sin enrolar) 2026-11-13 01:20:24 CST ---
+/usr/bin/openssl
+== s_client ==
+rc_grep=1
+t_handshake_ubuntu74=15501ms
+
+--- PASO 3a-bis ubuntu74 TLS real a 443 (diagnostico MTU, sin enrolar) 2026-11-13 01:21:02 CST ---
+rc_grep=1
+== route mtu ==20
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache expires 547sec mtu 1430 
+t_tls443_ubuntu74=15473ms
+
+--- PASO 3a-ter ubuntu74 connect a 443 y 55000 (solo lectura) 01:21:26 ---
+-- 443 --
+Connection to 10.50.40.10 443 port [tcp/https] succeeded!
+rc=0
+-- 55000 --
+nc: connect to 10.50.40.10 port 55000 (tcp) timed out: Operation now in progress
+rc=1
+== pmtu cache 1430: tamano max sin fragmentar ==
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache expires 533sec mtu 1430 
+
+--- PASO 3b win11 TLS real a 443 (diagnostico MTU; 1515 no es TLS) 2026-11-13 01:21:46 CST ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+rc_ssh_win11=0
+
+--- PASO 3b-retry win11 TLS 443 (EncodedCommand) 01:21:54 ---
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+#< CLIXML
+tcp_connect=ok 155ms
+ERROR: Exception calling "EndAuthenticateAsClient" with "1" argument(s): "There is no Runspace available to run scripts in this thread. You can provide one in the DefaultRunspace property of the System.Management.Automation.Runspaces.Runspace type. The script block you attempted to invoke was:  param($a,$b,$cert,$d) $true " t=330ms
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Obj S="progress" RefId="0"><TN RefId="0"><T>System.Management.Automation.PSCustomObject</T><T>System.Object</T></TN><MS><I64 N="SourceId">1</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil /><PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj></Objs>rc_ssh_win11=0
+
+--- PASO 3b-retry2 win11 TLS 443 (sin callback) 01:22:07 ---
+tcp_connect=ok 156ms
+rc_ssh_win11=0
+
+--- PASO 3b-retry3 win11 TLS 443 (sincrono, timeout externo 20s) 01:22:24 ---
+tcp_connect=ok 150ms
+handshake_excepcion=Exception calling "AuthenticateAsClient" with "4" argument(s): "The remote certificate is invalid according to the validation procedure."
+SslProtocol= t=313ms
+rc_win11_tls=0
+#< CLIXML
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Obj S="progress" RefId="0"><TN RefId="0"><T>System.Management.Automation.PSCustomObject</T><T>System.Object</T></TN><MS><I64 N="SourceId">1</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil /><PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj></Objs>
+
+--- PASO 3c ubuntu74 TLS 443 sin filtro, 3 intentos 01:22:33 ---
+== intento 1 ==
+Connecting to 10.50.40.10
+rc_pipe=0
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache expires 458sec mtu 1430 
+== intento 2 ==
+Connecting to 10.50.40.10
+rc_pipe=0
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache expires 446sec mtu 1430 
+== intento 3 ==
+Connecting to 10.50.40.10
+rc_pipe=0
+10.50.40.10 via 192.168.1.10 dev enp1s0 src 192.168.1.74 uid 1000 
+    cache expires 434sec mtu 1430 
+
+--- PASO 3d contexto Manager: agentes enrolados AHORA (solo lectura) 01:23:31 ---
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+
+List of agentless devices:
+rc_ansible=0
+
+--- PASO 3e win11 detalle del servicio y ossec.log (solo lectura) 01:23:45 ---
+State=Running StartMode=Auto
+--- ossec.log (ultimas 25, filtradas) ---
+2026/11/13 01:00:53 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:02:38 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:04:29 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:06:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:08:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:10:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:12:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:14:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:16:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:18:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:20:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+2026/11/13 01:22:24 wazuh-agent: ERROR: SSL error (5). Connection refused by the manager. Maybe the port specified is incorrect.
+rc=0
+
+--- PASO 3f Manager: authd rechaza? (solo lectura) 01:23:55 ---
+wazuh | CHANGED | rc=0 >>
+2026/11/08 23:23:42 wazuh-authd: INFO: Agent key generated for 'vm-honeyserver' (requested by any)
+2026/11/08 23:33:30 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/08 23:33:31 wazuh-authd: INFO: Exiting...
+2026/11/08 23:33:35 wazuh-authd: INFO: Started (pid: 64272).
+2026/11/08 23:33:35 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/08 23:38:26 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/08 23:38:27 wazuh-authd: INFO: Exiting...
+2026/11/08 23:38:30 wazuh-authd: INFO: Started (pid: 66098).
+2026/11/08 23:38:30 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/08 23:41:11 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/08 23:41:12 wazuh-authd: INFO: Exiting...
+2026/11/09 00:00:38 wazuh-authd: INFO: Started (pid: 1281).
+2026/11/09 00:00:38 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/09 00:34:54 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/09 00:34:55 wazuh-authd: INFO: Exiting...
+2026/11/09 07:09:46 wazuh-authd: INFO: Started (pid: 1282).
+2026/11/09 07:09:46 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/09 07:19:44 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/09 07:19:45 wazuh-authd: INFO: Exiting...
+2026/11/09 07:19:48 wazuh-authd: INFO: Started (pid: 5764).
+2026/11/09 07:19:48 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+2026/11/09 07:55:26 wazuh-authd: INFO: (1225): SIGNAL [(15)-(Terminated)] Received. Exit Cleaning...
+2026/11/09 07:55:27 wazuh-authd: INFO: Exiting...
+2026/11/13 06:55:09 wazuh-authd: INFO: Started (pid: 1287).
+2026/11/13 06:55:09 wazuh-authd: INFO: Accepting connections on port 1515. Using password specified on file: etc/authd.pass
+===
+LISTEN 0      128               0.0.0.0:1515       0.0.0.0:*    users:(("wazuh-authd",pid=1287,fd=6))    
+LISTEN 0      128               0.0.0.0:1514       0.0.0.0:*    users:(("wazuh-remoted",pid=1435,fd=4))  
+rc=0
+
+--- PASO 3g win11 config del agente (solo lectura) 01:24:19 ---
+--- ossec.conf win11 (address/port/enrollment) ---
+<address>10.50.40.10</address>
+<port>1514</port>
+<protocol>tcp</protocol>
+<enrollment>
+</enrollment>
+--- client.keys ---
+0 bytes
+--- primeras lineas del log (arranque del servicio) ---
+2026/11/11 00:00:10 wazuh-agent: INFO: Starting new log after rotation.
+2026/11/11 00:00:47 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+2026/11/11 00:01:08 wazuh-agent: ERROR: (1208): Unable to connect to enrollment service at '[10.50.40.10]:1515'
+2026/11/11 00:01:58 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+2026/11/11 00:02:19 wazuh-agent: ERROR: (1208): Unable to connect to enrollment service at '[10.50.40.10]:1515'
+2026/11/11 00:03:14 wazuh-agent: INFO: Requesting a key from server: 10.50.40.10
+
+--- PASO 3h Pi: set vpn_clients y SA (solo lectura) 01:24:33 ---
+table inet filter {
+	set vpn_clients {
+		type ipv4_addr
+		elements = { 192.168.1.73, 192.168.1.74,
+			     192.168.1.75 }
+	}
+}
+=== swanctl ===
+lab: #5, ESTABLISHED, IKEv2, a0827220147bc516_i* 0329827add01a0eb_r
+  local  'pi.soc-tesis' @ 192.168.1.10[4500]
+  remote 'azure-vpn.soc-tesis' @ 172.202.13.163[4500]
+  AES_GCM_16-256/PRF_HMAC_SHA2_384/ECP_384
+  established 1708s ago, rekeying in 12044s
+  lab: #10, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256
+    installed 1708s ago, rekeying in 1540s, expires in 2252s
+    in  c20e9fc7, 173258 bytes,  1007 packets,    10s ago
+    out c8d71d02, 1365287 bytes,  1686 packets,    10s ago
+    local  192.168.1.0/24
+    remote 10.50.0.0/16
+rc=0
+
+=== GATE PASOS 1-3 · 2026-11-13 01:25 CST (-0600) ===
+Paso 1 (estado, solo lectura)
+  ubuntu74: enp1s0 192.168.1.74/24; ruta 10.50.40.10 via 192.168.1.10 dev enp1s0 (SIN mtu);
+            wazuh-agent inactive / disabled.   ssh ubuntu74 = 183 ms (sin incidencia).
+  win11   : 192.168.1.75/24 Ethernet; NextHop 192.168.1.10 10.50.0.0/16; ssh = 2828 ms.
+            DESVIACION: WazuhSvc = Running (esperado Stopped), StartMode=Auto, en marcha desde el
+            arranque de la VM (~00:57). No se detuvo (no se toca el estado en este prompt).
+Paso 2 (alcance TCP)  OK en ambos
+  ubuntu74: 1514 "succeeded" rc=0 | 1515 "succeeded" rc=0
+  win11   : 1514 TcpTestSucceeded=True | 1515 TcpTestSucceeded=True
+  Pi      : set vpn_clients = .73,.74,.75; SA lab ESTABLISHED (1708 s), 1007 in / 1686 out.
+Paso 3 (MTU via handshake TLS)
+  ubuntu74 a 1515 con openssl s_client: 0 lineas de salida, 15.5 s hasta el timeout (3 intentos).
+    -> no distingue "no es TLS" de "MTU"; se necesita un control con TLS conocido.
+  CONTROL ubuntu74 a 443 (nginx, TLS seguro): TCP conecta, "Connecting to 10.50.40.10" y NADA mas;
+    15.4 s en los 3 intentos. Cache de ruta: mtu 1430.
+    => el fallo NO es del puerto: el camino desde .74 no sostiene el intercambio TLS.
+  CONTROL win11 a 443 (SslStream sincrono): tcp_connect ok 150-156 ms; handshake TRANSPORTA
+    COMPLETO en 313 ms (solo falla la validacion del cert autofirmado, que ocurre DESPUES).
+    => el camino desde .75 si sostiene un TLS normal.
+  Contexto del Manager: solo el agente 001 vm-honeyserver esta Active; ubuntu-lab y win11-lab no existen.
+  win11 ossec.log: desde el arranque, cada ~2 min "ERROR: SSL error (5). Connection refused by the
+    manager." (2026/11/13 01:00:53 ... 01:22:24); client.keys = 0 bytes; ossec.conf -> 10.50.40.10:1514 tcp.
+  Manager authd: ultimo arranque 2026/11/13 06:55:09 UTC (= 00:55 CST), sin una sola linea de rechazo
+    ni de "Agent key generated" desde entonces; escuchando en 1514 y 1515.
+  Conclusión: .74 = sospecha firme de MTU (ruta de E2 sin mtu; .73 necesito mtu 1360). .75 = el TLS
+    generico pasa, pero el enrolamiento falla igual; causa no identificada aun (authd no registra nada).
+SIN CAMBIOS: no se toco ninguna ruta, MTU, sysctl, ossec.conf, ni el estado de los servicios.
+PENDIENTE DE "adelante" PARA PASOS 4-5.

@@ -29,7 +29,8 @@ resource "azurerm_storage_account" "evidence" {
   # compartida; solo Azure AD/RBAC.
   shared_access_key_enabled = false
 
-  min_tls_version = "TLS1_2"
+  min_tls_version                 = "TLS1_2"
+  allow_nested_items_to_be_public = false
 
   blob_properties {
     delete_retention_policy {
@@ -41,12 +42,10 @@ resource "azurerm_storage_account" "evidence" {
     versioning_enabled = true
   }
 
-  # doc 19 §6: firewall limitado a la IP pública del laboratorio.
-  # PENDIENTE real (D6): con var.lab_public_ip sin confirmar, esta regla
-  # usa lo que se le pase (placeholder de documentación en example.tfvars).
+  # doc 19 §6 + ADR-005 N3: solo desde los prefijos de salida del laboratorio.
   network_rules {
     default_action = "Deny"
-    ip_rules       = [var.lab_public_ip]
+    ip_rules       = var.lab_source_cidrs
     bypass         = ["AzureServices"]
   }
 
@@ -80,4 +79,14 @@ resource "azurerm_storage_container_immutability_policy" "evidence" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+data "azurerm_client_config" "current" {}
+
+# doc 19 §6: subida con --auth-mode login. Sin clave compartida, el operador
+# necesita un rol del plano de datos; Owner/Contributor no bastan.
+resource "azurerm_role_assignment" "operator_blob" {
+  scope                = azurerm_storage_account.evidence.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
 }

@@ -1,0 +1,37 @@
+=== B5 historial e ISM 2026-11-13 14:42:23 CST / 2026-11-13T20:42:23Z ===
+[ERROR]: Task failed: Action failed: non-zero return code
+Origin: <adhoc 'script' task>
+
+{'action': 'script', 'args': {'_raw_params': '/tmp/claude-1000/-home-tacosconchelas-Projects-SOC- [...]
+
+wazuh | FAILED! => {
+    "changed": true,
+    "msg": "non-zero return code",
+    "rc": 3,
+    "stderr": "Shared connection to 10.50.40.10 closed.\r\n",
+    "stderr_lines": [
+        "Shared connection to 10.50.40.10 closed."
+    ],
+    "stdout": "B5: falta /root/wazuh-install-files.tar en la VM\r\n",
+    "stdout_lines": [
+        "B5: falta /root/wazuh-install-files.tar en la VM"
+    ]
+}
+=== B5 (reintento: contraseña por stdin de ssh; el tar ya no esta en la VM tras la entrega) 2026-11-13 14:42:54 CST / 2026-11-13T20:42:54Z ===
+bash: -c: option requires an argument
+--- _cat/indices wazuh-alerts-*
+health status index                       docs.count store.size
+green  open   wazuh-alerts-4.x-2026.11.08        969      1.8mb
+green  open   wazuh-alerts-4.x-2026.11.09       1953      1.9mb
+green  open   wazuh-alerts-4.x-2026.11.13      11369     16.6mb
+
+--- count rule.id:100102 en wazuh-alerts-4.x-2026.11.08
+{"count":0,"_shards":{"total":3,"successful":3,"skipped":0,"failed":0}}
+--- count rule.id:100102 en wazuh-alerts-4.x-2026.11.09
+{"count":10,"_shards":{"total":3,"successful":3,"skipped":0,"failed":0}}
+--- count rule.id:100102 en wazuh-alerts-4.x-2026.11.13
+{"count":320,"_shards":{"total":3,"successful":3,"skipped":0,"failed":0}}
+--- ISM explain wazuh-alerts-*
+{"wazuh-alerts-4.x-2026.11.13":{"policy_id":"wazuh-alert-retention-policy"},"wazuh-alerts-4.x-2026.11.09":{"policy_id":"wazuh-alert-retention-policy"},"total_managed_indices":2}
+--- ISM policy (resumen)
+{"policy":{"description":"Retencion de wazuh-alerts-* a 30 dias (D5)","ism_template":[{"index_patterns":["wazuh-alerts-*"],"priority":1,"last_updated_time":1794178504006}]}}

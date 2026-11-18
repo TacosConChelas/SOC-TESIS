@@ -1,0 +1,1 @@
+{"test_id":"TEST-00X","run":"RUN-k_AAAAMMDDTHHMMSSZ","step":1,"ts_utc":"AAAA-MM-DDTHH:MM:SS.mmmZ","host_origen":"192.168.1.73","objetivo":"honey-server:22","actividad":"<descripción>","comando_ref":"02-comandos.txt#L1","esperado":{"fuente":"cowrie","regla":"100101","alerta":true},"tipo":"positivo"}

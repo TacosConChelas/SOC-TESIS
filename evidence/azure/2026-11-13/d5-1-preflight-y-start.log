@@ -1,0 +1,509 @@
+=== E4 paso 1 · preflight y arranque · 2026-11-13 00:51:25 CST (-0600) ===
+make: Entering directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+time-guard: ok (00:51)
+ok: nginx 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-core 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: nginx-common 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: libnginx-mod-stream 1.18.0-6ubuntu14.22 disponible (roles/logrelay/defaults/main.yml:logrelay_nginx_version)
+ok: el asistente de Wazuh instalaria 4.14.10 (ultimo wazuh-manager 4.14.x: 4.14.10-1)
+ok: docker-ce 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: docker-ce-cli 5:29.8.2-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_docker_version)
+ok: containerd.io 2.3.6-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_containerd_version)
+ok: docker-compose-plugin 5.6.0-1~ubuntu.22.04~jammy disponible (indice de Docker, honeypot_compose_version)
+ok: wazuh-agent 4.14.10-1 disponible (indice de Wazuh)
+pin-check: ok
+make: Leaving directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+rc_1a=0
+
+--- 1b estado local (2026-11-13 00:51:58 CST) ---
+contenedores ^soc-local: 0
+redes soc-local: 0
+pgrep -x make: 
+
+--- 1c suscripcion (2026-11-13 00:52:01 CST) ---
+Azure subscription 1	Enabled
+
+--- 1d powerState VMs (2026-11-13 00:52:04 CST) ---
+vm-honeyserver	VM deallocated
+vm-logrelay	VM deallocated
+vm-strongswan	VM deallocated
+vm-wazuh	VM deallocated
+
+--- 1e nft vpn_clients en soc71 (2026-11-13 00:52:13 CST) ---
+table inet filter {
+	set vpn_clients {
+		type ipv4_addr
+		elements = { 192.168.1.73, 192.168.1.74,
+			     192.168.1.75 }
+	}
+}
+
+--- 2 R1 en .73 (2026-11-13 00:52:19 CST) ---
+ip local: 192.168.1.73 192.168.122.1 172.17.0.1 2806:10a6:f:d95:492d:e1cb:939e:3b51 2806:10a6:f:d95:d693:90ff:fe5a:c11e 
+ip route show 10.50.0.0/16:
+rc_show=0
+
+sudo -n true en .73: NO disponible (requiere password/TTY)
+
+--- 2b R1 verificacion post-aplicacion (2026-11-13 00:53:41 CST) ---
+ip route show 10.50.0.0/16:
+10.50.0.0/16 via 192.168.1.10 dev br0 
+ip route get 10.50.40.10:
+10.50.40.10 via 192.168.1.10 dev br0 src 192.168.1.73 uid 1000 
+    cache 
+
+=== 3 arranque secuencial (T0 costo) ===
+t_ini_strongswan=2026-11-13 00:53:48 CST
+rc_strongswan=0  t_fin_strongswan=2026-11-13 00:54:32 CST
+t_ini_wazuh=2026-11-13 00:54:35 CST
+rc_wazuh=0  t_fin_wazuh=2026-11-13 00:55:19 CST
+t_ini_logrelay=2026-11-13 00:55:22 CST
+rc_logrelay=0  t_fin_logrelay=2026-11-13 00:56:06 CST
+t_ini_honeyserver=2026-11-13 00:56:10 CST
+rc_honeyserver=0  T0=2026-11-13 00:56:54 CST
+
+--- 3b powerState post-arranque (2026-11-13 00:56:58 CST) ---
+vm-honeyserver	VM running
+vm-logrelay	VM running
+vm-strongswan	VM running
+vm-wazuh	VM running
+--- 4 intento 1 2026-11-13 00:57:12 CST rc=0 ---
+plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'ntru': failed to load - ntru_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+lab: #5, ESTABLISHED, IKEv2, a0827220147bc516_i* 0329827add01a0eb_r
+  local  'pi.soc-tesis' @ 192.168.1.10[4500]
+  remote 'azure-vpn.soc-tesis' @ 172.202.13.163[4500]
+  AES_GCM_16-256/PRF_HMAC_SHA2_384/ECP_384
+  established 67s ago, rekeying in 13685s
+  lab: #10, reqid 1, INSTALLED, TUNNEL-in-UDP, ESP:AES_GCM_16-256
+    installed 67s ago, rekeying in 3181s, expires in 3893s
+    in  c20e9fc7,   1265 bytes,     5 packets,     5s ago
+    out c8d71d02,   3322 bytes,     8 packets,     6s ago
+    local  192.168.1.0/24
+    remote 10.50.0.0/16
+found=1
+
+--- 5a ping 10.50.40.10 (2026-11-13 00:57:24 CST) ---
+PING 10.50.40.10 (10.50.40.10) 56(84) bytes of data.
+
+--- 10.50.40.10 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2064ms
+
+
+--- 5b ansible all -m ping (2026-11-13 00:57:42 CST) ---
+bash: line 1: ansible: command not found
+nota: ansible fuera de nix-shell = command not found (rc=127); se usa nix-shell (ansible/shell.nix)
+
+--- 5a-retry ping 10.50.40.10 (2026-11-13 00:58:53 CST) ---
+PING 10.50.40.10 (10.50.40.10) 56(84) bytes of data.
+
+--- 10.50.40.10 ping statistics ---
+3 packets transmitted, 0 received, 100% packet loss, time 2025ms
+
+
+--- 5b ansible all -m ping via nix-shell (2026-11-13 00:59:10 CST) ---
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+
+--- 5b ansible all -m ping (KEX=curve25519, 2026-11-13 01:08:51 CST) ---
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[ERROR]: Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:31
+Host key for 10.50.40.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:31
+Host key for 10.50.40.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+wazuh | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ED25519 key sent by the remote host is\nSHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.\r\nOffending RSA key in /home/tacosconchelas/.ssh/known_hosts:31\r\nHost key for 10.50.40.10 has changed and you have requested strict checking.\r\nHost key verification failed.",
+    "unreachable": true
+}
+[ERROR]: Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:P5zEqgiMvyY9sEbPRnDmYd/szqLSVWDMlACgtokQwzY.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:30
+Host key for [10.50.10.10]:22222 has changed and you have requested strict checking.
+Host key verification failed.
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:P5zEqgiMvyY9sEbPRnDmYd/szqLSVWDMlACgtokQwzY.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:30
+Host key for [10.50.10.10]:22222 has changed and you have requested strict checking.
+Host key verification failed.
+
+honeyserver | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ED25519 key sent by the remote host is\nSHA256:P5zEqgiMvyY9sEbPRnDmYd/szqLSVWDMlACgtokQwzY.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.\r\nOffending RSA key in /home/tacosconchelas/.ssh/known_hosts:30\r\nHost key for [10.50.10.10]:22222 has changed and you have requested strict checking.\r\nHost key verification failed.",
+    "unreachable": true
+}
+[ERROR]: Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:QuHF9wHp8jk/mL6Lo6+pbf+cmiwPXL94S1t+Jl2Xb9k.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:32
+Host key for 10.50.30.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:QuHF9wHp8jk/mL6Lo6+pbf+cmiwPXL94S1t+Jl2Xb9k.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:32
+Host key for 10.50.30.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+logrelay | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ED25519 key sent by the remote host is\nSHA256:QuHF9wHp8jk/mL6Lo6+pbf+cmiwPXL94S1t+Jl2Xb9k.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.\r\nOffending RSA key in /home/tacosconchelas/.ssh/known_hosts:32\r\nHost key for 10.50.30.10 has changed and you have requested strict checking.\r\nHost key verification failed.",
+    "unreachable": true
+}
+[ERROR]: Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:4wTIF2LL5ZDWmGxYDfnu/OBWT3Kb3WfLAeEjiP5dSkU.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:29
+Host key for 10.50.20.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:4wTIF2LL5ZDWmGxYDfnu/OBWT3Kb3WfLAeEjiP5dSkU.
+Please contact your system administrator.
+Add correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/tacosconchelas/.ssh/known_hosts:29
+Host key for 10.50.20.10 has changed and you have requested strict checking.
+Host key verification failed.
+
+strongswan | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\n@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @\r\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\r\nIT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!\r\nSomeone could be eavesdropping on you right now (man-in-the-middle attack)!\r\nIt is also possible that a host key has just been changed.\r\nThe fingerprint for the ED25519 key sent by the remote host is\nSHA256:4wTIF2LL5ZDWmGxYDfnu/OBWT3Kb3WfLAeEjiP5dSkU.\r\nPlease contact your system administrator.\r\nAdd correct host key in /home/tacosconchelas/.ssh/known_hosts to get rid of this message.\r\nOffending RSA key in /home/tacosconchelas/.ssh/known_hosts:29\r\nHost key for 10.50.20.10 has changed and you have requested strict checking.\r\nHost key verification failed.",
+    "unreachable": true
+}
+
+--- 5c huellas host key (2026-11-13 01:09:10 CST) ---
+[10.50.20.10:22]
+  actual:   SHA256:4wTIF2LL5ZDWmGxYDfnu/OBWT3Kb3WfLAeEjiP5dSkU
+  guardada: Host
+[10.50.40.10:22]
+  actual:   SHA256:iCmLJV2LNWnUT+GvuoZM1h6r4kez7obgPvocxY/D2+E
+  guardada: Host
+[10.50.30.10:22]
+  actual:   SHA256:QuHF9wHp8jk/mL6Lo6+pbf+cmiwPXL94S1t+Jl2Xb9k
+  guardada: Host
+[10.50.10.10:22222]
+  actual:   SHA256:P5zEqgiMvyY9sEbPRnDmYd/szqLSVWDMlACgtokQwzY
+  guardada: Host
+--- 5c-retry huellas guardadas (2026-11-13 01:09:16 CST) ---
+  10.50.20.10 guardada: SHA256:zF+ecFTEh2+wLw7o2SKuwGjOu8mkWO2zhB5ijT17pgM,SHA256:so8zvaVtgLzJyoH5ObXRwAD6m8SkpxB4D4j5YSazSkk
+  10.50.40.10 guardada: SHA256:MT+2dv8RqZtMR+iAFwcMczyyhaPiQ0oN5zoTGatCe/M,SHA256:0hhLETdk6ongAdfjnJM00klGdXt9wICX+eW1Lyw0+eQ
+  10.50.30.10 guardada: SHA256:BAT8d7ykxZRveppBs3ipjQ4lN2Ua52uBIs4hIyYe6cQ,SHA256:hHyqc6APnRokYeNEupBaCWjedBfdsBo052G7s3EuCpg
+  [10.50.10.10]:22222 guardada: SHA256:OVYrKpy+qxNioS4ZSB1hEPRzK+FQMXDt/IXIQOYQkCA,SHA256:txTkVx10dj3jUaqPH3U1wm4L3cn/F3M/ITDady9AjOE
+
+--- 5d DIAGNOSTICO (hostkey bypass, NO cuenta como paso 5) (2026-11-13 01:09:24 CST) ---
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[ERROR]: Task failed: Failed to connect to the host via ssh: Warning: Permanently added '[10.50.10.10]:22222' (ED25519) to the list of known hosts.
+soctesis@10.50.10.10: Permission denied (publickey).
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: Warning: Permanently added '[10.50.10.10]:22222' (ED25519) to the list of known hosts.
+soctesis@10.50.10.10: Permission denied (publickey).
+
+honeyserver | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: Warning: Permanently added '[10.50.10.10]:22222' (ED25519) to the list of known hosts.\r\nsoctesis@10.50.10.10: Permission denied (publickey).",
+    "unreachable": true
+}
+[ERROR]: Task failed: Failed to connect to the host via ssh: Warning: Permanently added '10.50.30.10' (ED25519) to the list of known hosts.
+soctesis@10.50.30.10: Permission denied (publickey).
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: Warning: Permanently added '10.50.30.10' (ED25519) to the list of known hosts.
+soctesis@10.50.30.10: Permission denied (publickey).
+
+logrelay | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: Warning: Permanently added '10.50.30.10' (ED25519) to the list of known hosts.\r\nsoctesis@10.50.30.10: Permission denied (publickey).",
+    "unreachable": true
+}
+[ERROR]: Task failed: Failed to connect to the host via ssh: Warning: Permanently added '10.50.20.10' (ED25519) to the list of known hosts.
+soctesis@10.50.20.10: Permission denied (publickey).
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: Warning: Permanently added '10.50.20.10' (ED25519) to the list of known hosts.
+soctesis@10.50.20.10: Permission denied (publickey).
+
+strongswan | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: Warning: Permanently added '10.50.20.10' (ED25519) to the list of known hosts.\r\nsoctesis@10.50.20.10: Permission denied (publickey).",
+    "unreachable": true
+}
+[ERROR]: Task failed: Failed to connect to the host via ssh: Warning: Permanently added '10.50.40.10' (ED25519) to the list of known hosts.
+soctesis@10.50.40.10: Permission denied (publickey).
+
+Task failed.
+Origin: <adhoc 'ping' task>
+
+{'action': 'ping', 'args': {}, 'timeout': 0, 'async_val': 0, 'poll': 15}
+
+<<< caused by >>>
+
+Failed to connect to the host via ssh: Warning: Permanently added '10.50.40.10' (ED25519) to the list of known hosts.
+soctesis@10.50.40.10: Permission denied (publickey).
+
+wazuh | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Task failed: Failed to connect to the host via ssh: Warning: Permanently added '10.50.40.10' (ED25519) to the list of known hosts.\r\nsoctesis@10.50.40.10: Permission denied (publickey).",
+    "unreachable": true
+}
+
+--- 5e DIAGNOSTICO (agente, sin IdentitiesOnly) (2026-11-13 01:09:42 CST) ---
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'strongswan' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'logrelay' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+strongswan | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+honeyserver | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+logrelay | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+wazuh | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+
+=== CIERRE PASO 1-5 · 2026-11-13 01:10:10 CST ===
+t_ini_strongswan=2026-11-13 00:53:48 CST
+T0 (fin honeyserver)=2026-11-13 00:56:54 CST
+SA ESTABLISHED observada=2026-11-13 00:57:12 CST (swanctl: 'established 67s ago' -> ~00:56:05)
+t_SA=204s desde t_ini_strongswan (observada); ~137s si se usa la hora real de establecimiento
+ping ICMP 10.50.40.10: 0/3 (UFW de wazuh no permite ICMP; esperado, no es fallo de arranque)
+ansible all -m ping: 4 pong SOLO con bypass de known_hosts + KEX=curve25519 (diagnostico 5e)
+BLOQUEO ABIERTO 1: known_hosts 29-32 con host keys viejas (4 VMs reconstruidas)
+BLOQUEO ABIERTO 2: KEX sntrup761x25519 (PQ) no completa por el tunel; curve25519-sha256 si
+BLOQUEO ABIERTO 3: ANSIBLE_PRIVATE_KEY_FILE sin definir (llave solo en ssh-agent; identitiessoOnly rompe la auth)
+R1 en .73: 10.50.0.0/16 via 192.168.1.10 dev br0 (dejada puesta)
+powerState: vm-honeyserver	VM running;vm-logrelay	VM running vm-strongswan	VM running;vm-wazuh	VM running
+
+--- 5f verificacion R1 con mtu (2026-11-13 01:16:04 CST) ---
+10.50.40.10 via 192.168.1.10 dev br0 src 192.168.1.73 uid 1000 
+    cache mtu 1360 
+
+--- 5g ansible all -m ping (KEX por defecto) (2026-11-13 01:16:23 CST) ---
+ANSIBLE_PRIVATE_KEY_FILE=definida
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+[WARNING]: Host 'strongswan' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'honeyserver' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+[WARNING]: Host 'logrelay' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+strongswan | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+wazuh | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+honeyserver | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+logrelay | SUCCESS => {
+    "ansible_facts": {
+        "discovered_interpreter_python": "/usr/bin/python3.10"
+    },
+    "changed": false,
+    "ping": "pong"
+}
+
+--- 5h make -C ansible azure-session (2026-11-13 01:16:35 CST) ---
+make: Entering directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+azure-session: define EXPECTED_AZ_SUBSCRIPTION_NAME (nombre de la suscripcion esperada)
+make: *** [Makefile:265: azure-session] Error 1
+make: Leaving directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+rc_make=2
+--- 5h-retry make -C ansible azure-session (con env cargado) (2026-11-13 01:16:45 CST) ---
+make: Entering directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+azure-session: ok (suscripcion esperada, estado Enabled)
+make: Leaving directory '/home/tacosconchelas/Projects/SOC-TESIS/ansible'
+rc_make=0
+
+=== 5i CAUSA DE LOS BLOQUEOS 1-3 (corregido) · 2026-11-13 01:17:03 CST ===
+1) host keys: NO cambiaron. Se comparaba contra ~/.ssh/known_hosts (entradas viejas de una reconstruccion anterior)
+   porque ANSIBLE_SSH_ARGS no estaba cargado. Con el env, ssh usa azure_known_hosts (grep UserKnownHostsFile=1).
+   Las 4 huellas actuales == evidence/azure/2026-11-08/4a-host-keys.md lineas 7-10 (verificado 01:09 y 01:16).
+2) KEX: sntrup761x25519 se colgaba porque R1 estaba sin mtu; con 'mtu 1360' el handshake completa con el KEX por defecto.
+   Verificado: ip route get 10.50.40.10 -> via 192.168.1.10 cache mtu 1360 (01:16:04).
+3) ANSIBLE_PRIVATE_KEY_FILE: definido tras source del env (echo ${VAR:+definida} = definida).
+
+--- RESULTADO PASO 5 ---
+ansible all -m ping (KEX por defecto, env cargado): 4 pong, rc=0, 2026-11-13 01:16:23 CST
+hosts: strongswan, wazuh, honeyserver, logrelay -> ping: pong
+make -C ansible azure-session: ok (suscripcion esperada, estado Enabled), rc=0, 01:16:45
+Nota: sin EXPECTED_AZ_SUBSCRIPTION_NAME el target falla por diseno (rc=2); el env la define.
+Sin cambios en known_hosts, ansible.cfg, la Pi ni Azure. VMs siguen encendidas.
+
+Corrección: las entradas RSA viejas de ~/.ssh/known_hosts (líneas 29-32) son del ensayo local con contenedores (make rehearse, mismas IPs 10.50.x), no de una reconstrucción de las VMs.

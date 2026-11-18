@@ -1,0 +1,14 @@
+# Fase 8 · B3 — guion de estimulos (ground truth fijado antes de ejecutar, doc 19 §2)
+# Copiar a $EV/f8-estimulos.txt el dia de la sesion. Origen: 192.168.1.73 salvo 3f/3g.
+# HP=$(terraform -chdir=terraform/lab output -raw honeyserver_public_ip)
+# Al menos 30 s entre filas. Anotar hora UTC del comando (date -u +%FT%T.%3NZ) y exit code.
+#
+# fila | fuente | origen | comando | rule.id esperado
+3a | cowrie (regresion) | .73 | ssh -o PubkeyAuthentication=no -o StrictHostKeyChecking=no root@$HP   (contrasena: root, una vez) | 100101
+3b | dionaea | .73 | nmap -Pn -sT -p 21,445,1433,3306,1883 $HP | 100200 por puerto + 1 x 100210
+3c | mailoney | .73 | printf 'EHLO prueba.local\r\nMAIL FROM:<a@prueba.local>\r\nQUIT\r\n' | nc -w5 $HP 25 | 100300 con IP del operador; NO 100301
+3d | tanner/snare | .73 | curl -s -o /dev/null -w '%{http_code}\n' http://$HP/ | 100400 (index)
+3e1 | tanner/snare | .73 | curl -s -o /dev/null -w '%{http_code}\n' "http://$HP/?id=1%27%20OR%20%271%27=%271" | 100410 (sqli)
+3e2 | tanner/snare | .73 | curl -s -o /dev/null -w '%{http_code}\n' "http://$HP/?q=%3Cscript%3Ealert(1)%3C/script%3E" | 100410 (xss)
+3f | ubuntu-lab | .74 | ssh nouser@localhost   (contrasena erronea, una vez) | 5710
+3g | win11-lab | .75 | net use \\localhost\IPC$ /user:nouser x | 60122 (EventID 4625)

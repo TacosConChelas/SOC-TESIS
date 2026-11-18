@@ -3,6 +3,10 @@
 wazuh_enabled: true
 # wazuh_expected_version y wazuh_secrets_dir viven en group_vars/all.yml (los usa tambien el rol honeypot).
 wazuh_installer_url: "https://packages.wazuh.com/4.14/wazuh-install.sh"
+# sha256 del asistente de la 4.14.10 (calculado el 2026-11-18, ya es la version esperada). La ruta /4.14/
+# cambia con cada parche: si Wazuh publica otro, get_url falla y hay que revisar el script, subir
+# wazuh_expected_version y actualizar este hash a la vez.
+wazuh_installer_sha256: "db5f8d37703b3673ec0e6b30834499756cbd093d828fc24d7f5b276980ea1bf6"
 wazuh_indexer_heap: "8g"
 wazuh_retention_days: 30
 wazuh_relay_ip: "10.50.30.10"

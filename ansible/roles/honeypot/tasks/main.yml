@@ -425,18 +425,22 @@
   run_once: true
   tags: [config]
 
+# authd.pass solo hace falta para enrolar el agente: se entrega antes del primer start y
+# `start` lo destruye (ver más abajo). Tras el primer arranque, config ya no lo toca.
 - name: Leer authd.pass en el controlador
   ansible.builtin.stat:
     path: "{{ honeypot_secrets_dir_real }}/authd.pass"
   register: honeypot_authd_local
   delegate_to: localhost
   become: false
+  when: not honeypot_started.stat.exists
   tags: [config]
 
 - name: Exigir que authd.pass exista en el controlador
   ansible.builtin.assert:
     that: honeypot_authd_local.stat.exists
     fail_msg: "Falta {{ honeypot_secrets_dir_real }}/authd.pass (D8: el mismo que entrega el rol wazuh)."
+  when: not honeypot_started.stat.exists
   tags: [config]
 
 - name: Entregar authd.pass (contraseña de enrolamiento)
@@ -448,6 +452,7 @@
     mode: "0640"
   no_log: true
   notify: Reiniciar wazuh-agent
+  when: not honeypot_started.stat.exists
   tags: [config]
 
 # --- start: nunca descarga ----------------------------------------------------------------
@@ -509,6 +514,14 @@
   delay: 10
   changed_when: false
   check_mode: false
+  tags: [start]
+
+# Un honeyserver comprometido podría usar authd.pass para enrolar agentes falsos por el relay
+# (1515). El agente ya está enrolado (client.keys): la contraseña sobra desde aquí.
+- name: Destruir authd.pass del honeyserver (ya enrolado, E1-3)
+  ansible.builtin.command:
+    cmd: shred -u /var/ossec/etc/authd.pass
+    removes: /var/ossec/etc/authd.pass
   tags: [start]
 
 - name: Marcar que el señuelo arrancó (desde ahora install no toca servicios)

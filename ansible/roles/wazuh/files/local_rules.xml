@@ -109,6 +109,20 @@
     <group>honeypot,mailoney,</group>
   </rule>
 
+  <!-- Healthcheck de Docker: python3 abre 127.0.0.1:25 cada 15 s (muestra real del Dia 4).
+       Cada alternativa va anclada con ^ al inicio del cuerpo, que tiene formato fijo de Mailoney.
+       Los comandos SMTP del atacante viajan dentro del JSON de session_ended ("commands"), nunca al
+       inicio de la linea, asi que no pueden forjar el healthcheck. Sin el ancla, un comando como
+       "Connection closed for 127.0.0.1:" silenciaba la alerta (nivel 0 y logall desactivado).
+       La ultima alternativa no se ancla: dentro del JSON las comillas del atacante salen escapadas,
+       asi que no puede reproducir ": " con comillas sin escapar. -->
+  <rule id="100301" level="0">
+    <if_sid>100300</if_sid>
+    <match>^{"logger": "mailoney.core", "event": "log", "level": "INFO", "message": "Connection from 127.0.0.1:|^{"logger": "mailoney.core", "event": "log", "level": "INFO", "message": "Connection closed for 127.0.0.1:|^[*] Connection from 127.0.0.1:|"src_ip": "127.0.0.1"</match>
+    <description>Mailoney: healthcheck interno de Docker a 127.0.0.1:25 (sin efecto).</description>
+    <group>honeypot,mailoney,</group>
+  </rule>
+
   <!-- Tanner (100400-100499) -->
   <rule id="100400" level="3">
     <decoded_as>json</decoded_as>

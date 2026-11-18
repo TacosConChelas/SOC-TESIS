@@ -26,16 +26,15 @@ variable "container_name" {
   default = "evidencia-soc-tesis"
 }
 
-# ADR-005 (enmienda 2026-10-27): terraform/lab ya NO usa esta IP (usa lab_source_cidrs, /12).
-# Esta variable solo filtra el Blob (/32). Si la IP de salida cambia,
-# actualizarla aquí. Solo comentario.
-variable "lab_public_ip" {
+variable "lab_source_cidrs" {
   description = <<-EOT
-    Mismo significado que terraform/lab: IP pública WAN del laboratorio, para
-    restringir el firewall de la cuenta de almacenamiento (doc 19 §6).
-    PENDIENTE (D6). Sin default: debe proveerse explícitamente.
+    Prefijos de salida del laboratorio permitidos en el firewall de la cuenta.
+    Mismo valor que terraform/lab (ADR-005 N3, vigente desde 2026-10-27): la
+    IP del ISP es dinámica dentro del /12. El control fuerte es Entra ID +
+    RBAC (sin claves); el firewall es una segunda capa.
   EOT
-  type        = string
+  type        = list(string)
+  default     = ["201.96.0.0/12"]
 }
 
 variable "retention_days" {

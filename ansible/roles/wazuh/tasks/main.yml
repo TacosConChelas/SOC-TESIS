@@ -76,6 +76,7 @@
     url: "{{ wazuh_installer_url }}"
     dest: /root/wazuh-install.sh
     mode: "0700"
+    checksum: "sha256:{{ wazuh_installer_sha256 }}"
   when: not wazuh_control.stat.exists
   tags: [install]
 
@@ -244,6 +245,17 @@
   notify: Reiniciar wazuh-manager
   tags: [config]
 
+# Con `force` activo, authd reemplaza el registro de un agente existente (mismo nombre o IP)
+# cuando lleva desconectado un rato: un honeyserver comprometido podría tomar la identidad de
+# otro agente. Apagado, un nombre ya registrado se rechaza.
+- name: Apagar el reenrolamiento forzado de agentes (force)
+  ansible.builtin.replace:
+    path: /var/ossec/etc/ossec.conf
+    regexp: '(?s)(<auth>(?:(?!</auth>).)*?<force>\s*<enabled>)\s*yes\s*(</enabled>)'
+    replace: '\1no\2'
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
 - name: Leer ossec.conf para verificarlo
   ansible.builtin.slurp:
     src: /var/ossec/etc/ossec.conf
@@ -260,6 +272,7 @@
       - (wazuh_ossec.content | b64decode) is search('<logall_json>no</logall_json>')
       - (wazuh_ossec.content | b64decode) is search('(?s)<vulnerability-detection>\s*<enabled>no</enabled>')
       - (wazuh_ossec.content | b64decode) is search('(?s)<active-response>\s*<disabled>yes</disabled>')
+      - ('<force>' not in (wazuh_ossec.content | b64decode)) or ((wazuh_ossec.content | b64decode) is search('(?s)<force>\s*<enabled>no</enabled>'))
     fail_msg: >-
       ossec.conf no tiene los valores de D5 (las sustituciones no coincidieron con el formato
       del archivo instalado). Revisa /var/ossec/etc/ossec.conf y ajusta las expresiones del rol.

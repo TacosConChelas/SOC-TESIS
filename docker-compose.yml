@@ -29,6 +29,8 @@
 #
 # Redes (F2-05, doc 17 §2.1):
 #   hp-front (bridge)   : cowrie, dionaea, mailoney, snare — superficie pública.
+#                          Masquerade (NAT saliente) DESACTIVADO: los contenedores
+#                          no tienen salida a Internet; el DNAT de puertos publicados sí funciona.
 #   hp-back  (internal) : snare, tanner, tanner_redis, tanner_phpox — sin salida,
 #                          cowrie/dionaea/mailoney NO alcanzan 8090/6379/8088.
 
@@ -38,6 +40,12 @@ services:
     image: ${COWRIE_IMAGE:?Set COWRIE_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-cowrie
     restart: unless-stopped
+    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - "no-new-privileges:true"
 
@@ -73,6 +81,12 @@ services:
     image: ${DIONAEA_IMAGE:?Set DIONAEA_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-dionaea
     restart: unless-stopped
+    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - "no-new-privileges:true"
 
@@ -171,6 +185,12 @@ services:
     image: ${SNARE_IMAGE:?Set SNARE_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-snare
     restart: unless-stopped
+    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - "no-new-privileges:true"
 
@@ -219,6 +239,12 @@ services:
     container_name: soc-tesis-tanner
     command: tanner
     restart: unless-stopped
+    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - "no-new-privileges:true"
 
@@ -264,6 +290,12 @@ services:
     image: ${TANNER_REDIS_IMAGE:?Set TANNER_REDIS_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-tanner-redis
     restart: unless-stopped
+    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - "no-new-privileges:true"
     # Config horneada de la imagen T-Pot: save "" (sin RDB) permite read_only.
@@ -290,6 +322,12 @@ services:
     image: ${TANNER_PHPOX_IMAGE:?Set TANNER_PHPOX_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-tanner-phpox
     restart: unless-stopped
+    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     security_opt:
       - "no-new-privileges:true"
     read_only: true
@@ -315,6 +353,10 @@ networks:
   hp-front:
     name: soc-tesis-hp-front
     driver: bridge
+    # Sin masquerade los contenedores del señuelo no pueden iniciar conexiones hacia fuera;
+    # los puertos publicados siguen funcionando.
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "false"
 
   hp-back:
     name: soc-tesis-hp-back

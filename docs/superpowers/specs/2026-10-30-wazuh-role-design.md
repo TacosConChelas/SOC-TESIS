@@ -19,7 +19,7 @@ Descomposición acordada: **W1** instalación y verificación de versión, **W2*
 | Versión | Asistente online `wazuh-install.sh -a` y verificación posterior de la versión contra `wazuh_expected_version`. El asistente no admite fijar versión: instala el último parche de la rama 4.14, que puede diferir de 4.14.8-1 (la documentación actual ya indexa 4.14.9). Si no coincide, el rol falla y se decide el baseline (D1). |
 | Ensayo local | All-in-one **completo** en el contenedor `wazuh`, con heap sobrescrito. |
 | Cuándo corre | Target aparte `make wazuh-rehearse`; `make preflight` omite el rol. |
-| Secretos | Ansible los mueve, siempre fuera del repo: `authd.pass` entra desde el controlador; `wazuh-install-files.tar` sale con `fetch` y se destruye con `shred` en la VM. |
+| Secretos | Ansible los mueve, siempre fuera del repo: `authd.pass` entra desde el controlador (`192.168.1.73`); `wazuh-install-files.tar` sale con `fetch` y se destruye con `shred` en la VM. |
 | Chequeo ampliado | Check de la cadena D4 real: un agente en `honeyserver` se enrola por el relay y aparece activo. |
 
 ## 3. Variables (prefijo `wazuh_`)
@@ -31,7 +31,7 @@ Descomposición acordada: **W1** instalación y verificación de versión, **W2*
 | `wazuh_installer_url` | `https://packages.wazuh.com/4.14/wazuh-install.sh` |
 | `wazuh_indexer_heap` | `8g` (D5); el inventario local lo sobrescribe a `2g` |
 | `wazuh_retention_days` | `30` |
-| `wazuh_secrets_dir` | `~/soc-tesis-secrets/wazuh` en el controlador; debe estar **fuera del repo** |
+| `wazuh_secrets_dir` | `~/soc-tesis-secrets/wazuh` en el controlador (`192.168.1.73`); debe estar **fuera del repo** |
 | `wazuh_relay_ip` | `10.50.30.10` |
 | `wazuh_admin_cidr` | `192.168.1.0/24` (`lab_cidr`) |
 
@@ -40,7 +40,7 @@ Descomposición acordada: **W1** instalación y verificación de versión, **W2*
 | Tag | Qué hace | Descarga |
 |---|---|---|
 | `install` | Comprueba RAM, disco y `vm.max_map_count` ≥ 262144 (persistido en `/etc/sysctl.d/99-soc-wazuh.conf`; `sysctl -p` solo en host real). Descarga el instalador y corre `-a` con `no_log`, solo si no existe `/var/ossec/bin/wazuh-control`; el centinela `/etc/soc-tesis/wazuh-installed` se escribe solo tras pasar el gate de versión y comprobar que los cuatro paquetes están instalados. Exige que `wazuh-control info` reporte `wazuh_expected_version`. Retiene (`hold`) `wazuh-manager`, `wazuh-indexer`, `wazuh-dashboard` y `filebeat` | **Sí** (único tag) |
-| `config` | Entrega `authd.pass` desde el controlador (640 `root:wazuh`, `no_log`). Edita `ossec.conf`: `use_password yes`, `use_source_ip no`, `logall` y `logall_json` en `no`, Active Response y detección de vulnerabilidades apagados. Punto de enganche para `local_rules.xml` (validado con `wazuh-analysisd -t`; hoy solo encabezado). Heap del Indexer en `jvm.options`. API en loopback (`api.yaml`). Política ISM de `wazuh_retention_days` días sobre `wazuh-alerts-*`, aplicada con la contraseña leída en memoria del tar (`no_log`). Luego `fetch` del tar al controlador, comparación de `sha256`, y solo entonces `shred` del tar y borrado de `/var/log/wazuh-install.log`; centinela `wazuh-secrets-handed-over`. UFW al final (solo host real) | No |
+| `config` | Entrega `authd.pass` desde el controlador (`192.168.1.73`; 640 `root:wazuh`, `no_log`). Edita `ossec.conf`: `use_password yes`, `use_source_ip no`, `logall` y `logall_json` en `no`, Active Response y detección de vulnerabilidades apagados. Punto de enganche para `local_rules.xml` (validado con `wazuh-analysisd -t`; hoy solo encabezado). Heap del Indexer en `jvm.options`. API en loopback (`api.yaml`). Política ISM de `wazuh_retention_days` días sobre `wazuh-alerts-*`, aplicada con la contraseña leída en memoria del tar (`no_log`). Luego `fetch` del tar al controlador, comparación de `sha256`, y solo entonces `shred` del tar y borrado de `/var/log/wazuh-install.log`; centinela `wazuh-secrets-handed-over`. UFW al final (solo host real) | No |
 | `start` | Habilita y arranca indexer, manager, filebeat y dashboard en ese orden y espera con reintentos (30 × 10 s) a 1514, 1515, 443 y 9200 local | Nunca |
 
 Reglas del rol:
@@ -82,7 +82,7 @@ Reglas del rol:
 | 2 | indexer, manager, filebeat y dashboard activos |
 | 3 | 1514, 1515 y 443 en todas las interfaces; 9200 y 55000 solo en `127.0.0.1`; 1516, 9300 y 514 cerrados |
 | 4 | `ossec.conf` con `logall`/`logall_json` en `no`, `use_password yes`, `use_source_ip no`, AR y vulnerabilidades apagados; `wazuh-analysisd -t` en 0 |
-| 5 | `authd.pass` en `640 root:wazuh` con el mismo `sha256` que el del controlador (sin imprimirlo) |
+| 5 | `authd.pass` en `640 root:wazuh` con el mismo `sha256` que el del controlador (`192.168.1.73`) (sin imprimirlo) |
 | 6 | `jvm.options` con el heap de la variable (no un valor fijo en el check) |
 | 7 | La política ISM existe y borra `wazuh-alerts-*` a los 30 días (consulta a la API con la contraseña leída del tar, sin imprimirla) |
 | 8 | Ni el tar ni `/var/log/wazuh-install.log` quedan en la VM; el tar fetched está en `/tmp/soc-local-secrets/` con `0600`; `make secret-scan` limpio |
@@ -108,7 +108,7 @@ El check 9 cierra el hueco que dejó `relay-check` (probaba el paso de bytes, no
 
 - Contenido de `local_rules.xml` (otra fase, rangos 100100–100499).
 - Cambio de contraseña de admin.
-- Agentes Windows 11 y Ubuntu del laboratorio.
+- Agentes Windows 11 (`192.168.1.75`) y Ubuntu (`192.168.1.74`) del laboratorio.
 - Personalización del Dashboard y despliegue distribuido.
 - El rol `honeypot`.
 

@@ -1,0 +1,353 @@
+=== D5-6 EVENTOS BENIGNOS (Fase 4.4) 2026-11-13 02:35:24.555 CST ===
+
+--- PASO 0: sincronia de relojes ---
+ref local .73 = hotdoggy 192.168.1.73
+
+--- PASO 0a: offsets respecto a .73 (offset = t_remoto - t_73_mid) ---
+  ubuntu74 intento1 rtt=0.479s offset=0.241s
+  ubuntu74 intento2 rtt=0.235s offset=0.118s
+  ubuntu74 intento3 rtt=0.175s offset=0.089s
+  ubuntu74 => OFFSET=0.089 s (rtt min 0.175s)
+  win11 intento1 rtt=1.297s offset=7200.931s
+  win11 intento2 rtt=1.108s offset=7200.831s
+  win11 intento3 rtt=0.962s offset=7200.776s
+  win11 => OFFSET=7200.776 s (rtt min 0.962s)
+
+--- PASO 0b: Manager wazuh (epoch UTC, date +%s.%N) ---
+  manager intento1 rtt=1.598s offset=0.678s
+  manager intento2 rtt=1.614s offset=0.687s
+  manager intento3 rtt=1.619s offset=0.691s
+  manager intento4 rtt=1.580s offset=0.671s
+  manager => OFFSET=0.671 s (rtt min 1.580s)
+
+--- PASO 0c: reglas locales del Manager (solo conteo) ---
+soc-tesis ansible shell
+  ansible:   ansible [core 2.21.1]
+  terraform: /run/current-system/sw/bin/terraform
+  uso:       make -C ansible preflight
+  docker:    se usa el demonio del host (privileged + cgroupns=host)
+wazuh | CHANGED | rc=0 >>
+13
+
+--- PASO 0d: detalle del desfase de win11 ---
+local_73=2026-11-13 02:39:09.551 CST (epoch 1794559149)
+  [02:39:20.667] win11> powershell -NoProfile -Command "Get-Date -Format o"
+    2026-11-13T02:39:21.7631257-08:00
+  [02:39:21.466] win11> powershell -NoProfile -Command "(Get-TimeZone).Id"
+    Pacific Standard Time
+  [02:39:22.266] win11> powershell -NoProfile -Command "(Get-TimeZone).BaseUtcOffset.TotalHours"
+    -8
+  [02:39:23.029] win11> w32tm /query /status
+    Leap Indicator: 3(not synchronized)
+    Stratum: 0 (unspecified)
+    Precision: -23 (119.209ns per tick)
+    Root Delay: 0.0000000s
+    Root Dispersion: 0.0000000s
+    ReferenceId: 0x00000000 (unspecified)
+    Last Successful Sync Time: unspecified
+    Source: Local CMOS Clock
+    Poll Interval: 10 (1024s)
+    
+
+--- PASO 0e: agentes (antes de los eventos) ---
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+
+List of agentless devices:
+
+=== PASO 1: Ubuntu (.74) ===
+--- 1a sudo -n -l (solo lectura, para decidir el punto c) ---
+User <oper-ubuntu> may run the following commands on ubuntu-host-client-1:
+    (ALL) NOPASSWD: ALL
+rc_sudo_l=0
+--- 1a sshd local + herramientas ---
+[2026-11-13 02:39:45.875 CST] systemctl is-active ssh: active
+sshd_socket: active
+sshpass: AUSENTE
+setsid: /usr/bin/setsid
+ssh-askpass: AUSENTE
+uid=1000 user=<oper-ubuntu>
+--- 1a.bis sshd efectivo (solo lectura) ---
+usepam yes
+maxauthtries 6
+pubkeyauthentication yes
+passwordauthentication yes
+kbdinteractiveauthentication no
+---
+nouser/nouser2: inexistentes (getent rc=2)
+
+--- 1b/1c: logins SSH fallidos (nouser x3 + nouser2 por desvio NOPASSWD) ---
+  askpass temporal: .ap-BlBxdA.sh (0700, se borra al terminar)
+  login fallido user=nouser   inicio=2026-11-13 02:40:29.850 CST (epoch 1794559229.845) fin=2026-11-13 02:40:31.897 CST rc=255
+  login fallido user=nouser   inicio=2026-11-13 02:40:33.914 CST (epoch 1794559233.910) fin=2026-11-13 02:40:37.893 CST rc=255
+  login fallido user=nouser   inicio=2026-11-13 02:40:39.908 CST (epoch 1794559239.904) fin=2026-11-13 02:40:43.889 CST rc=255
+  DESVIO 1c: <oper-ubuntu> es NOPASSWD:ALL -> no hay fallo de sudo que generar; 4.o login con nouser2
+  login fallido user=nouser2  inicio=2026-11-13 02:40:45.905 CST (epoch 1794559245.901) fin=2026-11-13 02:40:48.336 CST rc=255
+  askpass temporal borrado: NO
+  (el trap se ejecuta al salir; comprobacion posterior)
+  restos askpass en /tmp: 0
+
+--- 1d: evidencia local en auth.log (solo las lineas relevantes) ---
+2026-11-13T02:40:31.282159-06:00 ubuntu-host-client-1 sshd-session[9638]: Failed password for invalid user nouser from 127.0.0.1 port 33774 ssh2
+2026-11-13T02:40:31.885216-06:00 ubuntu-host-client-1 sshd-session[9638]: Connection closed by invalid user nouser 127.0.0.1 port 33774 [preauth]
+2026-11-13T02:40:33.984343-06:00 ubuntu-host-client-1 sshd-session[9802]: Invalid user nouser from 127.0.0.1 port 33784
+2026-11-13T02:40:36.392084-06:00 ubuntu-host-client-1 sshd-session[9802]: Failed password for invalid user nouser from 127.0.0.1 port 33784 ssh2
+2026-11-13T02:40:37.884825-06:00 ubuntu-host-client-1 sshd-session[9802]: Connection closed by invalid user nouser 127.0.0.1 port 33784 [preauth]
+2026-11-13T02:40:39.977806-06:00 ubuntu-host-client-1 sshd-session[9813]: Invalid user nouser from 127.0.0.1 port 36612
+2026-11-13T02:40:42.177068-06:00 ubuntu-host-client-1 sshd-session[9813]: Failed password for invalid user nouser from 127.0.0.1 port 36612 ssh2
+2026-11-13T02:40:43.880843-06:00 ubuntu-host-client-1 sshd-session[9813]: Connection closed by invalid user nouser 127.0.0.1 port 36612 [preauth]
+2026-11-13T02:40:45.979645-06:00 ubuntu-host-client-1 sshd-session[9822]: Invalid user nouser2 from 127.0.0.1 port 35084
+2026-11-13T02:40:47.467569-06:00 ubuntu-host-client-1 sshd-session[9822]: Failed password for invalid user nouser2 from 127.0.0.1 port 35084 ssh2
+2026-11-13T02:40:48.327722-06:00 ubuntu-host-client-1 sshd-session[9822]: Connection closed by invalid user nouser2 127.0.0.1 port 35084 [preauth]
+2026-11-13T02:40:56.088158-06:00 ubuntu-host-client-1 sudo: <oper-ubuntu> :  PWD=/home/<oper-ubuntu> ; USER=root ; COMMAND=/usr/bin/grep -E nouser|sudo.*(incorrect|authentication failure) /var/log/auth.log
+
+=== PASO 2: Windows 11 (.75) ===
+--- 2a/2b: 3 net use fallidos + alta/baja de soc-test-user ---
+  inicio local .73 = 2026-11-13 02:41:30.324 CST (epoch 1794559290.326858195)
+** WARNING: connection is not using a post-quantum key exchange algorithm.
+** This session may be vulnerable to "store now, decrypt later" attacks.
+** The server may need to be upgraded. See https://openssh.com/pq.html
+#< CLIXML
+HOST=WIN-HOST-CLIENT PID_ELEVADO=True
+EPOCH_OFFSET_REF=1794566492.388
+NETUSE_1 a=1794566492.400 b=1794566496.621 rc=2 out=net.exe : System error 1326 has occurred. | At line:12 char:12 | +     $out = & net use '\\127.0.0.1\IPC$' /user:nouser Wrong-pass-1 2>& ... | +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (System error 1326 has occurred.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | The user name or password is incorrect.
+NETUSE_2 a=1794566498.710 b=1794566500.795 rc=2 out=net.exe : System error 1326 has occurred. | At line:12 char:12 | +     $out = & net use '\\127.0.0.1\IPC$' /user:nouser Wrong-pass-1 2>& ... | +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (System error 1326 has occurred.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | The user name or password is incorrect.
+NETUSE_3 a=1794566502.819 b=1794566504.901 rc=2 out=net.exe : System error 1326 has occurred. | At line:12 char:12 | +     $out = & net use '\\127.0.0.1\IPC$' /user:nouser Wrong-pass-1 2>& ... | +            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (System error 1326 has occurred.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | The user name or password is incorrect.
+ADD a=1794566506.939 b=1794566506.992 rc=-1 out=The password entered is longer than 14 characters.  Computers | with Windows prior to Windows 2000 will not be able to use | this account. Do you want to continue this operation? (Y/N) [Y]:  | net.exe : No valid response was provided. | At line:26 char:8 | + $out = & net user soc-test-user $pwd /add 2>&1 | +        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (No valid response was provided.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError
+DEL a=1794566510.006 b=1794566510.057 rc=2 out=net.exe : The user name could not be found. | At line:35 char:8 | + $out = & net user soc-test-user /delete 2>&1 | +        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (The user name could not be found.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | More help is available by typing NET HELPMSG 2221.
+VERIFY rc=2 out=net.exe : The user name could not be found. | At line:40 char:8 | + $out = & net user soc-test-user 2>&1 | +        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (The user name could not be found.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | More help is available by typing NET HELPMSG 2221.
+<Objs Version="1.1.0.1" xmlns="http://schemas.microsoft.com/powershell/2004/04"><Obj S="progress" RefId="0"><TN RefId="0"><T>System.Management.Automation.PSCustomObject</T><T>System.Object</T></TN><MS><I64 N="SourceId">1</I64><PR N="Record"><AV>Preparing modules for first use.</AV><AI>0</AI><Nil /><PI>-1</PI><PC>-1</PC><T>Completed</T><SR>-1</SR><SD> </SD></PR></MS></Obj></Objs>  fin local .73 = 2026-11-13 02:41:49.826 CST (epoch 1794559309.828328877) rc_ssh=0
+
+--- 2b (reintento): alta y baja de soc-test-user, contrasena aleatoria de 12 (no se imprime) ---
+  inicio local .73 = 2026-11-13 02:42:15.733 CST (epoch 1794559335.735585692)
+PWD_LEN=16
+ADD a=1794566537.457 b=1794566537.519 rc=-1 out=The password entered is longer than 14 characters.  Computers | with Windows prior to Windows 2000 will not be able to use | this account. Do you want to continue this operation? (Y/N) [Y]:  | net.exe : No valid response was provided. | At line:13 char:8 | + $out = & net user soc-test-user $pwd /add 2>&1 | +        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (No valid response was provided.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError
+DEL a=1794566540.595 b=1794566540.649 rc=2 out=net.exe : The user name could not be found. | At line:22 char:8 | + $out = & net user soc-test-user /delete 2>&1 | +        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (The user name could not be found.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | More help is available by typing NET HELPMSG 2221.
+VERIFY rc=2 out=net.exe : The user name could not be found. | At line:27 char:8 | + $out = & net user soc-test-user 2>&1 | +        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (The user name could not be found.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | More help is available by typing NET HELPMSG 2221.
+  fin local .73 = 2026-11-13 02:42:20.413 CST (epoch 1794559340.415675798)
+
+--- 2b (3er intento): alta y baja de soc-test-user, contrasena aleatoria de 12 (8 base64 + aA1!, no se imprime) ---
+  inicio local .73 = 2026-11-13 02:42:32.833 CST (epoch 1794559352.835059502)
+PWD_LEN=12
+ADD a=1794566554.535 b=1794566554.646 rc=0 out=The command completed successfully.
+DEL a=1794566557.654 b=1794566557.710 rc=0 out=The command completed successfully.
+VERIFY rc=2 out=net.exe : The user name could not be found. | At line:27 char:8 | + $out = & net user soc-test-user 2>&1 | +        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ |     + CategoryInfo          : NotSpecified: (The user name could not be found.:String) [], RemoteException |     + FullyQualifiedErrorId : NativeCommandError |   |  | More help is available by typing NET HELPMSG 2221.
+  fin local .73 = 2026-11-13 02:42:37.543 CST (epoch 1794559357.545986191)
+
+--- 2c: evidencia local Get-WinEvent (4625/4720/4726, ultimos 10 min; cuentas reales -> <oper>) ---
+
+TimeCreated             Id User   Subj  
+-----------             -- ----   ----  
+11/13/2026 2:41:32 AM 4625 nouser <oper>
+11/13/2026 2:42:34 AM 4720 <oper> <oper>
+11/13/2026 2:42:37 AM 4726 <oper> <oper>
+
+
+
+COUNT 4726, <oper> n=1
+COUNT 4720, <oper> n=1
+COUNT 4625, nouser n=1
+
+--- 2c.bis diagnostico: 4625 y 4776 en los ultimos 15 min (solo lectura) ---
+4625 total=1
+  4625 02:41:32.459 rid=44535 user=nouser logontype=3 status=-1073741715 substatus=-1073741724
+4776 total=0
+Log Security: max=20971520 records=22963
+Ahora Windows: 02:43:31.943  (UTC 10:43:31.945)
+
+--- 2c.ter diagnostico de espaciado: 3 net use mas separados 10 s ---
+antes: 4625_total=1
+SPACED_1 a=1794566652.248 b=1794566656.478 rc=2 err=net.exe : System error 1326 has occurred. At line:9 char:12 + $out = & net use '\\127.0.0.
+SPACED_2 a=1794566666.598 b=1794566668.691 rc=2 err=net.exe : System error 1326 has occurred. At line:9 char:12 + $out = & net use '\\127.0.0.
+SPACED_3 a=1794566678.718 b=1794566680.812 rc=2 err=net.exe : System error 1326 has occurred. At line:9 char:12 + $out = & net use '\\127.0.0.
+despues: 4625_total=2
+  4625 02:41:32.459 rid=44535 user=nouser logontype=3 substatus=-1073741724
+  4625 02:44:12.297 rid=44628 user=nouser logontype=3 substatus=-1073741724
+
+=== PASO 3: alertas en el Manager (alerts.json, sin full_log) ===
+  jq/python3 en el Manager: /usr/bin/python3 
+
+# agente=ubuntu-lab ventana=2026-11-13T08:40:20Z..2026-11-13T08:46:30Z alertas_totales=38 relevantes=22
+{"epoch":1794559230.759,"timestamp":"2026-11-13T08:40:30.759+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559230.763,"timestamp":"2026-11-13T08:40:30.763+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559230.763,"timestamp":"2026-11-13T08:40:30.763+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559230.772,"timestamp":"2026-11-13T08:40:30.772+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559230.772,"timestamp":"2026-11-13T08:40:30.772+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559230.8,"timestamp":"2026-11-13T08:40:30.800+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559230.8,"timestamp":"2026-11-13T08:40:30.800+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559230.8,"timestamp":"2026-11-13T08:40:30.800+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559232.63,"timestamp":"2026-11-13T08:40:32.630+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559234.629,"timestamp":"2026-11-13T08:40:34.629+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559234.688,"timestamp":"2026-11-13T08:40:34.688+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559236.631,"timestamp":"2026-11-13T08:40:36.631+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559240.633,"timestamp":"2026-11-13T08:40:40.633+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559240.692,"timestamp":"2026-11-13T08:40:40.692+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559242.63,"timestamp":"2026-11-13T08:40:42.630+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser"}
+{"epoch":1794559246.631,"timestamp":"2026-11-13T08:40:46.631+0000","agent":"ubuntu-lab","rule_id":"5710","level":5,"desc":"sshd: Attempt to login using a non-existent user","srcuser":"nouser2"}
+{"epoch":1794559246.691,"timestamp":"2026-11-13T08:40:46.691+0000","agent":"ubuntu-lab","rule_id":"5503","level":5,"desc":"PAM: User login failed."}
+{"epoch":1794559248.632,"timestamp":"2026-11-13T08:40:48.632+0000","agent":"ubuntu-lab","rule_id":"5712","level":10,"desc":"sshd: brute force trying to get access to the system. Non existent user.","srcuser":"nouser2"}
+{"epoch":1794559266.683,"timestamp":"2026-11-13T08:41:06.683+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559266.683,"timestamp":"2026-11-13T08:41:06.683+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559266.683,"timestamp":"2026-11-13T08:41:06.683+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+{"epoch":1794559266.71,"timestamp":"2026-11-13T08:41:06.710+0000","agent":"ubuntu-lab","rule_id":"52002","level":3,"desc":"Apparmor DENIED"}
+# por_regla 52002 n=10 level=Apparmor DENIED
+# por_regla 5710 n=7 level=sshd: Attempt to login using a non-existent user
+# por_regla 5501 n=5 level=PAM: Login session opened.
+# por_regla 5502 n=5 level=PAM: Login session closed.
+# por_regla 5503 n=4 level=PAM: User login failed.
+# por_regla 5715 n=3 level=sshd: authentication success.
+# por_regla 52000 n=2 level=Apparmor messages grouped.
+# por_regla 5712 n=1 level=sshd: brute force trying to get access to the system. Non existent user.
+# por_regla 5402 n=1 level=Successful sudo to ROOT executed.
+
+# agente=win11-lab ventana=2026-11-13T08:41:20Z..2026-11-13T08:46:30Z alertas_totales=64 relevantes=10
+{"epoch":1794559293.177,"timestamp":"2026-11-13T08:41:33.177+0000","agent":"win11-lab","rule_id":"60122","level":5,"desc":"Logon Failure - Unknown user or bad password","eventID":"4625"}
+{"epoch":1794559355.313,"timestamp":"2026-11-13T08:42:35.313+0000","agent":"win11-lab","rule_id":"60160","level":5,"desc":"Domain Users Group Changed","eventID":"4728"}
+{"epoch":1794559355.325,"timestamp":"2026-11-13T08:42:35.325+0000","agent":"win11-lab","rule_id":"60109","level":8,"desc":"User account enabled or created","eventID":"4722"}
+{"epoch":1794559355.325,"timestamp":"2026-11-13T08:42:35.325+0000","agent":"win11-lab","rule_id":"60109","level":8,"desc":"User account enabled or created","eventID":"4720"}
+{"epoch":1794559355.327,"timestamp":"2026-11-13T08:42:35.327+0000","agent":"win11-lab","rule_id":"60110","level":8,"desc":"User account changed","eventID":"4738"}
+{"epoch":1794559355.372,"timestamp":"2026-11-13T08:42:35.372+0000","agent":"win11-lab","rule_id":"60170","level":5,"desc":"Users Group Changed","eventID":"4732"}
+{"epoch":1794559358.43,"timestamp":"2026-11-13T08:42:38.430+0000","agent":"win11-lab","rule_id":"60160","level":5,"desc":"Domain Users Group Changed","eventID":"4729"}
+{"epoch":1794559358.43,"timestamp":"2026-11-13T08:42:38.430+0000","agent":"win11-lab","rule_id":"60170","level":5,"desc":"Users Group Changed","eventID":"4733"}
+{"epoch":1794559358.435,"timestamp":"2026-11-13T08:42:38.435+0000","agent":"win11-lab","rule_id":"60111","level":8,"desc":"User account disabled or deleted","eventID":"4726"}
+{"epoch":1794559453.018,"timestamp":"2026-11-13T08:44:13.018+0000","agent":"win11-lab","rule_id":"60122","level":5,"desc":"Logon Failure - Unknown user or bad password","eventID":"4625"}
+# por_regla 67028 n=18 level=Special privileges assigned to new logon.
+# por_regla 60106 n=12 level=Windows Logon Success
+# por_regla 60137 n=11 level=Windows User Logoff
+# por_regla 67024 n=6 level=Service logon event registered from non standard service account.
+# por_regla 67023 n=6 level=Non service account logged off.
+# por_regla 60122 n=2 level=Logon Failure - Unknown user or bad password
+# por_regla 60160 n=2 level=Domain Users Group Changed
+# por_regla 60109 n=2 level=User account enabled or created
+# por_regla 60170 n=2 level=Users Group Changed
+# por_regla 60642 n=1 level=Software protection service scheduled successfully.
+# por_regla 60110 n=1 level=User account changed
+# por_regla 60111 n=1 level=User account disabled or deleted
+
+
+--- PASO 3: tabla accion -> alerta -> latencia (todo en el reloj de .73) ---
+  offsets corregidos: .74 +0.089s | win11 +7200.776s | Manager +0.671s
+  latencia = (timestamp de la alerta - offset del Manager) - hora de la accion
+
+| accion | hora accion .73 (UTC) | hora accion local | rc | alerta | nivel | hora alerta .73 | latencia |
+|---|---|---|---|---|---|---|---|
+| U1 ssh nouser localhost #1 | 08:40:29.756 | 08:40:29.845 (CST .74) | 255 | 5710 | 5 | 08:40:30.101 | 0.35 s |
+| U2 ssh nouser localhost #2 | 08:40:33.821 | 08:40:33.910 (CST .74) | 255 | 5710 | 5 | 08:40:33.958 | 0.14 s |
+| U3 ssh nouser localhost #3 | 08:40:39.815 | 08:40:39.904 (CST .74) | 255 | 5710 | 5 | 08:40:39.962 | 0.15 s |
+| U4 ssh nouser2 localhost (desvio 1c) | 08:40:45.812 | 08:40:45.901 (CST .74) | 255 | 5710 | 5 | 08:40:45.960 | 0.15 s |
+| W1 net use IPC$ nouser #1 | 08:41:31.624 | 10:41:32.400 (reloj win11, +2 h) | 2 | 60122 (EventID 4625) | 5 | 08:41:32.506 | 0.88 s |
+| W2 net use IPC$ nouser #2 | 08:41:37.934 | 10:41:38.710 (reloj win11, +2 h) | 2 | SIN ALERTA (ver nota) | - | - | - |
+| W3 net use IPC$ nouser #3 | 08:41:42.043 | 10:41:42.819 (reloj win11, +2 h) | 2 | SIN ALERTA (ver nota) | - | - | - |
+| W4 net user soc-test-user /add | 08:42:33.759 | 10:42:34.535 (reloj win11, +2 h) | 0 | 60109 (EventID 4720) | 8 | 08:42:34.654 | 0.89 s |
+| W5 net user soc-test-user /delete | 08:42:36.878 | 10:42:37.654 (reloj win11, +2 h) | 0 | 60111 (EventID 4726) | 8 | 08:42:37.764 | 0.89 s |
+| W6 net use IPC$ nouser (diagnostico espaciado) | 08:44:11.472 | 10:44:12.248 (reloj win11, +2 h) | 2 | 60122 (EventID 4625) | 5 | 08:44:12.347 | 0.88 s |
+
+W2/W3 sin alerta: Windows audito un solo 4625 para los 3 net use (rafaga). Ver PASO 2c.ter.
+
+--- PASO 3b: latencias minimas y maximas por agente ---
+  ubuntu-lab: min=0.14s max=0.35s n=4 (solo 1.a alerta de cada accion)
+  win11-lab: min=0.88s max=0.89s n=4 (solo 1.a alerta de cada accion)
+  ubuntu-lab incluyendo la alerta de fuerza bruta 5712: 0.14s .. 2.15s
+
+--- PASO 3c: reglas por evento ---
+  ssh invalido/no existente (Ubuntu)      -> 5710 (level 5) + 5503 PAM (level 5), 2 lineas por intento
+  fuerza bruta ssh (>=5 fallos, usuario inexistente) -> 5712 (level 10)
+  password incorrecta en sudo             -> no aplica: <oper-ubuntu> es NOPASSWD:ALL (desvio 1c)
+  4625 logon fallido (Windows)            -> 60122 Logon Failure (level 5)
+  4720 alta de cuenta (Windows)           -> 60109 (level 8); acompañada de 4722/4738/4732/4728
+  4726 baja de cuenta (Windows)           -> 60111 (level 8); acompañada de 4729/4733
+
+=== PASO 4: CONCLUSION ===
+
+-- Eventos SIN alerta (candidatos a FN) --
+1. W2 y W3 (net use #2 y #3): NO existe evento origen. Windows audito un solo EventID 4625
+   para los 3 intentos de la rafaga; se comprobo con 3 intentos extra separados 10 s, que
+   produjeron 1 unico 4625 mas (W6). El pipeline no perdio nada: el origen no creo el evento.
+   Consecuencia para TEST-005 / Fase 9: contar 4625 SUBESTIMA el numero real de intentos de
+   logon por red. Una deteccion por umbral de 4625 necesitara mas intentos reales de los que
+   parece, o apoyarse en el 4776 (no auditado aqui: 0 eventos en la ventana).
+2. sudo con contrasena incorrecta: no se genero (<oper-ubuntu> es NOPASSWD:ALL). No es FN; el evento
+   no existe por configuracion del cliente (desvio 1c).
+3. No hay ningun otro evento de los generados sin su alerta correspondiente.
+
+-- Alertas INESPERADAS (FP o ruido) --
+1. 52002 "Apparmor DENIED" (level 3) de ubuntu-lab cada ~10 s: profile="unprivileged_userns",
+   comm="(ubuntu-insigh...)" = el servicio de telemetria ubuntu-insights. Preexistente a estos
+   eventos; ruido continuo que ensucia el Dashboard. Candidato a tuning (silenciar 52002 para
+   ese perfil o deshabilitar ubuntu-insights).
+2. Duplicidad por diseno: cada intento SSH invalido produce 2 alertas (5710 de sshd + 5503 de PAM)
+   y la 5.a produce ademas 5712. Una accion -> hasta 3 alertas.
+3. Una accion administrativa de Windows produce 5 alertas (4720 + 4722 + 4738 + 4732 + 4728) y
+   el borrado 4 (4726 + 4729 + 4733): correcto pero ruidoso para el analista.
+4. 60642 "Software protection service scheduled successfully" (win11-lab): ruido periodico ajeno
+   a las acciones.
+
+-- Latencia (alerta - accion, corregida por offsets) --
+   ubuntu-lab: 0.14 s .. 0.35 s (primera alerta de cada accion); 2.15 s para la 5712 de fuerza
+               bruta, que se evalua sobre la 2.a linea de auth.log ("Failed password").
+   win11-lab:  0.88 s .. 0.89 s (uniforme en las 4 acciones con alerta).
+   Son tiempos de recepcion en el Manager, sin buffering del agente (los agentes estaban
+   conectados). No miden la latencia con el agente desconectado (eso es TEST-008).
+
+-- rule.id por evento --
+   Ubuntu: ssh usuario inexistente 5710 (5) + 5503 PAM (5); fuerza bruta ssh 5712 (10).
+           sudo con contrasena incorrecta: no aplica (NOPASSWD).
+   Windows: 4625 -> 60122 (5); 4720 -> 60109 (8); 4726 -> 60111 (8).
+
+-- Incertidumbre de la medida --
+   Offsets medidos en el PASO 0 con estimacion por punto medio: .74 +0.089 s, Manager +0.671 s
+   (rtt 1.6 s via ansible -> incertidumbre ~+-0.8 s), win11 +7200.776 s.
+   El desfase de 2 h de win11 es real y no corrige la latencia (el timestamp de la alerta es del
+   Manager), pero SI afecta a cualquier correlacion por la hora del evento: el systemTime que
+   envia el agente va 2 h por delante. Si se reconstruye una linea de tiempo con el campo del
+   evento, habra que corregirlo o sincronizar el reloj (w32tm esta en "Local CMOS Clock", sin
+   sincronizar). Se deja anotado, sin tocar la configuracion.
+
+=== CIERRE: estado final (nada apagado) 2026-11-13 02:51:56.526 CST ===
+   ID: 000, Name: vm-wazuh (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: vm-honeyserver, IP: any, Active
+   ID: 002, Name: win11-lab, IP: any, Active
+   ID: 003, Name: ubuntu-lab, IP: any, Active
+restos_tmp_manager=0
+  .74 restos_tmp_74: 0
+  .74 active
+  .75 WazuhSvc: Running
+
+-- Desvios respecto al prompt --
+1. PASO 1c (sudo con contrasena incorrecta): NO ejecutado. `sudo -n -l` muestra
+   "(ALL) NOPASSWD: ALL" para el user local de .74, asi que sudo nunca pide contrasena y no
+   existe el fallo que se queria generar. Sustituido por un 4.o login SSH fallido con nouser2.
+2. PASO 2a: `net use \\127.0.0.1\IPC$ /user:nouser` en vez de `runas /user:nouser cmd`.
+   runas pide la contrasena por consola y por SSH no hay TTY; net use produce el mismo
+   EventID 4625 (logontype 3, substatus 0xC000006A = contrasena incorrecta).
+3. PASO 1b: sshpass no esta instalado en .74. Se uso SSH_ASKPASS + setsid con un script
+   temporal en /tmp (0700, borrado al terminar; 0 restos).
+4. PASO 2b: los 2 primeros intentos de alta fallaron porque `net user` pregunta por consola
+   cuando la contrasena supera 14 caracteres ("Do you want to continue? (Y/N)") y no hay TTY.
+   No se creo ningun usuario en esos intentos (verificado). El 3.er intento, con 12 caracteres,
+   funciono (rc=0) y el usuario quedo borrado.
+5. Windows audita un solo 4625 por rafaga (ver PASO 4, FN #1). Se hicieron 3 intentos extra
+   separados 10 s como diagnostico acotado (W6) para distinguir "evento no creado" de
+   "evento perdido por el pipeline".
+6. El ~/.ssh/known_hosts del operador tenia una clave vieja para 10.50.40.10 y ansible no
+   conectaba ("REMOTE HOST IDENTIFICATION HAS CHANGED"). Se uso el fichero del proyecto
+   ~/soc-tesis-secrets/azure_known_hosts, cuyo fingerprint ED25519 (SHA256:iCmLJV2L...) coincide
+   con el que presenta el Manager. No se modifico ningun known_hosts.
+7. Los "restos_tmp_manager" y el askpass de .74 se comprobaron a 0.
+
+-- Archivos creados en evidence/azure/2026-11-13/ --
+   d5-6-eventos-benignos.log   (este log: pasos 0-4, tabla y cierre)
+   d5-6-alertas.jsonl         (22 alertas relevantes, JSON compacto, sin full_log)
+
+-- AVISO para el commit --
+   d5-6-eventos-benignos.log contiene el nombre de la cuenta local real del cliente Ubuntu
+   ("<oper-ubuntu>", 5 apariciones: salida de `sudo -n -l`, `id`, la nota del desvio 1c y 1 linea de
+   auth.log). d5-6-alertas.jsonl no contiene nombres reales (sustituidos por <oper>).
+   No se han escrito contrasenas: la de soc-test-user se genero aleatoria y nunca se imprimio.
+
+Sin commit, sin SHA256SUMS, sin deallocate: las 4 VMs y los 3 agentes siguen corriendo.

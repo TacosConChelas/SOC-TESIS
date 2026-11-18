@@ -93,9 +93,13 @@ c5() {
   fi
 }
 
-# 6. authd.pass.
+# 6. authd.pass: presente antes de start; destruido tras start (el agente ya esta enrolado).
 c6() {
   local meta have want
+  if hs test -e /etc/soc-tesis/honeypot-started; then
+    if hs test -e /var/ossec/etc/authd.pass; then bad "authd.pass sigue en el honeyserver tras start"; else good "authd.pass ausente tras start"; fi
+    return
+  fi
   meta="$(hs stat -c '%a %U:%G' /var/ossec/etc/authd.pass 2>/dev/null || true)"
   if [ "$meta" = "640 root:wazuh" ]; then good "authd.pass 640 root:wazuh"; else bad "authd.pass con permisos '$meta'"; fi
   have="$(hs sha256sum /var/ossec/etc/authd.pass 2>/dev/null | cut -d' ' -f1 || true)"
