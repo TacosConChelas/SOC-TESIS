@@ -24,7 +24,7 @@ export ANSIBLE_USER_KNOWN_HOSTS_FILE := $(LOCAL)/.known_hosts
 export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o IdentitiesOnly=yes -o UserKnownHostsFile=$(LOCAL)/.known_hosts -o GlobalKnownHostsFile=/dev/null
 
 .PHONY: help lint tf-fmt tf-validate ansible-lint syntax-check tags-contract \
-        secret-scan keys up known-hosts ping down \
+        secret-scan plan-egress-selftest keys up known-hosts ping down \
         toggle-install toggle-operate netcheck rehearse preflight \
         azure-session time-guard plan recap-check-selftest relay-check common-check \
         pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check rules-check \
@@ -60,15 +60,18 @@ tags-contract: ## contrato de tags E1-8
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --list-tasks --tags stop >/dev/null
 	@echo "tags-contract: ok (--list-tasks --tags start y stop compilan)"
 
-secret-scan: ## escaneo de secretos con git grep (archivos rastreados y no ignorados)
-	@cd "$(REPO)" && r=0; \
-	git grep -I -n -E --untracked -e '-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----' -- . ':!ansible/Makefile' | cut -d: -f1,2 || r=$$?; \
-	if [ $$r -eq 0 ]; then echo "secret-scan: FALLA (llave privada PEM; ver file:line)" >&2; exit 1; fi; \
-	[ $$r -eq 1 ] || { echo "secret-scan: error de git grep ($$r)" >&2; exit 1; }; \
-	r=0; git grep -I -n -i -E --untracked -e "(psk|pre[_-]?shared[_-]?key|secret)[[:space:]]*[:=][[:space:]]*[\"']?[^[:space:]\"'#\$$<{%!]{8,}" -- . ':!ansible/Makefile' | cut -d: -f1,2 || r=$$?; \
-	if [ $$r -eq 0 ]; then echo "secret-scan: FALLA (asignacion literal de PSK/secret; ver file:line)" >&2; exit 1; fi; \
-	[ $$r -eq 1 ] || { echo "secret-scan: error de git grep ($$r)" >&2; exit 1; }
-	@echo "secret-scan: ok"
+secret-scan: ## escaneo de secretos (git grep, sin exclusiones) + selftest que planta secretos sinteticos
+	@bash "$(LOCAL)/scripts/secret-scan.sh" --selftest
+	@bash "$(LOCAL)/scripts/secret-scan.sh" "$(REPO)"
+
+plan-egress-selftest: ## el filtro jq del plan detecta un egreso abierto y deja pasar uno cerrado
+	@f="$(LOCAL)/scripts/plan-egress.jq"; \
+	mk() { printf '{"resource_changes":[{"type":"azurerm_network_security_rule","change":{"after":{"name":"R","direction":"Outbound","access":"Allow","destination_address_prefix":"%s"}}}]}' "$$1"; }; \
+	for d in Internet '*' 0.0.0.0/0; do \
+	  [ "$$(mk "$$d" | jq -r -f "$$f")" = R ] || { echo "plan-egress-selftest: no detecto egreso a $$d" >&2; exit 1; }; done; \
+	for d in AzureCloud 168.63.129.16 10.50.30.10; do \
+	  [ -z "$$(mk "$$d" | jq -r -f "$$f")" ] || { echo "plan-egress-selftest: falso positivo con $$d" >&2; exit 1; }; done; \
+	echo "plan-egress-selftest: ok"
 
 keys:
 	@bash "$(LOCAL)/scripts/gen-local-keys.sh"
@@ -260,7 +263,7 @@ rehearse: known-hosts ## 1a pasada con cambios, 2a changed=0, --check, netcheck
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 	@echo "rehearse: ok. Para reabrir el egreso: make toggle-install"
 
-preflight: lint tags-contract secret-scan recap-check-selftest rehearse relay-check common-check ## lint + tags + secretos + ensayo  <-- Etapa 0
+preflight: lint tags-contract secret-scan plan-egress-selftest recap-check-selftest rehearse relay-check common-check ## lint + tags + secretos + ensayo  <-- Etapa 0
 	@echo "preflight: Etapa 0 OK"
 
 # Nombre de la suscripcion esperada: variable de entorno, nunca en el repo.
@@ -294,7 +297,8 @@ plan: ## terraform plan -out=/tmp/tfplan (sin egreso de mantenimiento) + guarda 
 	@umask 077; \
 	terraform -chdir="$(TF_DIR)" plan -input=false -lock=false -var maintenance_egress=false -out=/tmp/tfplan; \
 	j=$$(terraform -chdir="$(TF_DIR)" show -json /tmp/tfplan) || { echo "plan: no se pudo leer /tmp/tfplan" >&2; exit 1; }; \
-	if printf '%s' "$$j" | grep -q 'Allow-Out-Maintenance-Egress'; then echo "plan: el plan abre el egreso de mantenimiento" >&2; exit 1; fi; \
+	bad=$$(printf '%s' "$$j" | jq -r -f "$(LOCAL)/scripts/plan-egress.jq") || { echo "plan: jq no pudo evaluar el plan" >&2; exit 1; }; \
+	if [ -n "$$bad" ]; then echo "plan: reglas Outbound/Allow abiertas a Internet o *: $$bad" >&2; exit 1; fi; \
 	echo "plan: ok (/tmp/tfplan, 0600); revisalo y aplica a mano con terraform apply /tmp/tfplan"
 
 down: ## destruye contenedores

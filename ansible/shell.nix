@@ -8,6 +8,7 @@ pkgs.mkShell {
     ansible
     ansible-lint
     shellcheck
+    jq
     openssh
     (python3.withPackages (ps: [ ps.pyyaml ]))
   ];

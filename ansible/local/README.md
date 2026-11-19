@@ -57,7 +57,8 @@ make netcheck         # falla si algún contenedor alcanza 1.1.1.1 o example.com
 |---|---|
 | `lint` | `terraform fmt -check`, `validate` (copia temporal, backend=false), `ansible-lint`, `--syntax-check` |
 | `tags-contract` | E1-8: tags ∈ {install,config,start} y `start` sin módulos de descarga |
-| `secret-scan` | `git grep` sobre archivos rastreados y no ignorados: llave PEM y asignación literal de PSK/secret. Ignora referencias (`$VAR`, `{{ var }}`, `<...>`). |
+| `secret-scan` | `local/scripts/secret-scan.sh`: `git grep` sobre archivos rastreados y no ignorados (sin exclusiones): llave PEM, asignación literal de PSK/secret y credencial de 64 hex. Ignora referencias (`$VAR`, `{{ var }}`, `<...>`) y digests sha256 sueltos. Antes corre `--selftest`, que planta secretos sintéticos en un repo temporal y exige que se detecten. |
+| `plan-egress-selftest` | El filtro `jq` de `make plan` detecta una regla Outbound/Allow hacia `Internet`, `*` o `0.0.0.0/0` y deja pasar `AzureCloud` e IPs internas. Va en `preflight`. |
 | `up` / `down` | construye/arranca y destruye los contenedores |
 | `known-hosts` | simula la Etapa 4a (huellas de host desechables) |
 | `ping` | `ansible all -m ping` (4 `pong`) |
@@ -73,7 +74,7 @@ make netcheck         # falla si algún contenedor alcanza 1.1.1.1 o example.com
 |---|---|
 | `azure-session` | exige `EXPECTED_AZ_SUBSCRIPTION_NAME` (variable de entorno, nunca en el repo), `az` con sesión vigente y esa suscripción en estado `Enabled`. No imprime IDs. |
 | `time-guard` | falla a partir de 20:30 (E1-9). Se prueba sin esperar: `TIMEGUARD_NOW=20:30 make time-guard`. |
-| `plan` | `umask 077; terraform plan -input=false -lock=false -var maintenance_egress=false -out=/tmp/tfplan`; falla si `terraform show -json` contiene `Allow-Out-Maintenance-Egress`. No aplica nada: el operador revisa el plan y aplica a mano con `terraform apply /tmp/tfplan`. |
+| `plan` | `umask 077; terraform plan -input=false -lock=false -var maintenance_egress=false -out=/tmp/tfplan`; falla si `terraform show -json` deja alguna `azurerm_network_security_rule` Outbound/Allow hacia `Internet`, `*` o `0.0.0.0/0` (filtro `local/scripts/plan-egress.jq`, no un grep del nombre). No aplica nada: el operador revisa el plan y aplica a mano con `terraform apply /tmp/tfplan`. |
 
 `make plan` no ejecuta `terraform init`: si falta `terraform/lab/.terraform`, falla y pide hacerlo una vez a mano (así no se toca el repo).
 

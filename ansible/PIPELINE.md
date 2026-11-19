@@ -24,7 +24,7 @@ Regla general: cada verificación termina con exit ≠ 0 si falla. Los gates se 
 `unattended-upgrades` ya no es un riesgo abierto: el rol `common` desactiva los timers `apt-daily*` y la actualización automática (ver `roles/common` y `make common-check`).
 
 ## Etapa 1 · Plan de Terraform [AUTO] + revisión [MANUAL]
-1. `make plan` (en `ansible/`): `umask 077; terraform plan -out=/tmp/tfplan` con `maintenance_egress=false`. Falla si el plan contiene `Allow-Out-Maintenance-Egress`. No aplica nada.
+1. `make plan` (en `ansible/`): `umask 077; terraform plan -out=/tmp/tfplan` con `maintenance_egress=false`. Falla si el plan deja alguna regla NSG Outbound/Allow hacia `Internet`, `*` o `0.0.0.0/0` (`jq`, `local/scripts/plan-egress.jq`); eso incluye `Allow-Out-Maintenance-Egress`. No aplica nada.
 2. El operador revisa el plan a mano: 4 `azurerm_linux_virtual_machine`, SSH 22 solo desde `lab_cidr` hacia `10.50.20.10`, `10.50.30.10` y `10.50.40.10`, 22222 solo desde `lab_cidr` hacia honeyserver, y `custom_data` de honeyserver con `Port 22222`. Luego aplica con `terraform apply /tmp/tfplan` (Etapa 2).
 
 El plan contiene secretos (p. ej. `admin_password`): se guarda con permisos 0600 y `/tmp/tfplan` se borra tras el apply.
