@@ -165,9 +165,9 @@
 - name: Comprobar que el directorio de secretos está fuera del repositorio
   ansible.builtin.assert:
     that:
-      - not ((wazuh_secrets_dir_real ~ '/').startswith(wazuh_repo_root ~ '/'))
+      - not ((soc_secrets_dir_real ~ '/').startswith(soc_repo_root ~ '/'))
     fail_msg: >-
-      wazuh_secrets_dir ({{ wazuh_secrets_dir_real }}) está dentro del repositorio ({{ wazuh_repo_root }}):
+      wazuh_secrets_dir ({{ soc_secrets_dir_real }}) está dentro del repositorio ({{ soc_repo_root }}):
       los secretos de Wazuh nunca pueden vivir en el repo.
   delegate_to: localhost
   become: false
@@ -176,7 +176,7 @@
 
 - name: Leer authd.pass en el controlador
   ansible.builtin.stat:
-    path: "{{ wazuh_secrets_dir_real }}/authd.pass"
+    path: "{{ soc_secrets_dir_real }}/authd.pass"
   register: wazuh_authd_local
   delegate_to: localhost
   become: false
@@ -185,12 +185,12 @@
 - name: Exigir que authd.pass exista en el controlador
   ansible.builtin.assert:
     that: wazuh_authd_local.stat.exists
-    fail_msg: "Falta {{ wazuh_secrets_dir_real }}/authd.pass (D8: se genera con openssl rand -base64 32)."
+    fail_msg: "Falta {{ soc_secrets_dir_real }}/authd.pass (D8: se genera con openssl rand -base64 32)."
   tags: [config]
 
 - name: Entregar authd.pass (contraseña de enrolamiento)
   ansible.builtin.copy:
-    src: "{{ wazuh_secrets_dir_real }}/authd.pass"
+    src: "{{ soc_secrets_dir_real }}/authd.pass"
     dest: /var/ossec/etc/authd.pass
     owner: root
     group: wazuh
@@ -403,7 +403,7 @@
 
 - name: Crear el directorio de secretos en el controlador
   ansible.builtin.file:
-    path: "{{ wazuh_secrets_dir_real }}"
+    path: "{{ soc_secrets_dir_real }}"
     state: directory
     mode: "0700"
   delegate_to: localhost
@@ -414,7 +414,7 @@
 - name: Traer wazuh-install-files.tar al controlador
   ansible.builtin.fetch:
     src: /root/wazuh-install-files.tar
-    dest: "{{ wazuh_secrets_dir_real }}/wazuh-install-files.tar"
+    dest: "{{ soc_secrets_dir_real }}/wazuh-install-files.tar"
     flat: true
     validate_checksum: true
   no_log: true
@@ -423,7 +423,7 @@
 
 - name: Dejar el tar traído solo para el operador
   ansible.builtin.file:
-    path: "{{ wazuh_secrets_dir_real }}/wazuh-install-files.tar"
+    path: "{{ soc_secrets_dir_real }}/wazuh-install-files.tar"
     mode: "0600"
   delegate_to: localhost
   become: false
@@ -440,7 +440,7 @@
 
 - name: Calcular el sha256 del tar en el controlador
   ansible.builtin.stat:
-    path: "{{ wazuh_secrets_dir_real }}/wazuh-install-files.tar"
+    path: "{{ soc_secrets_dir_real }}/wazuh-install-files.tar"
     checksum_algorithm: sha256
   register: wazuh_tar_local
   delegate_to: localhost
@@ -486,7 +486,7 @@
     rule: allow
     port: "22"
     proto: tcp
-    src: "{{ wazuh_admin_cidr }}"
+    src: "{{ lab_cidr }}"
   when: ansible_virtualization_type != 'docker'
   tags: [config]
 
@@ -496,7 +496,7 @@
     port: "{{ item.0 }}"
     proto: tcp
     src: "{{ item.1 }}"
-  loop: "{{ ['1514', '1515'] | product([wazuh_relay_ip, wazuh_admin_cidr]) | list }}"
+  loop: "{{ ['1514', '1515'] | product([wazuh_relay_ip, lab_cidr]) | list }}"
   when: ansible_virtualization_type != 'docker'
   tags: [config]
 
@@ -505,7 +505,7 @@
     rule: allow
     port: "443"
     proto: tcp
-    src: "{{ wazuh_admin_cidr }}"
+    src: "{{ lab_cidr }}"
   when: ansible_virtualization_type != 'docker'
   tags: [config]
 

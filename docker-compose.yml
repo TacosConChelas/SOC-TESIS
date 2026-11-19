@@ -34,18 +34,21 @@
 #   hp-back  (internal) : snare, tanner, tanner_redis, tanner_phpox — sin salida,
 #                          cowrie/dionaea/mailoney NO alcanzan 8090/6379/8088.
 
+# Rotación de logs json-file (ancla reutilizada por los honeypots con `logging: *logging`):
+# sin límite, los logs pueden llenar el disco del host. Mailoney usa journald y no la usa.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
 
   cowrie:
     image: ${COWRIE_IMAGE:?Set COWRIE_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-cowrie
     restart: unless-stopped
-    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging
     security_opt:
       - "no-new-privileges:true"
 
@@ -81,12 +84,7 @@ services:
     image: ${DIONAEA_IMAGE:?Set DIONAEA_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-dionaea
     restart: unless-stopped
-    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging
     security_opt:
       - "no-new-privileges:true"
 
@@ -185,12 +183,7 @@ services:
     image: ${SNARE_IMAGE:?Set SNARE_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-snare
     restart: unless-stopped
-    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging
     security_opt:
       - "no-new-privileges:true"
 
@@ -239,12 +232,7 @@ services:
     container_name: soc-tesis-tanner
     command: tanner
     restart: unless-stopped
-    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging
     security_opt:
       - "no-new-privileges:true"
 
@@ -290,12 +278,7 @@ services:
     image: ${TANNER_REDIS_IMAGE:?Set TANNER_REDIS_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-tanner-redis
     restart: unless-stopped
-    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging
     security_opt:
       - "no-new-privileges:true"
     # Config horneada de la imagen T-Pot: save "" (sin RDB) permite read_only.
@@ -322,12 +305,7 @@ services:
     image: ${TANNER_PHPOX_IMAGE:?Set TANNER_PHPOX_IMAGE in .env (see .env.example, D2 CLOSED)}
     container_name: soc-tesis-tanner-phpox
     restart: unless-stopped
-    # Rotación de logs json-file: sin límite pueden llenar el disco del host.
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
+    logging: *logging
     security_opt:
       - "no-new-privileges:true"
     read_only: true

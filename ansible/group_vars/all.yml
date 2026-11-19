@@ -6,3 +6,9 @@
 wazuh_expected_version: "4.14.10"
 # Directorio de secretos en el CONTROLADOR; debe quedar fuera del repositorio.
 wazuh_secrets_dir: "~/soc-tesis-secrets/wazuh"
+# CIDR de la LAN del laboratorio: mismo valor que la variable lab_cidr de terraform/lab.
+lab_cidr: "192.168.1.0/24"
+# Raiz del repositorio en el CONTROLADOR (el playbook vive en ansible/).
+soc_repo_root: "{{ (playbook_dir ~ '/..') | realpath }}"
+# Directorio real de secretos (wazuh_secrets_dir expandido); debe quedar fuera de soc_repo_root.
+soc_secrets_dir_real: "{{ wazuh_secrets_dir | expanduser | realpath }}"

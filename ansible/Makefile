@@ -24,10 +24,9 @@ export ANSIBLE_USER_KNOWN_HOSTS_FILE := $(LOCAL)/.known_hosts
 export ANSIBLE_SSH_ARGS := -C -o ControlMaster=auto -o ControlPersist=60s -o IdentitiesOnly=yes -o UserKnownHostsFile=$(LOCAL)/.known_hosts -o GlobalKnownHostsFile=/dev/null
 
 .PHONY: help lint tf-fmt tf-validate ansible-lint syntax-check tags-contract \
-        secret-scan secret-scan-selftest keys up known-hosts ping down \
+        secret-scan keys up known-hosts ping down \
         toggle-install toggle-operate netcheck rehearse preflight \
-        azure-session time-guard plan plan-check plan-check-selftest \
-        gate-apply stage1 recap-check-selftest relay-check common-check \
+        azure-session time-guard plan recap-check-selftest relay-check common-check \
         pin-check wazuh-hostcheck wazuh-secrets wazuh-apply wazuh-rehearse wazuh-check rules-check \
         honeypot-apply honeypot-rehearse honeypot-check stage9-rehearse egress-precheck clean
 
@@ -61,11 +60,15 @@ tags-contract: ## contrato de tags E1-8
 	@cd "$(ANSIBLE_DIR)" && ansible-playbook site.yml --list-tasks --tags stop >/dev/null
 	@echo "tags-contract: ok (--list-tasks --tags start y stop compilan)"
 
-secret-scan: ## escaneo de secretos (arbol de git)
-	@cd "$(REPO)" && "$(PY)" ansible/local/scripts/secret-scan.py
-
-secret-scan-selftest: ## planta secretos falsos y exige que falle
-	@bash "$(LOCAL)/scripts/secret-scan-selftest.sh"
+secret-scan: ## escaneo de secretos con git grep (archivos rastreados y no ignorados)
+	@cd "$(REPO)" && r=0; \
+	git grep -I -n -E --untracked -e '-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----' -- . ':!ansible/Makefile' | cut -d: -f1,2 || r=$$?; \
+	if [ $$r -eq 0 ]; then echo "secret-scan: FALLA (llave privada PEM; ver file:line)" >&2; exit 1; fi; \
+	[ $$r -eq 1 ] || { echo "secret-scan: error de git grep ($$r)" >&2; exit 1; }; \
+	r=0; git grep -I -n -i -E --untracked -e "(psk|pre[_-]?shared[_-]?key|secret)[[:space:]]*[:=][[:space:]]*[\"']?[^[:space:]\"'#\$$<{%!]{8,}" -- . ':!ansible/Makefile' | cut -d: -f1,2 || r=$$?; \
+	if [ $$r -eq 0 ]; then echo "secret-scan: FALLA (asignacion literal de PSK/secret; ver file:line)" >&2; exit 1; fi; \
+	[ $$r -eq 1 ] || { echo "secret-scan: error de git grep ($$r)" >&2; exit 1; }
+	@echo "secret-scan: ok"
 
 keys:
 	@bash "$(LOCAL)/scripts/gen-local-keys.sh"
@@ -227,7 +230,7 @@ stage9-rehearse: wazuh-secrets known-hosts
 	@echo "== stage9-rehearse: comprobaciones finales =="
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 	@$(MAKE) --no-print-directory common-check relay-check wazuh-check honeypot-check
-	@cd "$(REPO)" && "$(PY)" ansible/local/scripts/secret-scan.py
+	@$(MAKE) --no-print-directory secret-scan
 	@echo "stage9-rehearse: ok"
 
 rehearse: known-hosts ## 1a pasada con cambios, 2a changed=0, --check, netcheck
@@ -257,7 +260,7 @@ rehearse: known-hosts ## 1a pasada con cambios, 2a changed=0, --check, netcheck
 	@bash "$(LOCAL)/scripts/netcheck.sh"
 	@echo "rehearse: ok. Para reabrir el egreso: make toggle-install"
 
-preflight: lint tags-contract secret-scan secret-scan-selftest recap-check-selftest rehearse relay-check common-check ## lint + tags + secretos + ensayo  <-- Etapa 0
+preflight: lint tags-contract secret-scan recap-check-selftest rehearse relay-check common-check ## lint + tags + secretos + ensayo  <-- Etapa 0
 	@echo "preflight: Etapa 0 OK"
 
 # Nombre de la suscripcion esperada: variable de entorno, nunca en el repo.
@@ -286,25 +289,17 @@ time-guard: ## rechaza arrancar despues de 20:30 (E1-9)
 	fi; \
 	echo "time-guard: ok ($$now)"
 
-# Etapa 1: plan guardado + checks. El JSON temporal lo borra stage1-plan.sh.
-plan: ## terraform plan -out=/tmp/tfplan + plan-check
-	@TF_DIR="$(TF_DIR)" PY="$(PY)" bash "$(LOCAL)/scripts/stage1-plan.sh"
-
-plan-check: ## valida un JSON de plan (por defecto /tmp/tfplan.json)
-	@"$(PY)" "$(LOCAL)/scripts/plan-check.py" "$${PLAN_JSON:-/tmp/tfplan.json}"
-
-plan-check-selftest: ## control + casos roto a-f
-	@PY="$(PY)" bash "$(LOCAL)/scripts/plan-check-selftest.sh"
-
-gate-apply: ## pide la frase de autorizacion (NO aplica)
-	@bash "$(LOCAL)/scripts/gate-apply.sh"
-
-stage1: azure-session time-guard plan gate-apply ## azure-session + time-guard + plan + gate-apply
-	@echo "Etapa 1 lista; apply NO ejecutado"
+# Etapa 1: plan guardado. No aplica nada; el operador revisa el plan y aplica a mano.
+plan: ## terraform plan -out=/tmp/tfplan (sin egreso de mantenimiento) + guarda del egreso
+	@umask 077; \
+	terraform -chdir="$(TF_DIR)" plan -input=false -lock=false -var maintenance_egress=false -out=/tmp/tfplan; \
+	j=$$(terraform -chdir="$(TF_DIR)" show -json /tmp/tfplan) || { echo "plan: no se pudo leer /tmp/tfplan" >&2; exit 1; }; \
+	if printf '%s' "$$j" | grep -q 'Allow-Out-Maintenance-Egress'; then echo "plan: el plan abre el egreso de mantenimiento" >&2; exit 1; fi; \
+	echo "plan: ok (/tmp/tfplan, 0600); revisalo y aplica a mano con terraform apply /tmp/tfplan"
 
 down: ## destruye contenedores
 	@$(COMPOSE) down -v --remove-orphans
 
 clean: down ## todo el entorno local
-	@rm -rf "$(LOGS)" "$(LOCAL)/.known_hosts" "$(LOCAL)/.keys" "$(LOCAL)/.selftest-scan.txt" /tmp/soc-local-secrets
+	@rm -rf "$(LOGS)" "$(LOCAL)/.known_hosts" "$(LOCAL)/.keys" /tmp/soc-local-secrets
 	@echo "clean: entorno local eliminado"

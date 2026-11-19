@@ -18,7 +18,7 @@ make preflight     # Etapa 0 completa
 ```
 
 `make preflight` encadena `lint` → `tags-contract` → `secret-scan` →
-`secret-scan-selftest` → `rehearse`.
+`recap-check-selftest` → `rehearse`.
 
 ## Contenedores
 
@@ -57,8 +57,7 @@ make netcheck         # falla si algún contenedor alcanza 1.1.1.1 o example.com
 |---|---|
 | `lint` | `terraform fmt -check`, `validate` (copia temporal, backend=false), `ansible-lint`, `--syntax-check` |
 | `tags-contract` | E1-8: tags ∈ {install,config,start} y `start` sin módulos de descarga |
-| `secret-scan` | reglas A/B sobre todo el árbol, C con lista de excepciones |
-| `secret-scan-selftest` | planta 4 secretos falsos y exige que el escaneo falle |
+| `secret-scan` | `git grep` sobre archivos rastreados y no ignorados: llave PEM y asignación literal de PSK/secret. Ignora referencias (`$VAR`, `{{ var }}`, `<...>`). |
 | `up` / `down` | construye/arranca y destruye los contenedores |
 | `known-hosts` | simula la Etapa 4a (huellas de host desechables) |
 | `ping` | `ansible all -m ping` (4 `pong`) |
@@ -68,27 +67,19 @@ make netcheck         # falla si algún contenedor alcanza 1.1.1.1 o example.com
 | `preflight` | todo lo anterior |
 | `azure-session` / `time-guard` | `az account show` y corte de las 20:30; **fuera** de `preflight` |
 
-## Etapa 1 — plan y autorización (sin apply)
+## Etapa 1 — plan (sin apply)
 
 | Target | Qué hace |
 |---|---|
 | `azure-session` | exige `EXPECTED_AZ_SUBSCRIPTION_NAME` (variable de entorno, nunca en el repo), `az` con sesión vigente y esa suscripción en estado `Enabled`. No imprime IDs. |
 | `time-guard` | falla a partir de 20:30 (E1-9). Se prueba sin esperar: `TIMEGUARD_NOW=20:30 make time-guard`. |
-| `plan` | `umask 077; terraform plan -input=false -lock=false -var maintenance_egress=false -out=/tmp/tfplan`; deriva el JSON a un temporal 0600, corre `plan-check` y lo borra con `trap`. La salida del plan no se imprime y las rutas del home se redactan. Un plan nuevo borra `/tmp/tfplan.authorized`. |
-| `plan-check` | valida un JSON de plan (`PLAN_JSON=... make plan-check`, por defecto `/tmp/tfplan.json`) por tipo y nombre: (a) sin secretos, (b) sin `Allow-Out-Maintenance-Egress`, (c) 4 VMs, (d) SSH 22 solo desde `lab_cidr` a 10.50.20.10/30.10/40.10, (e) 22222 solo desde `lab_cidr` a 10.50.10.10, (f) `custom_data` de honeyserver fija `Port 22222`. |
-| `plan-check-selftest` | plan sintético control (debe pasar) + un caso roto por check a–f (cada uno falla nombrando su check). Sin datos reales (`203.0.113.0/24`). |
-| `gate-apply` | exige TTY y la frase exacta `AUTORIZO terraform apply de /tmp/tfplan`; escribe el `sha256` en `/tmp/tfplan.authorized` (0600) para que la Etapa 2 compruebe que aplica el plan autorizado. **No aplica nada.** |
-| `stage1` | `azure-session` → `time-guard` → `plan` (incluye `plan-check`) → `gate-apply`. Si algo falla, no sigue. |
+| `plan` | `umask 077; terraform plan -input=false -lock=false -var maintenance_egress=false -out=/tmp/tfplan`; falla si `terraform show -json` contiene `Allow-Out-Maintenance-Egress`. No aplica nada: el operador revisa el plan y aplica a mano con `terraform apply /tmp/tfplan`. |
 
 `make plan` no ejecuta `terraform init`: si falta `terraform/lab/.terraform`, falla y pide hacerlo una vez a mano (así no se toca el repo).
 
 ### Lo que la Etapa 1 NO verifica
 
 Que Azure acepte las SKU o la cuota vigente, que la imagen Ubuntu siga disponible, precios, ni que el `apply` funcione. Todo eso se descubre en la Etapa 2 (con costo). El plan tampoco prueba el banner del 22 público (E1-2): eso es posterior al apply.
-
-### Check (f) y `custom_data`
-
-azurerm 5.8.0 marca `custom_data` como `sensitive`. Se verifica sobre `resource_changes[].change.after.custom_data` del JSON del plan (local no redacta esos valores; por eso el plan y el JSON son 0600) decodificando base64. Si el valor no apareciera, el check **falla** en vez de pasar en silencio.
 
 ## Rutas y secretos
 
@@ -97,10 +88,7 @@ azurerm 5.8.0 marca `custom_data` como `sensitive`. Se verifica sobre `resource_
 - El Makefile exporta `ANSIBLE_INVENTORY`, `ANSIBLE_PRIVATE_KEY_FILE`,
   `ANSIBLE_USER_KNOWN_HOSTS_FILE` y `ANSIBLE_SSH_ARGS` con rutas absolutas, para
   que ssh no lea `~/.ssh/known_hosts` del operador.
-- `local/secret-scan.allow` exceptúa **solo** la regla C (64 hex) en rutas que
-  guardan hashes sha256 ya registrados (`evidence/`, `scrape_2_5/`, `.firecrawl/`,
-  `graphify-out/`, `config/`, `.env.example` y el lockfile de Terraform). Las reglas A (PEM) y B (PSK/secret literal) cubren el
-  árbol completo sin excepciones.
+- No hay lista de excepciones en el escaneo: `make secret-scan` cubre todo el árbol rastreado y debe pasar en limpio.
 
 ## Lo que NO se valida localmente (E1-7)
 

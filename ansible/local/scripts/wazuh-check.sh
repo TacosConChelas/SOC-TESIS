@@ -123,7 +123,7 @@ c8() {
   if wz test ! -e /root/wazuh-install-files.tar; then good "el tar no queda en la VM"; else bad "el tar sigue en la VM"; fi
   if wz test ! -e /var/log/wazuh-install.log; then good "el log del asistente no queda en la VM"; else bad "el log del asistente sigue en la VM"; fi
   if [ "$(stat -c %a "$secrets/wazuh-install-files.tar" 2>/dev/null || true)" = 600 ]; then good "tar en el controlador con 0600"; else bad "falta el tar en $secrets o no es 0600"; fi
-  if (cd "$repo" && python3 ansible/local/scripts/secret-scan.py >/dev/null 2>&1); then good "secret-scan limpio"; else bad "secret-scan encontro secretos"; fi
+  if make -s -C "$repo/ansible" secret-scan >/dev/null 2>&1; then good "secret-scan limpio"; else bad "secret-scan encontro secretos"; fi
 }
 
 # 9. Cadena D4 real: agente en honeyserver enrolado por el relay.

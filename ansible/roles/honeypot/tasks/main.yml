@@ -177,7 +177,7 @@
 
 - name: Copiar docker-compose.yml y .env (sin secretos, D2)
   ansible.builtin.copy:
-    src: "{{ honeypot_repo_root }}/{{ item.src }}"
+    src: "{{ soc_repo_root }}/{{ item.src }}"
     dest: "{{ honeypot_dir }}/{{ item.dest }}"
     owner: root
     group: root
@@ -189,7 +189,7 @@
 
 - name: Copiar config/ de Dionaea y Tanner
   ansible.builtin.copy:
-    src: "{{ honeypot_repo_root }}/config/"
+    src: "{{ soc_repo_root }}/config/"
     dest: "{{ honeypot_dir }}/config/"
     owner: root
     group: root
@@ -416,9 +416,9 @@
 - name: Comprobar que el directorio de secretos está fuera del repositorio
   ansible.builtin.assert:
     that:
-      - not ((honeypot_secrets_dir_real ~ '/').startswith(honeypot_repo_root ~ '/'))
+      - not ((soc_secrets_dir_real ~ '/').startswith(soc_repo_root ~ '/'))
     fail_msg: >-
-      wazuh_secrets_dir ({{ honeypot_secrets_dir_real }}) está dentro del repositorio ({{ honeypot_repo_root }}):
+      wazuh_secrets_dir ({{ soc_secrets_dir_real }}) está dentro del repositorio ({{ soc_repo_root }}):
       los secretos nunca pueden vivir en el repo.
   delegate_to: localhost
   become: false
@@ -429,7 +429,7 @@
 # `start` lo destruye (ver más abajo). Tras el primer arranque, config ya no lo toca.
 - name: Leer authd.pass en el controlador
   ansible.builtin.stat:
-    path: "{{ honeypot_secrets_dir_real }}/authd.pass"
+    path: "{{ soc_secrets_dir_real }}/authd.pass"
   register: honeypot_authd_local
   delegate_to: localhost
   become: false
@@ -439,13 +439,13 @@
 - name: Exigir que authd.pass exista en el controlador
   ansible.builtin.assert:
     that: honeypot_authd_local.stat.exists
-    fail_msg: "Falta {{ honeypot_secrets_dir_real }}/authd.pass (D8: el mismo que entrega el rol wazuh)."
+    fail_msg: "Falta {{ soc_secrets_dir_real }}/authd.pass (D8: el mismo que entrega el rol wazuh)."
   when: not honeypot_started.stat.exists
   tags: [config]
 
 - name: Entregar authd.pass (contraseña de enrolamiento)
   ansible.builtin.copy:
-    src: "{{ honeypot_secrets_dir_real }}/authd.pass"
+    src: "{{ soc_secrets_dir_real }}/authd.pass"
     dest: /var/ossec/etc/authd.pass
     owner: root
     group: wazuh

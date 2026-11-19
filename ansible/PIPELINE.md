@@ -23,18 +23,11 @@ Regla general: cada verificación termina con exit ≠ 0 si falla. Los gates se 
 
 `unattended-upgrades` ya no es un riesgo abierto: el rol `common` desactiva los timers `apt-daily*` y la actualización automática (ver `roles/common` y `make common-check`).
 
-## Etapa 1 · Plan de Terraform [AUTO] + autorización [GATE]
-1. `umask 077; terraform plan -out=/tmp/tfplan` con `maintenance_egress=false`.
-2. Comprobaciones automáticas sobre `terraform show -json /tmp/tfplan`. Se valida por tipo y nombre, no por número total de recursos:
-   - no hay secretos en el plan,
-   - no hay ninguna regla `Allow-Out-Maintenance-Egress`,
-   - hay exactamente 4 `azurerm_linux_virtual_machine`,
-   - `Allow-Lab-Admin-SSH` (22): exactamente tres reglas, una por NSG (`nsg-vpn`→`10.50.20.10`, `nsg-logrelay`→`10.50.30.10`, `nsg-wazuh`→`10.50.40.10`), solo desde `lab_cidr`,
-   - `Allow-Lab-Admin-SSH-22222` solo desde `lab_cidr` hacia `10.50.10.10`,
-   - honeyserver tiene `custom_data` que mueve sshd al 22222 (E1-2). Se lee del JSON del plan (el valor sensible viene en `after`): debe existir `10-admin-port.conf` y el conjunto de líneas `Port` debe ser exactamente `{22222}`. Si no aparece, el check falla; nunca pasa por omisión.
-3. **Gate:** el operador escribe `AUTORIZO terraform apply de /tmp/tfplan`. Desde aquí hay costo. El gate guarda el sha256 del plan en `/tmp/tfplan.authorized` (0600) para que la Etapa 2 compruebe que aplica el plan autorizado.
+## Etapa 1 · Plan de Terraform [AUTO] + revisión [MANUAL]
+1. `make plan` (en `ansible/`): `umask 077; terraform plan -out=/tmp/tfplan` con `maintenance_egress=false`. Falla si el plan contiene `Allow-Out-Maintenance-Egress`. No aplica nada.
+2. El operador revisa el plan a mano: 4 `azurerm_linux_virtual_machine`, SSH 22 solo desde `lab_cidr` hacia `10.50.20.10`, `10.50.30.10` y `10.50.40.10`, 22222 solo desde `lab_cidr` hacia honeyserver, y `custom_data` de honeyserver con `Port 22222`. Luego aplica con `terraform apply /tmp/tfplan` (Etapa 2).
 
-`make stage1` (en `ansible/`) encadena `azure-session` → `time-guard` → `plan` (incluye `plan-check`) → `gate-apply`. Requiere `EXPECTED_AZ_SUBSCRIPTION_NAME` y TTY. Para solo planear sin gate ni guarda de hora: `make azure-session plan`. El plan y su JSON contienen secretos (p. ej. `admin_password`): 0600, JSON temporal borrado con `trap`, `/tmp/tfplan` borrado tras el apply.
+El plan contiene secretos (p. ej. `admin_password`): se guarda con permisos 0600 y `/tmp/tfplan` se borra tras el apply.
 
 ## Etapa 2 · Apply y validación de infraestructura [AUTO]
 | Paso | Verificación |
@@ -166,7 +159,7 @@ Comprobaciones finales:
 - `ansible`, `ansible-lint` y `molecule` no instalados (en NixOS conviene `nix-shell` o un `flake`).
 - Orquestación propuesta: `Makefile` + Docker Compose. Molecule solo si hace falta.
 - `custom_data` de honeyserver (E1-2) implementado en `terraform/lab/vms.tf` (sshd en 22222); verificado contra el plan real de Azure (Etapa 1); sin desplegar. La Etapa 2 lo confirma con el banner del 22 público.
-- Etapas 0 y 1 implementadas en `ansible/` (`make preflight`, `make stage1`). Etapa 1 probada con plan real (checks a–f en verde); el gate `time-guard` + `gate-apply` en cadena se prueba en la primera corrida completa de `make stage1`.
+- Etapas 0 y 1 implementadas en `ansible/` (`make preflight`, `make plan`). Etapa 1 probada con plan real; falta la primera corrida completa de `make plan` con revisión manual.
 
 ## Etapa M — Mantenimiento con el honeypot ya arrancado [GATE]
 Orden para reabrir el egreso (o cambiar el rol) cuando el señuelo ya quedó en marcha:

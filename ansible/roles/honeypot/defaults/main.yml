@@ -39,11 +39,9 @@ honeypot_egress_probe_urls:
   - http://1.1.1.1
   - https://example.com
 
-honeypot_repo_root: "{{ (playbook_dir ~ '/..') | realpath }}"
-honeypot_secrets_dir_real: "{{ wazuh_secrets_dir | expanduser | realpath }}"
 # Lineas *_IMAGE= de .env.example (D2): fuente unica de los 7 digests.
 honeypot_image_env: >-
-  {{ dict(lookup('ansible.builtin.file', honeypot_repo_root ~ '/.env.example').splitlines()
+  {{ dict(lookup('ansible.builtin.file', soc_repo_root ~ '/.env.example').splitlines()
      | select('match', '^[A-Z_]+_IMAGE=') | map('split', '=')) }}
 honeypot_image_refs: "{{ honeypot_image_env.values() | list }}"
 # Directorios del bind (D4), la imagen que escribe en cada uno y el JSON que logcollector

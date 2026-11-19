@@ -10,8 +10,5 @@ wazuh_installer_sha256: "db5f8d37703b3673ec0e6b30834499756cbd093d828fc24d7f5b276
 wazuh_indexer_heap: "8g"
 wazuh_retention_days: 30
 wazuh_relay_ip: "10.50.30.10"
-wazuh_admin_cidr: "192.168.1.0/24"
 wazuh_min_memory_mb: 7000
 wazuh_min_disk_mb: 15000
-wazuh_repo_root: "{{ (playbook_dir ~ '/..') | realpath }}"
-wazuh_secrets_dir_real: "{{ wazuh_secrets_dir | expanduser | realpath }}"

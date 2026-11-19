@@ -76,7 +76,7 @@
     rule: allow
     port: "22"
     proto: tcp
-    src: "{{ logrelay_admin_cidr }}"
+    src: "{{ lab_cidr }}"
   when: ansible_virtualization_type != 'docker'
   tags: [config]
 
