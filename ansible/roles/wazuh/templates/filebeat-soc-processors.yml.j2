@@ -1,0 +1,23 @@
+# Procesador de Filebeat (hallazgo 7, Fase 8). El Indexer rechaza un campo keyword de mas de
+# 32766 bytes (max_bytes_length_exceeded) y Filebeat descarta la alerta sin reintentar. El payload
+# de deteccion de Tanner (sqli/xss con filas de BD) llego a 34682 bytes. Se acota SOLO el envio:
+# el alerts.json del Manager conserva el original. Techo: 4096 caracteres UTF-16 (<= 16 KiB).
+# ponytail: solo el campo conocido de Tanner; si otro campo supera el limite, anadirlo aqui.
+processors:
+  - script:
+      lang: javascript
+      id: soc_truncar_payload_tanner
+      tag: soc_truncar_payload_tanner
+      source: |
+        var CAMPO = "data.response_msg.response.message.detection.payload.value";
+        var MAX = 4096;
+        function process(event) {
+          try {
+            var v = event.Get(CAMPO);
+            if (typeof v === "string" && v.length > MAX) {
+              event.Put(CAMPO, v.substring(0, MAX) + "...[truncado]");
+            }
+          } catch (e) {
+            // Sin el campo (alertas que no son de Tanner): no hacer nada.
+          }
+        }

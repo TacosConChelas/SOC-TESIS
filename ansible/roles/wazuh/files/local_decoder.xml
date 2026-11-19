@@ -1,0 +1,15 @@
+<!--
+  Decoders locales de SOC-TESIS.
+  Mailoney (journald, syslog): extrae srcip del JSON de session_started/session_ended.
+  Regex y no JSON_Decoder a proposito: no cambia decoded_as de las demas fuentes JSON.
+  Como el JSON de session_ended lista "src_ip" antes que "commands", la primera
+  coincidencia es la del origen real; un comando del atacante llega escapado (\"src_ip\")
+  y no coincide. Solo IPv4; IPv6 no se extrae.
+  wazuh-logtest 4.14.10 no devuelve srcip para IPs privadas de Docker (172.18.x, 172.19.x, 10.x).
+-->
+  <decoder name="mailoney-srcip">
+    <program_name>^soc-tesis-mailoney$</program_name>
+    <regex>"src_ip": "(\d+\.\d+\.\d+\.\d+)"</regex>
+    <order>srcip</order>
+  </decoder>
+

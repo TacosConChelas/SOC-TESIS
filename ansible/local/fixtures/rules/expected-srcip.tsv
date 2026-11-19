@@ -1,0 +1,3 @@
+# archivo	linea	srcip esperado (decoder mailoney-srcip, fase 2 de wazuh-logtest)
+# Observado en wazuh-logtest 4.14.10: srcip de Docker/privado (172.18.x, 172.19.x, 10.x) NO se extrae; IP publica y 192.168.x si.
+mailoney.jsonl	6	203.0.113.50

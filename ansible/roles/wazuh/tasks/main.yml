@@ -299,6 +299,16 @@
   notify: Reiniciar wazuh-manager
   tags: [config]
 
+- name: Dejar el decoder local (srcip de Mailoney)
+  ansible.builtin.copy:
+    src: local_decoder.xml
+    dest: /var/ossec/etc/decoders/local_decoder.xml
+    owner: wazuh
+    group: wazuh
+    mode: "0660"
+  notify: Reiniciar wazuh-manager
+  tags: [config]
+
 - name: Dejar la API de Wazuh solo en loopback
   ansible.builtin.lineinfile:
     path: /var/ossec/api/configuration/api.yaml
@@ -322,6 +332,22 @@
 
 - name: Validar la configuración del Manager
   ansible.builtin.command: /var/ossec/bin/wazuh-analysisd -t
+  changed_when: false
+  check_mode: false
+  tags: [config]
+
+# Hallazgo 7 (Fase 8): sin este procesador, una alerta de Tanner con payload > 32766 bytes se
+# pierde en el Indexer (400 del bulk, sin reintento). Idempotente por marcador de bloque.
+- name: Truncar el payload de Tanner antes del envío al Indexer (Filebeat)
+  ansible.builtin.blockinfile:
+    path: /etc/filebeat/filebeat.yml
+    marker: "# {mark} SOC-TESIS truncado de payload Tanner"
+    block: "{{ lookup('ansible.builtin.template', 'filebeat-soc-processors.yml.j2') }}"
+  notify: Reiniciar filebeat
+  tags: [config]
+
+- name: Validar la configuración de Filebeat
+  ansible.builtin.command: filebeat test config -c /etc/filebeat/filebeat.yml
   changed_when: false
   check_mode: false
   tags: [config]
