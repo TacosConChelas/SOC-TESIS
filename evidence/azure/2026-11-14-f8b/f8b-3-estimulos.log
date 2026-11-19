@@ -1,0 +1,28 @@
+=== 3f ubuntu-lab 2026-11-14T08:51:35Z ===
+t0_cliente=2026-11-14T08:51:35.522Z
+nouser@localhost: Permission denied (publickey,password).
+rc=255
+2026-11-14T02:51:35.602762-06:00 ubuntu-host-client-1 sudo: user1 :  PWD=/home/user1 ; USER=root ; COMMAND=/usr/bin/grep Invalid user nouser /var/log/auth.log
+=== 3g win11-lab 2026-11-14T08:52:18Z ===
+t0_cliente=2026-11-14T08:52:19.809Z
+System error 1326 has occurred.
+
+The user name or password is incorrect.
+
+rc=2
+=== reloj win11 2026-11-14T08:52:43Z ===
+'Source\""' is not recognized as an internal or external command,
+operable program or batch file.
+=== 3f alerta 5710 08:51:36.579Z (t0 08:51:35.522Z) ===
+=== reloj win11 (stripchart) 2026-11-14T08:52:47Z ===
+Tracking time.windows.com [40.119.6.228:123].
+Collecting 3 samples.
+The current time is 11/14/2026 12:52:48 AM.
+00:52:48, +00.0110450s
+00:52:50, +00.0109927s
+00:52:52, +00.0119213s
+
+Last Successful Sync Time: 11/13/2026 6:45:48 AM
+Source: time.windows.com,0x9 
+
+

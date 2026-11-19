@@ -1,0 +1,14 @@
+=== deallocate vm-honeyserver 2026-11-14 05:09:28 CST / 2026-11-14T11:09:28Z ===
+rc=0 2026-11-14T11:10:02Z
+=== deallocate vm-wazuh 2026-11-14 05:10:02 CST / 2026-11-14T11:10:02Z ===
+rc=0 2026-11-14T11:10:36Z
+=== deallocate vm-logrelay 2026-11-14 05:10:36 CST / 2026-11-14T11:10:36Z ===
+rc=0 2026-11-14T11:11:09Z
+=== deallocate vm-strongswan 2026-11-14 05:11:09 CST / 2026-11-14T11:11:09Z ===
+rc=0 2026-11-14T11:11:41Z
+N               S
+--------------  --------------
+vm-honeyserver  VM deallocated
+vm-logrelay     VM deallocated
+vm-strongswan   VM deallocated
+vm-wazuh        VM deallocated

@@ -1,0 +1,105 @@
+=== setup 2026-11-14 02:11:12 CST / 2026-11-14T08:11:12Z ===
+=== time-guard ok 02:10 2026-11-14 02:11:12 CST / 2026-11-14T08:11:12Z ===
+=== start vm-strongswan 2026-11-14 02:11:12 CST / 2026-11-14T08:11:12Z ===
+rc=0 2026-11-14T08:11:55Z
+=== start vm-logrelay 2026-11-14 02:11:55 CST / 2026-11-14T08:11:55Z ===
+rc=0 2026-11-14T08:12:38Z
+=== start vm-wazuh 2026-11-14 02:12:38 CST / 2026-11-14T08:12:38Z ===
+rc=0 2026-11-14T08:13:21Z
+=== start vm-honeyserver 2026-11-14 02:13:21 CST / 2026-11-14T08:13:21Z ===
+rc=0 2026-11-14T08:14:05Z
+=== vm list 2026-11-14 02:14:05 CST / 2026-11-14T08:14:05Z ===
+N               S           Ip
+--------------  ----------  ---------------
+vm-honeyserver  VM running  130.131.218.113
+vm-logrelay     VM running
+vm-strongswan   VM running  172.202.13.163
+vm-wazuh        VM running
+=== ansible ping 2026-11-14T08:49:12Z ===
+honeyserver | SUCCESS => {
+wazuh | SUCCESS => {
+strongswan | SUCCESS => {
+logrelay | SUCCESS => {
+=== chronyc ===
+wazuh | CHANGED | rc=0 >>
+System time     : 0.000002509 seconds fast of NTP time
+Leap status     : Normal
+honeyserver | CHANGED | rc=0 >>
+System time     : 0.000002375 seconds slow of NTP time
+Leap status     : Normal
+strongswan | CHANGED | rc=0 >>
+System time     : 0.000005583 seconds fast of NTP time
+Leap status     : Normal
+logrelay | CHANGED | rc=0 >>
+System time     : 0.000000005 seconds slow of NTP time
+Leap status     : Normal
+=== agentes y contenedores 2026-11-14T08:49:41Z ===
+NAMES IMAGE COMMAND CREATED STATUS
+soc-tesis-snare 35 minutes (healthy) 0.0.0.0:80->80/tcp,
+soc-tesis-tanner Up 35 minutes (healthy)
+soc-tesis-cowrie (healthy) 0.0.0.0:22->2222/tcp, [::]:22->2222/tcp, 0.0.0.0:23->2223/tcp,
+soc-tesis-mailoney 35 minutes (healthy) 0.0.0.0:25->25/tcp,
+soc-tesis-dionaea [::]:69->69/udp, 0.0.0.0:5060-5061->5060-5061/tcp, [::]:5060-5061->5060-5061/tcp, 0.0.0.0:5060-5061->5060-5061/udp,
+soc-tesis-tanner-redis Up 35 minutes (healthy)
+soc-tesis-tanner-phpox Up 35 minutes (healthy)
+[WARNING]: Host 'wazuh' is using the discovered Python interpreter at '/usr/bin/python3.10', but future installation of another Python interpreter could cause a different interpreter to be discovered. See https://docs.ansible.com/ansible-core/2.21/reference_appendices/interpreter_discovery.html for more information.
+wazuh | CHANGED | rc=0 >>
+
+Wazuh agent_control. List of available agents:
+
+List of agentless devices:
+[ERROR]: Task failed: Finalization of task args for 'ansible.builtin.command' failed: Error while resolving value for '_raw_params': Syntax error in template: expected token ':', got '}'
+
+Task failed.
+Origin: <adhoc 'command' task>
+
+{'action': 'command', 'args': {'_raw_params': 'docker inspect --format "{{ {{ }}.Name{{ }} }} {{ {{ [...]
+
+<<< caused by >>>
+
+Finalization of task args for 'ansible.builtin.command' failed.
+Origin: <CLI option '-m'>
+
+command
+
+<<< caused by >>>
+
+Error while resolving value for '_raw_params'.
+Origin: <CLI option '-a'>
+
+docker inspect --format "{{ {{ }}.Name{{ }} }} {{ {{ }}.State.Health.Status{{ }} }}" soc-tesis-dionaea
+
+<<< caused by >>>
+
+Syntax error in template: expected token ':', got '}'
+Origin: <CLI option '-a'>:1
+
+docker inspect --format "{{ {{ }}.Name{{ }} }} {{ {{ }}.State.Health.Status{{ }} }}" soc-tesis-dionaea
+
+honeyserver | FAILED | rc=-1 >>
+Task failed: Finalization of task args for 'ansible.builtin.command' failed: Error while resolving value for '_raw_params': Syntax error in template: expected token ':', got '}'
+azure-session: ok (suscripcion esperada, estado Enabled)
+time-guard: ok (04:24)
+=== reinicio start vm-strongswan 2026-11-14T10:24:31Z ===
+rc=0 2026-11-14T10:25:16Z
+=== reinicio start vm-logrelay 2026-11-14T10:25:16Z ===
+rc=0 2026-11-14T10:25:59Z
+=== reinicio start vm-wazuh 2026-11-14T10:25:59Z ===
+rc=0 2026-11-14T10:26:42Z
+=== reinicio start vm-honeyserver 2026-11-14T10:26:42Z ===
+rc=0 2026-11-14T10:27:25Z
+N               S
+--------------  ----------
+vm-honeyserver  VM running
+vm-logrelay     VM running
+vm-strongswan   VM running
+vm-wazuh        VM running
+=== comprobacion post-reinicio 2026-11-14T10:28:22Z ===
+honeyserver | SUCCESS => {
+strongswan | SUCCESS => {
+logrelay | SUCCESS => {
+wazuh | SUCCESS => {
+honeyserver | CHANGED | rc=0 >>
+7
+(healthy)
+active

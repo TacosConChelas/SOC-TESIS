@@ -1,0 +1,3 @@
+# Ground truth fijado antes de ejecutar (doc 19 §2)
+3f  ubuntu-lab (.74)  ssh -o PubkeyAuthentication=no nouser@localhost (usuario inexistente)  -> esperado rule.id 5710, agent.name ubuntu-lab
+3g  win11-lab  (.75)  net use \\localhost\IPC$ /user:nouser x  (EventID 4625)               -> esperado rule.id 60122, agent.name win11-lab

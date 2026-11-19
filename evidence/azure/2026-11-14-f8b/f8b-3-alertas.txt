@@ -1,0 +1,35 @@
+2026-11-14T08:52:27.314+0000 60137 3 Windows User Logoff 4634 User2
+2026-11-14T08:52:27.211+0000 67023 3 Non service account logged off. 4634 sshd_3200
+2026-11-14T08:52:20.230+0000 60122 5 Logon Failure - Unknown user or bad password 4625 nouser
+2026-11-14T08:52:20.213+0000 67028 3 Special privileges assigned to new logon. 4672 None
+2026-11-14T08:52:20.181+0000 60106 3 Windows Logon Success 4624 User2
+2026-11-14T08:52:20.131+0000 60137 3 Windows User Logoff 4634 User2
+3f 5710 2026-11-14T08:51:36.579Z ubuntu-lab nouser MTTD=1.06s
+3g 60122 2026-11-14T08:52:20.230Z win11-lab nouser(4625) MTTD=0.42s
+total {'value': 46, 'relation': 'eq'}
+2026-11-14T10:36:39.013+0000 100300 5 vm-honeyserver | Nov 14 10:36:37 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.events", "event": "session_ended", "session_uuid": "08049af6-9088-4104-87c3-a5e31a8c49e4", "src_ip": "203.0.113.11", "src
+2026-11-14T10:36:39.013+0000 100300 5 vm-honeyserver | Nov 14 10:36:37 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.core", "event": "log", "level": "INFO", "message": "Connection closed for 203.0.113.11:6587 (dest: 0.0.0.0:25)", "session
+2026-11-14T10:36:29.014+0000 100300 5 vm-honeyserver | Nov 14 10:36:27 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.events", "event": "session_started", "session_uuid": "08049af6-9088-4104-87c3-a5e31a8c49e4", "src_ip": "203.0.113.11", "s
+2026-11-14T10:36:29.012+0000 100300 5 vm-honeyserver | Nov 14 10:36:27 vm-honeyserver soc-tesis-mailoney[695]: [*] Connection from 203.0.113.11:6587 to 0.0.0.0:25
+2026-11-14T10:36:29.012+0000 100300 5 vm-honeyserver | Nov 14 10:36:27 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.core", "event": "log", "level": "INFO", "message": "Connection from 203.0.113.11:6587 to 0.0.0.0:25"}
+2026-11-14T10:34:25.031+0000 100300 5 vm-honeyserver | Nov 14 10:34:23 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.core", "event": "log", "level": "INFO", "message": "Connection closed for 203.0.113.10:6272 (dest: 0.0.0.0:25)", "session_
+2026-11-14T10:34:25.029+0000 100300 5 vm-honeyserver | Nov 14 10:34:23 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.events", "event": "session_ended", "session_uuid": "03355b68-3816-4ddc-a2f2-0ef5e81f089e", "src_ip": "203.0.113.10", "src_
+2026-11-14T10:34:25.027+0000 100300 5 vm-honeyserver | Nov 14 10:34:23 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.events", "event": "session_started", "session_uuid": "03355b68-3816-4ddc-a2f2-0ef5e81f089e", "src_ip": "203.0.113.10", "sr
+2026-11-14T10:34:25.025+0000 100300 5 vm-honeyserver | Nov 14 10:34:23 vm-honeyserver soc-tesis-mailoney[695]: [*] Connection from 203.0.113.10:6272 to 0.0.0.0:25
+2026-11-14T10:34:25.023+0000 100300 5 vm-honeyserver | Nov 14 10:34:23 vm-honeyserver soc-tesis-mailoney[695]: {"logger": "mailoney.core", "event": "log", "level": "INFO", "message": "Connection from 203.0.113.10:6272 to 0.0.0.0:25"}
+3c por rule.id: {'100300': 46}
+conexiones por IP origen: {'203.0.113.10': (2, '2026-11-14T10:34:25.023+0000'), '203.0.113.11': (2, '2026-11-14T10:36:29.012+0000')}
+--- sesion 08049af6 (10:36) ---
+2026-11-14T10:36:29.014+0000 "event": "session_started", "session_uuid": "08049af6-9088-4104-87c3-a5e31a8c49e4", "src_ip": "203.0.113.11", "src_port": 6587, "server_name": "mail.example.com", "dest_ip": "0.0.0.0", "dest_port": 25}
+2026-11-14T10:36:39.013+0000 "event": "session_ended", "session_uuid": "08049af6-9088-4104-87c3-a5e31a8c49e4", "src_ip": "203.0.113.11", "src_port": 6587, "dest_ip": "0.0.0.0", "dest_port": 25, "duration_seconds": 10.119, "command_count": 0, "commands": [], "last_response_code": 220, "o
+
+=== NOTA 3c (diagnostico propio, NO es del operador) 2026-11-14T10:39:52Z ===
+Prueba local desde el honeyserver (nc a 127.0.0.1:25, via docker-proxy => origen 172.19.0.1, no filtrado por 100301). El script corrio 2 veces.
+20 alertas 100300 con origen 172.19.0.1: 2026-11-14T10:38:55.023+0000 -> 2026-11-14T10:39:27.067+0000
+Origen del operador (hotspot): 203.0.113.10 (10:34:23Z, nc -vz) y 203.0.113.11 (10:36:27Z, EHLO). Excluir 172.19.0.1 al contar 3c / TEST-004.
+=== 3c reintento con pausas (excluye 172.19.0.1) ===
+2026-11-14T10:34:25.029+0000 "203.0.113.10" dur 0.009 cmds 0 [] last 220
+2026-11-14T10:36:39.013+0000 "203.0.113.11" dur 10.119 cmds 0 [] last 220
+2026-11-14T10:46:51.063+0000 "203.0.113.11" dur 3.032 cmds 3 ["ehlo prueba.local", "mail from:<a@prueba.local>", "quit"] last 221
+
+Nota de anonimizacion: IPs del hotspot del operador -> 203.0.113.10 (sesion nc -vz 10:34:23Z) y 203.0.113.11 (sesiones EHLO 10:36:27Z y con pausas 10:46:48Z); index_uuid -> <guid>.
